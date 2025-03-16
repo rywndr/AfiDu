@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}AfiDu{% endblock %}</title>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="">Students</a></li>
+            <li><a href="">Scores</a></li>
+            <li><a href="">Materials</a></li>
+            <li><a href="">Report</a></li>
+            <li>
+            <form method="post" action="{% url 'login:logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="all: unset; cursor: pointer; color: black; text-decoration: underline;">
+                    Log out
+                </button>
+            </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div>
+        {% block content %}
+
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>&copy;2025 AfiDu</p>
+    </footer>
+</body>
+
+</html>
