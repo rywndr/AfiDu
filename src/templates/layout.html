@@ -16,13 +16,12 @@
             <li><a href="">Materials</a></li>
             <li><a href="">Report</a></li>
             <li>
-            <form method="post" action="{% url 'login:logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" style="all: unset; cursor: pointer; color: black; text-decoration: underline;">
-                    Log out
-                </button>
-            </form>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
             </li>
+
         </ul>
     </nav>
 

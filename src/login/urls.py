@@ -1,7 +1,10 @@
-from django.urls import include, path
+from django.urls import path
+
+from .views import CustomLoginView
 
 app_name = "login"
 
 urlpatterns = [
-    path("", include("django.contrib.auth.urls"), name="login"),
+    # login
+    path("login/", CustomLoginView.as_view(), name="login"),
 ]

@@ -3,7 +3,11 @@
 {% block title %}AfiDu-Dashboard{% endblock %}
 
 {% block content %}
-<p>🚀 Welcome back {{user.username}}!</p>
+  {% if user.first_name %}
+    <h3>🚀 Welcome back, {{ user.first_name }}!</h3>
+  {% else %}
+    <h3>🚀 Welcome back, {{ user.email }}!</h3>
+  {% endif %}
 </form>
 
 {% endblock %}
