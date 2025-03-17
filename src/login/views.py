@@ -6,6 +6,7 @@ from django.contrib.auth.views import (
     PasswordResetDoneView,
     PasswordResetView,
 )
+from django.shortcuts import render
 from django.urls import reverse_lazy
 
 from .email_backend import clear_reset_link, get_reset_email, get_reset_link
@@ -27,6 +28,10 @@ class CustomLoginView(LoginView):
             self.request.session.set_expiry(1209600)
 
         return super().form_valid(form)
+
+
+def register(request):
+    return render(request, "register.html")
 
 
 class CustomPasswordResetView(PasswordResetView):

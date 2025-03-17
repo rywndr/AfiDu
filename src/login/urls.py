@@ -6,6 +6,7 @@ from .views import (
     CustomPasswordResetConfirmView,
     CustomPasswordResetDoneView,
     CustomPasswordResetView,
+    register,
 )
 
 app_name = "login"
@@ -13,6 +14,8 @@ app_name = "login"
 urlpatterns = [
     # login
     path("login/", CustomLoginView.as_view(), name="login"),
+    # register
+    path("register/", register, name="register"),
     # password reset
     path("password_reset/", CustomPasswordResetView.as_view(), name="password_reset"),
     path(

@@ -1,0 +1,28 @@
+{% extends 'auth/layout.html' %}
+
+{% block title %}
+    Afidu - Register
+{% endblock %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold text-center mb-6 text-red-800">
+        AfiDu
+    </h2>
+
+    <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg shadow-sm">
+        <h3 class="text-lg font-semibold mb-2">Registration Unavailable</h3>
+        <p class="text-sm leading-relaxed">
+            Please contact the admin for further information about the registration process.
+            <br class="my-1" />
+            If you have any questions about the platform, feel free to reach out at
+            <a href="mailto:dummyemail@gmail.com" class="text-blue-600 hover:underline">dummyemail@gmail.com</a>.
+        </p>
+    </div>
+
+    <div class="mt-4 text-sm text-center">
+        <a href="{% url 'login:login' %}" class="text-red-500 hover:text-red-800 hover:underline">
+            Back to Login
+        </a>
+    </div>
+{% endblock %}
+
