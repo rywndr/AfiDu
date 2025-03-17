@@ -21,12 +21,12 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # path to login app
+    # path ke login app
     path("accounts/", include("login.urls")),
-    # direct to login page
+    # direct path ke login page
     path("accounts/login/", LoginView.as_view(), name="login"),
-    # logout path to login page
+    # path logout ke login page
     path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
-    # path to dashboard app after login
+    # path ke dashboard app
     path("", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
 ]
