@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -6,13 +7,13 @@ from .models import StudyMaterial
 
 
 # Create your views here.
-class StudyMaterialListView(ListView):
+class StudyMaterialListView(LoginRequiredMixin, ListView):
     model = StudyMaterial
     template_name = "study_materials/list.html"
     context_object_name = "materials"
 
 
-class StudyMaterialCreateView(CreateView):
+class StudyMaterialCreateView(LoginRequiredMixin, CreateView):
     model = StudyMaterial
     form_class = StudyMaterialForm
     template_name = "study_materials/upload.html"
@@ -24,14 +25,14 @@ class StudyMaterialCreateView(CreateView):
         return super().form_valid(form)
 
 
-class StudyMaterialUpdateView(UpdateView):
+class StudyMaterialUpdateView(LoginRequiredMixin, UpdateView):
     model = StudyMaterial
     fields = ["title", "category"]
     template_name = "study_materials/edit.html"
     success_url = reverse_lazy("study_materials:list")
 
 
-class StudyMaterialDeleteView(DeleteView):
+class StudyMaterialDeleteView(LoginRequiredMixin, DeleteView):
     model = StudyMaterial
     template_name = "study_materials/confirm_delete.html"
     success_url = reverse_lazy("study_materials:list")
