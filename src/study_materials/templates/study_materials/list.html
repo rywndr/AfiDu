@@ -1,0 +1,67 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    AfiDu - Study Materials
+{% endblock %}
+
+{% block content %}
+
+<h1>Study Materials</h1>
+<a href="{% url 'study_materials:upload' %}">+</a>
+
+{% regroup materials|dictsort:"category" by category as grouped_materials %}
+
+{% for group in grouped_materials %}
+<h2>{{ group.grouper|capfirst }}</h2>
+<ul>
+    {% for material in group.list %}
+    <li>
+        {% if material.get_file_extension == "pdf" %}
+        <a href="{{ material.file.url }}" target="_blank">
+            {% else %}
+            <a href="{{ material.file.url }}" download>
+                {% endif %}
+                <!-- add the below if statements if want to add icon support for other file types -->
+                <!-- {% if material.get_file_extension == "pdf" %} -->
+                <img src="/static/icons/pdf_icon.png" alt="PDF Thumbnail" width="50" height="50">
+                <!-- {% else %} -->
+                <!-- {% endif %} -->
+                {{ material.title }}
+            </a>
+            <div>
+                Uploaded by:
+                {% if material.uploaded_by %}
+                {% if material.uploaded_by.first_name %}
+                {{ material.uploaded_by.first_name }}
+                {% else %}
+                {{ material.uploaded_by.email }}
+                {% endif %}
+                {% else %}
+                Unknown
+                {% endif %}
+            </div>
+            <div>
+                Uploaded at: {{ material.uploaded_at|date:"M d, Y H:i" }}
+            </div>
+            <div>
+                Edited at: {{ material.edited_at|date:"M d, Y H:i" }}
+            </div>
+            <!-- Three dot button to toggle options -->
+            <button onclick="toggleMenu('menu-{{ material.id }}')">...</button>
+            <div id="menu-{{ material.id }}" style="display: none;">
+                <a href="{% url 'study_materials:edit' material.id %}">Edit</a>
+                <a href="{% url 'study_materials:delete' material.id %}">Delete</a>
+            </div>
+    </li>
+    {% endfor %}
+</ul>
+{% endfor %}
+
+<script>
+    function toggleMenu(id) {
+        var menu = document.getElementById(id);
+        menu.style.display = (menu.style.display === "none") ? "block" : "none";
+    }
+</script>
+
+{% endblock %}

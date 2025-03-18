@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    AfiDu - Edit Study Material
+{% endblock %}
+
+{% block content %}
+
+<h1>Edit Study Material</h1>
+<form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+</form>
+<a href="{% url 'study_materials:list' %}">Back to List</a>
+
+{% endblock %}

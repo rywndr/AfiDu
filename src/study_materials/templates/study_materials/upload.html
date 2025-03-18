@@ -1,0 +1,16 @@
+{% extends 'layout.html' %} 
+
+{% block title %}
+    AfiDu - Upload Study Material
+{% endblock %}
+
+{% block content %}
+
+<h1>Upload Study Material</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit">Upload</button>
+</form>
+<a href="{% url 'study_materials:list' %}">Back to List</a>
+
+{% endblock %}

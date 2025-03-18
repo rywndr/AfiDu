@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    AfiDu - Delete Study Material
+{% endblock %}
+
+{% block content %}
+
+<h1>Delete Study Material</h1>
+<p>Are you sure you want to delete "{{ object.title }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirm Delete</button>
+</form>
+<a href="{% url 'study_materials:list' %}">Cancel</a>
+
+{% endblock %}
