@@ -1,3 +1,5 @@
+{% load static %}
+
 <!doctype html>
 <html lang="en">
 
@@ -16,12 +18,26 @@
             <li><a href="{% url 'study_materials:list' %}">Materials</a></li>
             <li><a href="">Report</a></li>
             <li>
-                <form action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit">Logout</button>
-                </form>
+                <!-- hamburger menu -->
+                <div class="dropdown">
+                    <button id="user-dropdown-toggle" type="button">&#9776;</button>
+                    <div id="user-dropdown-menu" style="display: none;">
+                        <div class="profile-header">
+                            <img src="{% static 'images/blank_profile.png' %}" alt="Profile Picture" style="width: 30px;">
+                            <span>{{ request.user.first_name }}</span>
+                        </div>
+                        <ul>
+                            <li><a href="{% url 'myprofile:profile' %}">My Profile</a></li>
+                            <li>
+                                <form action="{% url 'logout' %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </li>
-
         </ul>
     </nav>
 
@@ -34,6 +50,17 @@
     <footer>
         <p>&copy;2025 AfiDu</p>
     </footer>
+
+    <script>
+    document.getElementById('user-dropdown-toggle').addEventListener('click', function() {
+        let menu = document.getElementById('user-dropdown-menu');
+        if (menu.style.display === 'none' || menu.style.display === '') {
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
+    });
+</script>
 </body>
 
 </html>
