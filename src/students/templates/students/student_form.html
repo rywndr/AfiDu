@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+  AfiDu - {% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}
+{% endblock %}
+
 {% block content %}
   <h1>{% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}</h1>
 
