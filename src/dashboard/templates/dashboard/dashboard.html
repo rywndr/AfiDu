@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 
-{% block title %}AfiDu-Dashboard{% endblock %}
+{% block title %}
+    AfiDu - Dashboard
+{% endblock %}
 
 {% block content %}
   {% if user.first_name %}
@@ -8,6 +10,34 @@
   {% else %}
     <h3>🚀 Welcome back, {{ user.email }}!</h3>
   {% endif %}
-</form>
 
+    <!-- students -->
+    <div>
+      <h4>Students</h4>
+      <p>Total students: {{ student_count }}</p>
+      <a href="{% url 'students:student-list' %}">Manage Students</a>
+    </div>
+
+    <!-- scores -->
+    <div>
+      <h4>Scores</h4>
+      <p>View and evaluate student scores.</p>
+      <a href="#">Go to Scores</a>
+    </div>
+
+    <!-- study materials -->
+    <div>
+      <h4>Materials</h4>
+      <p>Upload and manage learning materials.</p>
+      <a href="{% url 'study_materials:list' %}">Manage Materials</a>
+    </div>
+
+    <!-- report -->
+    <div>
+      <h4>Report</h4>
+      <p>Generate and view student reports.</p>
+      <a href="#">Generate Reports</a>
+    </div>
+  </div>
 {% endblock %}
+
