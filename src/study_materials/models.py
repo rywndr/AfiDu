@@ -30,6 +30,10 @@ class StudyMaterial(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
     )
 
+    class Meta:
+        verbose_name = "Study Material"
+        verbose_name_plural = "Study Materials"
+
     def __str__(self):
         return self.title
 
