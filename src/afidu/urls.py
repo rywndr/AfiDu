@@ -21,6 +21,11 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import include, path
 
+admin.site.site_header = "AfiDu Admin Dashboard"
+admin.site.site_title = "Bimbel AfiDu Admin Panel"
+admin.site.index_title = "Welcome to AfiDu Admin Dashboard"
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     # path ke login app
