@@ -31,6 +31,8 @@ urlpatterns = [
     path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
     # path ke dashboard app
     path("", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
+    # path ke students app
+    path("students/", include(("students.urls", "students"), namespace="students")),
     # path ke study_materials app
     path("study-materials/", include("study_materials.urls")),
 ]

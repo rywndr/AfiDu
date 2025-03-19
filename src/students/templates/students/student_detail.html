@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>{{ student.name }}</h1>
+
+  {% if student.profile_photo %}
+    <img src="{{ student.profile_photo.url }}" alt="Profile Photo" width="150">
+  {% endif %}
+
+  <ul>
+    <li><strong>Age:</strong> {{ student.age }}</li>
+    <li><strong>Date of Birth:</strong> {{ student.date_of_birth }}</li>
+    <li><strong>Contact:</strong> {{ student.contact_number }}</li>
+    <li><strong>Address:</strong> {{ student.address }}</li>
+    <li><strong>Assigned Class:</strong> {{ student.get_assigned_class_display }}</li>
+  </ul>
+
+  <a href="{% url 'students:student-edit' student.pk %}">Edit</a>
+  <a href="{% url 'students:student-delete' student.pk %}">Delete</a>
+  <a href="{% url 'students:student-list' %}">Back to List</a>
+{% endblock %}
+

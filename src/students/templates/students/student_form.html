@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>{% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}</h1>
+
+  <form method="post" enctype="multipart/form-data" id="student-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+    <!-- back ke student list -->
+    <a href="{% url 'students:student-list' %}">Cancel</a>
+
+    <!-- back ke student detail -->
+    <!-- {% if request.GET.next %} -->
+    <!--   <a href="{{ request.GET.next }}">Cancel</a> -->
+    <!-- {% else %} -->
+    {% comment %} <a href="{% url 'students:student-detail' student.pk %}">Cancel</a> {% endcomment %}
+    <!-- {% endif %} -->
+
+  </form>
+
+  <script>
+    // panggil IIFE
+    (function() {
+      // variable supaya ga infinite loop tiap perubahan value
+      let updating = false;
+      let ageField = document.getElementById("id_age");
+      let dobField = document.getElementById("id_date_of_birth");
+
+      if (ageField && dobField) {
+        // kalo age ditentukan, sesuaikan tahun di tanggal lahir dengan age yang ditentukan
+        ageField.addEventListener("change", function() {
+          if (updating) return;
+          updating = true;
+          var age = parseInt(this.value);
+          if (!isNaN(age)) {
+            var currentYear = new Date().getFullYear();
+            var computedYear = currentYear - age;
+            var currentDob = dobField.value;
+            if (!currentDob) {
+              // jika tanggal tidak ditentukan default ke January 1 dari tahun yang dihitung
+              dobField.value = computedYear + "-01-01";
+            } else {
+              // If a date exists, update only its year while keeping month/day.
+              // kalo tanggal ditentukan, update tahunnya aja, sisa bulan dan tanggal tetap
+              var parts = currentDob.split("-");
+              if (parts.length === 3) {
+                dobField.value = computedYear + "-" + parts[1] + "-" + parts[2];
+              } else {
+                dobField.value = computedYear + "-01-01";
+              }
+            }
+          }
+          updating = false;
+        });
+
+        // kalo tanggal lahir diubah, sesuaikan age
+        dobField.addEventListener("change", function() {
+          if (updating) return;
+          updating = true;
+          var dob = new Date(this.value);
+          if (!isNaN(dob.getTime())) {
+            var today = new Date();
+            var age = today.getFullYear() - dob.getFullYear();
+            var m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+              age--;
+            }
+            ageField.value = age;
+          }
+          updating = false;
+        });
+      }
+    })();
+  </script>
+{% endblock %}
+
