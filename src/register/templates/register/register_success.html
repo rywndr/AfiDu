@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <h2>Registration Successful</h2>
+  <p>Your account has been successfully created.</p>
+  <p>You will be redirected to the dashboard shortly...</p>
+  
+  <script>
+    setTimeout(function() {
+        window.location.href = "{% url 'dashboard:dashboard' %}";
+    }, 3000);  // Redirect after 3 seconds
+  </script>
+
+  <p>If you are not redirected, <a href="{% url 'dashboard:dashboard' %}">click here</a>.</p>
+{% endblock %}

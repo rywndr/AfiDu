@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "login",
+    "register",
     "dashboard",
     "students",
     "study_materials",
@@ -138,6 +139,8 @@ LOGOUT_REDIRECT_URL = reverse_lazy("login:login")
 AUTH_USER_MODEL = "login.CustomUser"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

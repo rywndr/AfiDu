@@ -4,6 +4,15 @@
     AfiDu - Dashboard
 {% endblock %}
 
+{% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+
 {% block content %}
   {% if user.first_name %}
     <h3>🚀 Welcome back, {{ user.first_name }}!</h3>
