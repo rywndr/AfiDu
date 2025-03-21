@@ -1,3 +1,5 @@
+import random
+
 from django.conf import settings
 from django.contrib.auth.views import (
     LoginView,
@@ -16,6 +18,14 @@ from .forms import EmailAuthenticationForm
 class CustomLoginView(LoginView):
     authentication_form = EmailAuthenticationForm
     template_name = "auth/login.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # pilih salah satu gambar secara acak
+        context["image"] = random.choice(
+            ["images/login_img.png", "images/login_img2.png"]
+        )
+        return context
 
     def form_valid(self, form):
         remember_me = form.cleaned_data["remember_me"]
