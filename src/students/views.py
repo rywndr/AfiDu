@@ -40,6 +40,8 @@ class StudentListView(LoginRequiredMixin, ListView):
         context["class_choices"] = Student._meta.get_field("assigned_class").choices
         # pass item per_page context ke template untuk pagination
         context["current_per_page"] = self.request.GET.get("per_page", "5")
+        context["active_tab_title"] = "Students"
+        context["active_tab_icon"] = "fa-user-graduate"
         return context
 
 
@@ -48,12 +50,24 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
     template_name = "students/student_detail.html"
     context_object_name = "student"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Students"
+        context["active_tab_icon"] = "fa-user-graduate"
+        return context
+
 
 class StudentCreateView(LoginRequiredMixin, CreateView):
     model = Student
     form_class = StudentForm
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Students"
+        context["active_tab_icon"] = "fa-user-graduate"
+        return context
 
 
 class StudentUpdateView(LoginRequiredMixin, UpdateView):
@@ -62,8 +76,20 @@ class StudentUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Students"
+        context["active_tab_icon"] = "fa-user-graduate"
+        return context
+
 
 class StudentDeleteView(LoginRequiredMixin, DeleteView):
     model = Student
     template_name = "students/student_confirm_delete.html"
     success_url = reverse_lazy("students:student-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Students"
+        context["active_tab_icon"] = "fa-user-graduate"
+        return context

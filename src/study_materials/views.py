@@ -12,6 +12,28 @@ class StudyMaterialListView(LoginRequiredMixin, ListView):
     template_name = "study_materials/list.html"
     context_object_name = "materials"
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get("q", "")
+        category_filter = self.request.GET.get("category_filter", "")
+
+        if q:
+            queryset = queryset.filter(title__icontains=q)
+        if category_filter:
+            queryset = queryset.filter(category=category_filter)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # ambil kategori yang ada di database
+        categories = StudyMaterial.objects.values_list("category", flat=True).distinct()
+        context["categories"] = categories
+        context["q"] = self.request.GET.get("q", "")
+        context["category_filter"] = self.request.GET.get("category_filter", "")
+        context["active_tab_title"] = "Study Materials"
+        context["active_tab_icon"] = "fa-book-open"
+        return context
+
 
 class StudyMaterialCreateView(LoginRequiredMixin, CreateView):
     model = StudyMaterial
@@ -24,6 +46,12 @@ class StudyMaterialCreateView(LoginRequiredMixin, CreateView):
         form.instance.uploaded_by = self.request.user
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Study Materials"
+        context["active_tab_icon"] = "fa-book-open"
+        return context
+
 
 class StudyMaterialUpdateView(LoginRequiredMixin, UpdateView):
     model = StudyMaterial
@@ -31,8 +59,20 @@ class StudyMaterialUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "study_materials/edit.html"
     success_url = reverse_lazy("study_materials:list")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Study Materials"
+        context["active_tab_icon"] = "fa-book-open"
+        return context
+
 
 class StudyMaterialDeleteView(LoginRequiredMixin, DeleteView):
     model = StudyMaterial
     template_name = "study_materials/confirm_delete.html"
     success_url = reverse_lazy("study_materials:list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["active_tab_title"] = "Study Materials"
+        context["active_tab_icon"] = "fa-book-open"
+        return context

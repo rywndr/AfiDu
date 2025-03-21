@@ -1,52 +1,85 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    AfiDu - Dashboard
+  AfiDu - Dashboard
 {% endblock %}
 
 {% if messages %}
-  <ul class="messages">
+  <ul class="messages mb-4">
     {% for message in messages %}
-      <li class="{{ message.tags }}">{{ message }}</li>
+      <li class="px-4 py-2 border-l-4 {{ message.tags }} mb-2">{{ message }}</li>
     {% endfor %}
   </ul>
 {% endif %}
 
-
 {% block content %}
-  {% if user.first_name %}
-    <h3>🚀 Welcome back, {{ user.first_name }}!</h3>
-  {% else %}
-    <h3>🚀 Welcome back, {{ user.email }}!</h3>
-  {% endif %}
-
-    <!-- students -->
-    <div>
-      <h4>Students</h4>
-      <p>Total students: {{ student_count }}</p>
-      <a href="{% url 'students:student-list' %}">Manage Students</a>
+  <!-- nyobain make grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+    
+    <!-- greet user -->
+    <div class="col-span-full bg-[#ff5d5d] text-white shadow-lg rounded-lg p-6 transform transition duration-300 hover:scale-105">
+      {% if user.first_name %}
+        <h3 class="text-3xl font-bold mb-2">
+          <i class="fas fa-hand-spock"></i>
+          Welcome back, {{ user.first_name }}!
+        </h3>
+      {% else %}
+        <h3 class="text-3xl font-bold mb-2">
+          <i class="fas fa-hand-spock"></i>
+          Welcome back, {{ user.email }}!
+        </h3>
+      {% endif %}
+      <p class="opacity-80">Hope you have a productive day!</p>
     </div>
 
-    <!-- scores -->
-    <div>
-      <h4>Scores</h4>
-      <p>View and evaluate student scores.</p>
-      <a href="#">Go to Scores</a>
+    <!-- students card -->
+    <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-user-graduate text-3xl text-blue-500 mr-3"></i>
+        <h4 class="text-2xl font-semibold text-gray-800">Students</h4>
+      </div>
+      <p class="text-gray-600">Total students: <span class="font-bold">{{ student_count }}</span></p>
+      <a href="{% url 'students:student-list' %}" class="inline-block mt-4 text-blue-500 hover:text-blue-700 font-medium">
+        <i class="fas fa-chevron-right"></i> Manage Students
+      </a>
     </div>
 
-    <!-- study materials -->
-    <div>
-      <h4>Materials</h4>
-      <p>Upload and manage learning materials.</p>
-      <a href="{% url 'study_materials:list' %}">Manage Materials</a>
+    <!-- scores card -->
+    <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-chart-line text-3xl text-green-500 mr-3"></i>
+        <h4 class="text-2xl font-semibold text-gray-800">Scores</h4>
+      </div>
+      <p class="text-gray-600">View and evaluate student scores.</p>
+      <a href="#" class="inline-block mt-4 text-green-500 hover:text-green-700 font-medium">
+        <i class="fas fa-chevron-right"></i> Go to Scores
+      </a>
     </div>
 
-    <!-- report -->
-    <div>
-      <h4>Report</h4>
-      <p>Generate and view student reports.</p>
-      <a href="#">Generate Reports</a>
+    <!-- study materials card -->
+    <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-book-open text-3xl text-purple-500 mr-3"></i>
+        <h4 class="text-2xl font-semibold text-gray-800">Materials</h4>
+      </div>
+      <p class="text-gray-600">Upload and manage learning materials.</p>
+      <a href="{% url 'study_materials:list' %}" class="inline-block mt-4 text-purple-500 hover:text-purple-700 font-medium">
+        <i class="fas fa-chevron-right"></i> Manage Materials
+      </a>
     </div>
+
+    <!-- report card -->
+    <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-file-alt text-3xl text-red-500 mr-3"></i>
+        <h4 class="text-2xl font-semibold text-gray-800">Report</h4>
+      </div>
+      <p class="text-gray-600">Generate and view student reports.</p>
+      <a href="#" class="inline-block mt-4 text-red-500 hover:text-red-700 font-medium">
+        <i class="fas fa-chevron-right"></i> Generate Reports
+      </a>
+    </div>
+
   </div>
 {% endblock %}
 
