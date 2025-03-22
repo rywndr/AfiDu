@@ -78,10 +78,10 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-center relative">
             <div class="inline-block relative group">
-              <button type="button" class="inline-flex justify-center rounded-full border border-gray-300 shadow-sm px-2 py-1 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
+              <button type="button" class="inline-flex justify-center shadow-sm px-2 py-1 text-sm font-medium text-gray-700">
                 <i class="fa-solid fa-ellipsis-v"></i>
               </button>
-              <div class="absolute right-0 mt-2 w-32 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+              <div class="absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-10 bg-white hidden ">
                 <ul class="py-1">
                   <li>
                     <a href="{% url 'students:student-edit' student.pk %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -193,22 +193,34 @@
 </div>
 
 <script>
-  // temp javascript I'll move it later hehe
-  document.querySelectorAll('[type="button"]').forEach(button => {
-    button.addEventListener('click', function (e) {
-      const dropdown = this.nextElementSibling;
-      dropdown.classList.toggle('hidden');
-    });
-  });
+    // temp javascript I'll move it later hehe
 
-  window.addEventListener('click', function(e) {
+    // loop semua button
     document.querySelectorAll('[type="button"]').forEach(button => {
-      const dropdown = button.nextElementSibling;
-      if (!button.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.add('hidden');
-      }
+      button.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        // tutup semua dropdown kecuali yang di klik
+        document.querySelectorAll('[type="button"]').forEach(btn => {
+          if (btn !== this) {
+            btn.nextElementSibling.classList.add('hidden');
+          }
+        });
+
+        // toggle dropdown yang di klik
+        const dropdown = this.nextElementSibling;
+        dropdown.classList.toggle('hidden');
+      });
     });
-  });
+
+    // click elsewhere untuk close all dropdown toggle
+    window.addEventListener('click', function () {
+      document.querySelectorAll('[type="button"]').forEach(button => {
+        const dropdown = button.nextElementSibling;
+        dropdown.classList.add('hidden');
+      });
+    });
+
 </script>
 {% endblock %}
 

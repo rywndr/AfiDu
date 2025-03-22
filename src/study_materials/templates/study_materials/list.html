@@ -103,33 +103,31 @@
 </div>
 
 <script>
-  // again, ini cuma tempo
-  // toggle dropdown menu on click dan stop propagation so that when click ga langsung close
-  function toggleMenu(event, id) {
-      event.stopPropagation();
-      var menu = document.getElementById(id);
-      if (menu.classList.contains('hidden')) {
-          menu.classList.remove('hidden');
-      } else {
-          menu.classList.add('hidden');
-      }
-  }
+    // again, ini cuma tempo
 
-  // close semua dropdown menu kalo klik diluiar
-  window.addEventListener('click', function(event) {
-      document.querySelectorAll('[id^="menu-"]').forEach(function(menu) {
-          if (!menu.classList.contains('hidden')) {
-              menu.classList.add('hidden');
-          }
-      });
-  });
+    // toggle dropdown menu on click dan stop propagation so that when click ga langsung close
+    function toggleMenu(event, id) {
+    event.stopPropagation();
+    var menu = document.getElementById(id);
 
-  // jangan close dropdown menu kalo di dalamnya diklik
-  document.querySelectorAll('[id^="menu-"]').forEach(function(menu) {
-      menu.addEventListener('click', function(event) {
-          event.stopPropagation();
-      });
-  });
+    // tutup semua dropdown menu kecuali yang lagi di klik
+    document.querySelectorAll('[id^="menu-"]').forEach(function(otherMenu) {
+        if (otherMenu !== menu) {
+            otherMenu.classList.add('hidden');
+        }
+    });
+
+    // toggle dropdown
+    menu.classList.toggle('hidden');
+    }
+
+    // tutup dropdown menu kalo click diluar dropdown
+    window.addEventListener('click', function(event) {
+        document.querySelectorAll('[id^="menu-"]').forEach(function(menu) {
+            menu.classList.add('hidden');
+        });
+    });
+
 </script>
 {% endblock %}
 
