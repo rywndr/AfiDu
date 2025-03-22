@@ -1,0 +1,64 @@
+{% extends 'layout.html' %}
+{% load report_extras %}
+
+{% block title %}
+AfiDu - Student Reports
+{% endblock %}
+
+{% block content %}
+<h1>Student Reports</h1>
+{% comment %} filter form {% endcomment %}
+<form method="get">
+  <label for="year">Year:</label>
+  <select name="year" id="year" onchange="this.form.submit()">
+    {% for y in years %}
+      <option value="{{ y }}" {% if y|stringformat:"s" == year %}selected{% endif %}>{{ y }}</option>
+    {% endfor %}
+  </select>
+  <label for="semester">Semester:</label>
+  <select name="semester" id="semester" onchange="this.form.submit()">
+    {% for key, label in semesters %}
+      <option value="{{ key }}" {% if key == semester %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</form>
+<br>
+<table border="1" cellspacing="0" cellpadding="5">
+  <thead>
+    <tr>
+      <th>Student Name</th>
+      <th>Class</th>
+      {% for key, label in score_categories %}
+        <th>{{ label }}</th>
+      {% endfor %}
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in students_data %}
+      <tr>
+        <td>
+          <a href="{% url 'students:student-detail' item.student.id %}">
+            {{ item.student.name }}
+          </a>
+        </td>
+        <td>{{ item.student.assigned_class }}</td>
+        {% for key, label in score_categories %}
+          <td>
+            {% with score=item.scores|get_item:key %}
+              {% if score %}
+                {{ score|floatformat:2 }}
+              {% else %}
+                N/A
+              {% endif %}
+            {% endwith %}
+          </td>
+        {% endfor %}
+        <td>
+          <a href="{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}">Export PDF</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

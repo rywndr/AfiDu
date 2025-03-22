@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "myprofile",
     "dashboard",
     "students",
+    "scores",
+    "reports",
     "study_materials",
 ]
 

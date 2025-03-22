@@ -42,6 +42,10 @@ urlpatterns = [
     path("", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
     # path ke students app
     path("students/", include(("students.urls", "students"), namespace="students")),
+    # path ke scores app
+    path("scores/", include(("scores.urls", "scores"), namespace="scores")),
+    # path ke reports app
+    path("reports/", include(("reports.urls", "reports"), namespace="reports")),
     # path ke study_materials app
     path("study-materials/", include("study_materials.urls")),
 ]
