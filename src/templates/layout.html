@@ -22,8 +22,8 @@
         <!-- sidebar brand -->
         <div class="flex items-center px-4 py-5 bg-white text-white rounded-t-lg">
             <a href="{% url 'dashboard:dashboard' %}">
-              <i class="fa-solid fa-school text-xl mr-2" style="color: #ec6f4f;"></i>
-              <span class="text-xl text-red-500 font-bold">AfiDu</span>
+              <i class="fa-solid fa-school text-2xl mr-2" style="color: #ff4f25;"></i>
+              <span class="text-2xl text-[#ff4f25] font-bold">AfiDu</span>
             </a>
         </div>
 
@@ -31,31 +31,31 @@
         <nav class="mt-4">
           <ul class="space-y-1">
             <li>
-              <a href="{% url 'dashboard:dashboard' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-red-50 hover:text-red-600 {% if request.resolver_match.url_name == 'dashboard' %} bg-red-50 border-r-4 border-red-500 text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
+              <a href="{% url 'dashboard:dashboard' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'dashboard' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
                 <i class="fas fa-tachometer-alt mr-2"></i>
                 <span>Dashboard</span>
               </a>
             </li>
             <li>
-              <a href="{% url 'students:student-list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-red-50 hover:text-red-600 {% if request.resolver_match.url_name == 'student-list' %} bg-red-50 border-r-4 border-red-500 text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
+              <a href="{% url 'students:student-list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'student-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
                 <i class="fas fa-user-graduate mr-2"></i>
                 <span>Students</span>
               </a>
             </li>
             <li>
-              <a href="#" class="flex items-center px-4 py-2 transition-colors hover:bg-red-50 hover:text-red-600 border-l-4 border-transparent text-gray-700">
+              <a href="#" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 border-l-4 border-transparent text-gray-700">
                 <i class="fas fa-chart-bar mr-2"></i>
                 <span>Scores</span>
               </a>
             </li>
             <li>
-              <a href="{% url 'study_materials:list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-red-50 hover:text-red-600 {% if request.resolver_match.url_name == 'list' %} bg-red-50 border-r-4 border-red-500 text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
+              <a href="{% url 'study_materials:list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
                 <i class="fas fa-book mr-2"></i>
                 <span>Materials</span>
               </a>
             </li>
             <li>
-              <a href="#" class="flex items-center px-4 py-2 transition-colors hover:bg-red-50 hover:text-red-600 border-l-4 border-transparent text-gray-700">
+              <a href="#" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 border-l-4 border-transparent text-gray-700">
                 <i class="fas fa-file-alt mr-2"></i>
                 <span>Report</span>
               </a>
@@ -75,7 +75,7 @@
       <!-- topbar -->
       <header class="mx-4 my-4 bg-white shadow rounded-lg px-6 py-4 flex justify-between items-center">
         <!-- title top bar dynamic based on view -->
-        <h1 class="text-3xl font-bold text-gray-800 ">
+        <h1 class="text-3xl font-bold text-[#5a5656] ">
           {% if active_tab_icon %}
             <i class="fas {{ active_tab_icon }} mr-2"></i>
           {% endif %}
