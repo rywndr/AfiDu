@@ -85,7 +85,7 @@
             <span>Edited: {{ material.edited_at|date:"M d, Y H:i" }}</span>
           </div>
         </div>
-        <button onclick="toggleMenu(event, 'menu-{{ material.id }}')" class="absolute top-2 right-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 focus:outline-none transition">
+        <button onclick="toggleMenu(event, 'menu-{{ material.id }}')" class="absolute top-2 right-2 text-gray-700 p-2">
           <i class="fa-solid fa-ellipsis-v"></i>
         </button>
         <div id="menu-{{ material.id }}" class="absolute right-2 top-12 bg-white border border-gray-200 rounded shadow-lg z-10 hidden">
