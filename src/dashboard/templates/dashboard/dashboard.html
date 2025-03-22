@@ -17,7 +17,7 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
     
     <!-- greet user -->
-    <div class="col-span-full bg-[#ff5d5d] text-white shadow-lg rounded-lg p-6 transform transition duration-300 hover:scale-105">
+    <div class="col-span-full bg-[#ff4f25] text-white shadow-lg rounded-lg p-6 transform transition duration-300 hover:scale-105">
       {% if user.first_name %}
         <h3 class="text-3xl font-bold mb-2">
           <i class="fas fa-hand-spock"></i>
@@ -36,7 +36,7 @@
     <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center mb-4">
         <i class="fas fa-user-graduate text-3xl text-blue-500 mr-3"></i>
-        <h4 class="text-2xl font-semibold text-gray-800">Students</h4>
+        <h4 class="text-2xl font-semibold text-[#5a5656]">Students</h4>
       </div>
       <p class="text-gray-600">Total students: <span class="font-bold">{{ student_count }}</span></p>
       <a href="{% url 'students:student-list' %}" class="inline-block mt-4 text-blue-500 hover:text-blue-700 font-medium">
@@ -48,7 +48,7 @@
     <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center mb-4">
         <i class="fas fa-chart-line text-3xl text-green-500 mr-3"></i>
-        <h4 class="text-2xl font-semibold text-gray-800">Scores</h4>
+        <h4 class="text-2xl font-semibold text-[#5a5656]">Scores</h4>
       </div>
       <p class="text-gray-600">View and evaluate student scores.</p>
       <a href="#" class="inline-block mt-4 text-green-500 hover:text-green-700 font-medium">
@@ -60,7 +60,7 @@
     <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center mb-4">
         <i class="fas fa-book-open text-3xl text-purple-500 mr-3"></i>
-        <h4 class="text-2xl font-semibold text-gray-800">Materials</h4>
+        <h4 class="text-2xl font-semibold text-[#5a5656]">Materials</h4>
       </div>
       <p class="text-gray-600">Upload and manage learning materials.</p>
       <a href="{% url 'study_materials:list' %}" class="inline-block mt-4 text-purple-500 hover:text-purple-700 font-medium">
@@ -72,7 +72,7 @@
     <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center mb-4">
         <i class="fas fa-file-alt text-3xl text-red-500 mr-3"></i>
-        <h4 class="text-2xl font-semibold text-gray-800">Report</h4>
+        <h4 class="text-2xl font-semibold text-[#5a5656]">Report</h4>
       </div>
       <p class="text-gray-600">Generate and view student reports.</p>
       <a href="#" class="inline-block mt-4 text-red-500 hover:text-red-700 font-medium">
