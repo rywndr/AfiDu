@@ -15,10 +15,20 @@ def register(request):
             return redirect("register:register_success")
     else:
         form = RegistrationForm()
-    return render(request, "register/register.html", {"form": form})
+
+    context = {
+        "form": form,
+        "active_tab_title": "Register",
+        "active_tab_icon": "fa-user-plus",
+    }
+    return render(request, "register/register.html", context)
 
 
 @login_required
 def register_success(request):
+    context = {
+        "active_tab_title": "Register",
+        "active_tab_icon": "fa-user-plus",
+    }
     messages.success(request, "Your account has been successfully created!")
-    return render(request, "register/register_success.html")
+    return render(request, "register/register_success.html", context)
