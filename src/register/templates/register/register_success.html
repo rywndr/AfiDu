@@ -1,0 +1,22 @@
+{% extends "layout.html" %} 
+
+{% block title %}
+    AfiDu - Registration Successful
+{% endblock %}
+
+{% block content %}
+<h2>Registration Successful</h2>
+<p>Your account has been successfully created.</p>
+<p>You will be redirected to the dashboard shortly...</p>
+
+<script>
+    setTimeout(function () {
+        window.location.href = "{% url 'dashboard:dashboard' %}";
+    }, 3000); // redirect setelah 3 detik ke halaman dashboard
+</script>
+
+<p>
+    If you are not redirected,
+    <a href="{% url 'dashboard:dashboard' %}">click here</a>.
+</p>
+{% endblock %}

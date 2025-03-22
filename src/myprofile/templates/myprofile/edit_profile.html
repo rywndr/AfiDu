@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}
+  AfiDu - Edit My Profile
+{% endblock %}
+
+{% block content %}
+  <h2>Edit My Profile</h2>
+  <img src="{% static 'images/blank_profile.png' %}" alt="Profile Picture" style="width: 70px; border-radius: 50%;">
+  <p>Email: {{ user.email }}</p>
+  
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+
+  <a href="{% url 'myprofile:profile' %}"><button type="button">Cancel</button></a>
+{% endblock %}
+

@@ -1,67 +1,135 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block title %}
-    AfiDu - Study Materials
+  AfiDu - Study Materials
 {% endblock %}
 
 {% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- header search, filter dan add new material -->
+  <div class="bg-white shadow rounded-lg p-4 mb-6">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex flex-col sm:flex-row items-center gap-4">
+        <!-- search filter form -->
+        <form method="get" class="flex gap-2">
+          <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
+            <span class="px-4 text-gray-500">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" name="q" placeholder="Search materials..." value="{{ request.GET.q }}"
+              class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+          </div>
+          <select name="category_filter" onchange="this.form.submit()"
+                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-red-500">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
+            {% endfor %}
+          </select>
+        </form>
 
-<h1>Study Materials</h1>
-<a href="{% url 'study_materials:upload' %}">+</a>
+      </div>
+      <!-- THEEE ADDD BUTTONNNN -->
+      <a href="{% url 'study_materials:upload' %}" class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+        <i class="fa-solid fa-plus"></i>
+      </a>
+    </div>
+  </div>
 
-{% regroup materials|dictsort:"category" by category as grouped_materials %}
+  {% regroup materials|dictsort:"category" by category as grouped_materials %}
 
-{% for group in grouped_materials %}
-<h2>{{ group.grouper|capfirst }}</h2>
-<ul>
-    {% for material in group.list %}
-    <li>
-        {% if material.get_file_extension == "pdf" %}
-        <a href="{{ material.file.url }}" target="_blank">
+  {% for group in grouped_materials %}
+    <!-- cat header -->
+    <h2 class="text-2xl font-semibold text-white bg-[#ff5d5d] rounded-lg px-4 py-2 mt-8 mb-4 shadow">
+      {{ group.grouper|capfirst }}
+    </h2>
+    <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {% for material in group.list %}
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden relative">
+        <a href="{{ material.file.url }}"
+           {% if material.get_file_extension == "pdf" %}target="_blank"{% else %}download{% endif %}
+           class="block">
+          <div class="h-32 w-full bg-gray-100 overflow-hidden">
+            {% if material.thumbnail %}
+              <img src="{{ material.thumbnail.url }}" alt="{{ material.title }} Thumbnail" class="w-full h-full object-cover">
             {% else %}
-            <a href="{{ material.file.url }}" download>
-                {% endif %}
-                <!-- add the below if statements if want to add icon support for other file types -->
-                <!-- {% if material.get_file_extension == "pdf" %} -->
-                <img src="/static/icons/pdf_icon.png" alt="PDF Thumbnail" width="50" height="50">
-                <!-- {% else %} -->
-                <!-- {% endif %} -->
-                {{ material.title }}
-            </a>
-            <div>
-                Uploaded by:
-                {% if material.uploaded_by %}
+              <img src="{% static 'icons/pdf_icon.png' %}" alt="PDF Thumbnail" class="w-full h-full object-contain p-4">
+            {% endif %}
+          </div>
+          <div class="p-4">
+            <h3 class="text-lg font-medium text-gray-800 text-center">{{ material.title }}</h3>
+          </div>
+        </a>
+        <div class="px-4 pb-4 border-t border-gray-200">
+          <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-user"></i>
+            <span>
+              {% if material.uploaded_by %}
                 {% if material.uploaded_by.first_name %}
-                {{ material.uploaded_by.first_name }}
+                  {{ material.uploaded_by.first_name }}
                 {% else %}
-                {{ material.uploaded_by.email }}
+                  {{ material.uploaded_by.email }}
                 {% endif %}
-                {% else %}
+              {% else %}
                 Unknown
-                {% endif %}
-            </div>
-            <div>
-                Uploaded at: {{ material.uploaded_at|date:"M d, Y H:i" }}
-            </div>
-            <div>
-                Edited at: {{ material.edited_at|date:"M d, Y H:i" }}
-            </div>
-            <!-- Three dot button to toggle options -->
-            <button onclick="toggleMenu('menu-{{ material.id }}')">...</button>
-            <div id="menu-{{ material.id }}" style="display: none;">
-                <a href="{% url 'study_materials:edit' material.id %}">Edit</a>
-                <a href="{% url 'study_materials:delete' material.id %}">Delete</a>
-            </div>
-    </li>
-    {% endfor %}
-</ul>
-{% endfor %}
+              {% endif %}
+            </span>
+          </div>
+          <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-clock"></i>
+            <span>Uploaded: {{ material.uploaded_at|date:"M d, Y H:i" }}</span>
+          </div>
+          <div class="text-xs text-gray-500 flex items-center gap-1">
+            <i class="fa-solid fa-edit"></i>
+            <span>Edited: {{ material.edited_at|date:"M d, Y H:i" }}</span>
+          </div>
+        </div>
+        <button onclick="toggleMenu(event, 'menu-{{ material.id }}')" class="absolute top-2 right-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 focus:outline-none transition">
+          <i class="fa-solid fa-ellipsis-v"></i>
+        </button>
+        <div id="menu-{{ material.id }}" class="absolute right-2 top-12 bg-white border border-gray-200 rounded shadow-lg z-10 hidden">
+          <a href="{% url 'study_materials:edit' material.id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <i class="fa-solid fa-pen-to-square mr-2"></i> Edit
+          </a>
+          <a href="{% url 'study_materials:delete' material.id %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+            <i class="fa-solid fa-trash mr-2"></i> Delete
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
 
 <script>
-    function toggleMenu(id) {
-        var menu = document.getElementById(id);
-        menu.style.display = (menu.style.display === "none") ? "block" : "none";
-    }
-</script>
+  // again, ini cuma tempo
+  // toggle dropdown menu on click dan stop propagation so that when click ga langsung close
+  function toggleMenu(event, id) {
+      event.stopPropagation();
+      var menu = document.getElementById(id);
+      if (menu.classList.contains('hidden')) {
+          menu.classList.remove('hidden');
+      } else {
+          menu.classList.add('hidden');
+      }
+  }
 
+  // close semua dropdown menu kalo klik diluiar
+  window.addEventListener('click', function(event) {
+      document.querySelectorAll('[id^="menu-"]').forEach(function(menu) {
+          if (!menu.classList.contains('hidden')) {
+              menu.classList.add('hidden');
+          }
+      });
+  });
+
+  // jangan close dropdown menu kalo di dalamnya diklik
+  document.querySelectorAll('[id^="menu-"]').forEach(function(menu) {
+      menu.addEventListener('click', function(event) {
+          event.stopPropagation();
+      });
+  });
+</script>
 {% endblock %}
+

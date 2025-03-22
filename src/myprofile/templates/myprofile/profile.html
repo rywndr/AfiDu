@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}
+  AfiDu - My Profile
+{% endblock %}
+
+{% block content %}
+  <h2>My Profile</h2>
+  <img src="{% static 'images/blank_profile.png' %}" alt="Profile Picture" style="width: 70px; border-radius: 50%;">
+  <p>Email: {{ user.email }}</p>
+  <p>First Name: {{ user.first_name }}</p>
+  <p>Last Name: {{ user.last_name }}</p>
+  
+  <a href="{% url 'myprofile:edit_profile' %}"><button>Edit</button></a>
+{% endblock %}
+

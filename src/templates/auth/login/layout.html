@@ -1,0 +1,46 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}AfiDu-Login{% endblock %}</title>
+    {% include 'snippets/tailwind.html' %}
+</head>
+<body class="relative min-h-screen flex flex-col items-center justify-center bg-center bg-repeat [background-image:url('{% static 'images/abstract_doodle.png' %}')] [background-size:400px]">
+
+    <!-- overlay -->
+    <div class="absolute inset-0 bg-white/90 z-0"></div>
+
+    <!-- content -->
+    <div class="relative z-10 container mx-auto flex flex-col items-center justify-center px-4 py-8">
+
+        <!-- login card -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row w-full max-w-3xl">
+            
+            <!-- left image (hidden on mobile dvcs) -->
+            <div class="hidden md:flex w-full md:w-1/2 items-center justify-center p-4">
+
+                <div class="w-3/5">
+                    <img src="{% static image %}" alt="person sitting with laptop" class="w-[400px] h-[400px] object-contain drop-shadow-xl" />
+                </div>
+
+            </div>
+
+            <!-- right form -->
+            <div class="w-full md:w-1/2 p-8 flex flex-col justify-center">
+                <div class="w-full max-w-md mx-auto">
+                    {% block content %}
+
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <!-- footer -->
+        {% include 'snippets/footer.html' %}
+
+    </div>
+</body>
+</html>
+
