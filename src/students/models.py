@@ -9,8 +9,8 @@ CLASSES = [
 ]
 
 GENDER = [
-    ("M", "Male"),
-    ("F", "Female"),
+    ("Male", "Male"),
+    ("Female", "Female"),
 ]
 
 phone_validator = RegexValidator(
@@ -24,7 +24,7 @@ class Student(models.Model):
         upload_to="profile_photos/", blank=True, null=True
     )
     name = models.CharField(max_length=100)
-    gender = models.CharField(max_length=1, choices=GENDER)
+    gender = models.CharField(max_length=10, choices=GENDER)
     age = models.PositiveIntegerField()
     date_of_birth = models.DateField()
     contact_number = models.CharField(max_length=20, validators=[phone_validator])
