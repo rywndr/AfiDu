@@ -89,7 +89,7 @@
             <span class="text-gray-700">{{ request.user.first_name }}</span>
             <i class="fas fa-chevron-down text-gray-500"></i>
           </button>
-          <div id="dropdown-menu" class="hidden absolute z-2 right-0 mt-2 w-48 bg-white shadow-md rounded-md overflow-hidden">
+          <div id="dropdown-menu" class="hidden absolute z-2 right-0 mt-2 w-38 bg-white shadow-md rounded-md overflow-hidden">
             <a href="{% url 'myprofile:profile' %}" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">My Profile</a>
             <a href="{% url 'register:register' %}" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Register Account</a>
             <form action="{% url 'logout' %}" method="post" class="block">
