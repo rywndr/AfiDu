@@ -1,17 +1,48 @@
-{% extends "layout.html" %}
-{% load static %}
+{% extends "layout.html" %} 
 
-{% block title %}
-  AfiDu - My Profile
-{% endblock %}
+{% load static %} 
+
+{% block title %} 
+  AfiDu - MyProfile 
+{% endblock %} 
 
 {% block content %}
-  <h2>My Profile</h2>
-  <img src="{% static 'images/blank_profile.png' %}" alt="Profile Picture" style="width: 70px; border-radius: 50%;">
-  <p>Email: {{ user.email }}</p>
-  <p>First Name: {{ user.first_name }}</p>
-  <p>Last Name: {{ user.last_name }}</p>
-  
-  <a href="{% url 'myprofile:edit_profile' %}"><button>Edit</button></a>
-{% endblock %}
+  <div class="mx-4 my-4">
+    <!-- Profile Card -->
+    <div class="w-full bg-white rounded-lg shadow p-6">
+      <div class="flex items-center space-x-4">
+        <!-- Profile Picture -->
+        <img 
+          src="{% static 'images/blank_profile.png' %}" 
+          alt="Profile Picture" 
+          class="w-20 h-20 rounded-full"
+        />
+        <div>
+          <!-- Username (Bigger & Bold) -->
+          <div class="text-xl font-bold text-[#5a5656]">
+            {{ user.first_name }}
+          </div>
+          <!-- Email Below the Name -->
+          <div class="text-sm text-gray-500">
+            {{ user.email }}
+          </div>
+        </div>
+      </div>
 
+      <!-- Additional Info / Description -->
+      <p class="text-sm text-gray-500 mt-4">
+        Your first name is retrieved from your account.
+      </p>
+
+      <!-- Edit Profile Button (Smaller) -->
+      <div class="mt-6">
+        <a 
+          href="{% url 'myprofile:edit_profile' %}" 
+          class="inline-block bg-[#ff4f25] hover:bg-[#cc3f1e] text-white font-semibold py-1 px-3 rounded text-sm"
+        >
+          Edit
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
