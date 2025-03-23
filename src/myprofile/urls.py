@@ -1,10 +1,10 @@
 from django.urls import path
 
-from .views import edit_profile, profile
+from .views import ProfileView, EditProfileView
 
 app_name = "myprofile"
 
 urlpatterns = [
-    path("", profile, name="profile"),
-    path("edit/", edit_profile, name="edit_profile"),
+    path("", ProfileView.as_view(), name="profile"),
+    path("edit/", EditProfileView.as_view(), name="edit_profile"),
 ]
