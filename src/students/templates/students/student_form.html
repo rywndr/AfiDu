@@ -1,27 +1,73 @@
 {% extends 'layout.html' %}
+{% load widget_tweaks %}
 
 {% block title %}
   AfiDu - {% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}
 {% endblock %}
 
 {% block content %}
-  <h1>{% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}</h1>
+<div class="container mx-auto max-w-6xl px-4 py-8">
+  
+  <!-- back btn (only for editing) -->
+  {% if form.instance.pk %}
+    <div class="mb-2">
+      <a href="{% url 'students:student-detail' student.pk %}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+        Back
+      </a>
+    </div>
+  {% endif %}
 
-  <form method="post" enctype="multipart/form-data" id="student-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
-    <!-- back ke student list -->
-    <a href="{% url 'students:student-list' %}">Cancel</a>
-
-    <!-- back ke student detail -->
-    <!-- {% if request.GET.next %} -->
-    <!--   <a href="{{ request.GET.next }}">Cancel</a> -->
-    <!-- {% else %} -->
-    {% comment %} <a href="{% url 'students:student-detail' student.pk %}">Cancel</a> {% endcomment %}
-    <!-- {% endif %} -->
-
-  </form>
+  <!-- card -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="p-6">
+      <form method="post" enctype="multipart/form-data" id="student-form" class="space-y-6">
+        {% csrf_token %}
+        
+        {% for field in form %}
+          <div class="space-y-2">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
+              {{ field.label }}
+            </label>
+            
+            {% if field.field.widget.input_type == 'file' %}
+              <div class="mt-1">
+                {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
+              </div>
+            {% elif field.field.widget.input_type == 'select' %}
+              <div>
+                {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
+              </div>
+            {% else %}
+              <div>
+                {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
+              </div>
+            {% endif %}
+            
+            {% if field.help_text %}
+              <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+            {% endif %}
+            
+            {% for error in field.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        
+        <div class="flex items-center space-x-4 pt-4">
+          <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b3371a] transition-all duration-200 transform hover:-translate-y-1">
+            Submit
+          </button>
+          <a href="{% url 'students:student-list' %}" class="inline-flex justify-center py-2 px-4 border border-[#5a5656] shadow-sm text-sm font-medium rounded-md text-[#5a5656] bg-white hover:bg-gray-50 duration-200">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
   <script>
     // panggil IIFE
