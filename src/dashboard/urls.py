@@ -1,10 +1,10 @@
 from django.urls import include, path
 
-from . import views
+from .views import DashboardView
 
 app_name = "dashboard"
 
 urlpatterns = [
-    path("", views.dashboard, name="dashboard"),
+    path("", DashboardView.as_view(), name="dashboard"),
     path("register/", include("register.urls"), name="register"),
 ]
