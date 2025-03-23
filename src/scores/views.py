@@ -1,24 +1,58 @@
 from django.shortcuts import redirect, render
+from django.views import View
 
 from students.models import Student
-
 from .forms import ScoreForm
 from .models import Score
 
 # Create your views here.
+class ScoreListView(View):
+    template_name = "scores/score_list.html"
 
-def score_list(request):
-    # ambil params untuk filter tahun dari GET
-    year = request.GET.get("year", "2025")
-    semester = request.GET.get("semester", "odd")
-    category = request.GET.get("category", "reading")
-
-    if request.method == "POST":
-        # untuk POST, baca nilai filter dari hidden input tuk nentuin score mana yang diupdate
-        year = request.POST.get("year", year)
-        semester = request.POST.get("semester", semester)
-        category = request.POST.get("category", category)
+    def get_context_data(self, year, semester, category):
         students = Student.objects.all()
+        forms = []
+        for student in students:
+            try:
+                score = Score.objects.get(
+                    student=student, year=year, semester=semester, category=category
+                )
+                form = ScoreForm(instance=score, prefix=f"student_{student.id}")
+            except Score.DoesNotExist:
+                form = ScoreForm(prefix=f"student_{student.id}")
+            forms.append((student, form))
+
+        context = {
+            "forms": forms,
+            "year": year,
+            "semester": semester,
+            "category": category,
+            "years": range(2020, 2031),
+            "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
+            "categories": [
+                ("reading", "Reading"),
+                ("writing", "Writing"),
+                ("listening", "Listening"),
+                ("speaking", "Speaking"),
+            ],
+        }
+        return context
+
+    def get(self, request, *args, **kwargs):
+        # default params
+        year = request.GET.get("year", "2025")
+        semester = request.GET.get("semester", "odd")
+        category = request.GET.get("category", "reading")
+        context = self.get_context_data(year, semester, category)
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        # get filter params dari hidden input
+        year = request.POST.get("year", "2025")
+        semester = request.POST.get("semester", "odd")
+        category = request.POST.get("category", "reading")
+        students = Student.objects.all()
+
         for student in students:
             prefix = f"student_{student.id}"
             form = ScoreForm(request.POST, prefix=prefix)
@@ -38,35 +72,7 @@ def score_list(request):
                 score.mid_term = form.cleaned_data.get("mid_term")
                 score.finals = form.cleaned_data.get("finals")
                 score.save()
+
         return redirect(
             f"{request.path}?year={year}&semester={semester}&category={category}"
         )
-
-    # siapkan form untuk setiap student berdasarkan filter tahun, semester, dan kategori
-    students = Student.objects.all()
-    forms = []
-    for student in students:
-        try:
-            score = Score.objects.get(
-                student=student, year=year, semester=semester, category=category
-            )
-            form = ScoreForm(instance=score, prefix=f"student_{student.id}")
-        except Score.DoesNotExist:
-            form = ScoreForm(prefix=f"student_{student.id}")
-        forms.append((student, form))
-
-    context = {
-        "forms": forms,
-        "year": year,
-        "semester": semester,
-        "category": category,
-        "years": range(2020, 2031),
-        "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
-        "categories": [
-            ("reading", "Reading"),
-            ("writing", "Writing"),
-            ("listening", "Listening"),
-            ("speaking", "Speaking"),
-        ],
-    }
-    return render(request, "scores/score_list.html", context)
