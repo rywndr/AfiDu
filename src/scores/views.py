@@ -35,6 +35,8 @@ class ScoreListView(View):
                 ("listening", "Listening"),
                 ("speaking", "Speaking"),
             ],
+            "active_tab_title": "Score",
+            "active_tab_icon": "fa-chart-bar",
         }
         return context
 

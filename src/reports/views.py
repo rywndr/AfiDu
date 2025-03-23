@@ -78,6 +78,8 @@ class ReportListView(View):
             "years": range(2020, 2031),
             "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
             "score_categories": SCORE_CATEGORIES,
+            "active_tab_title": "Report",
+            "active_tab_icon": "fa-chart-bar",
         }
         return render(request, self.template_name, context)
 
