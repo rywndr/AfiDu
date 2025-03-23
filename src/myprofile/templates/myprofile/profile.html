@@ -18,23 +18,19 @@
           class="w-20 h-20 rounded-full"
         />
         <div>
-          <!-- Username (Bigger & Bold) -->
           <div class="text-xl font-bold text-[#5a5656]">
             {{ user.first_name }}
           </div>
-          <!-- Email Below the Name -->
           <div class="text-sm text-gray-500">
             {{ user.email }}
           </div>
         </div>
       </div>
 
-      <!-- Additional Info / Description -->
       <p class="text-sm text-gray-500 mt-4">
         Your first name is retrieved from your account.
       </p>
 
-      <!-- Edit Profile Button (Smaller) -->
       <div class="mt-6">
         <a 
           href="{% url 'myprofile:edit_profile' %}" 

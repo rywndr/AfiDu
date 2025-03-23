@@ -5,18 +5,27 @@
 {% endblock %}
 
 {% block content %}
-<h2>Registration Successful</h2>
-<p>Your account has been successfully created.</p>
-<p>You will be redirected to the dashboard shortly...</p>
+<div class="mx-4 my-4">
+    <div class="bg-white rounded-lg shadow p-6 w-full">
+        <h2 class="text-3xl font-bold text-[#5a5656] mb-4">Registration Successful</h2>
+        <p class="text-lg text-gray-700 mb-4">
+            Your account has been successfully created.
+        </p>
+        <p class="text-gray-600 mb-6">
+            You will be redirected to the dashboard shortly...
+        </p>
+        <p class="text-sm text-gray-500">
+            If you are not redirected, 
+            <a href="{% url 'dashboard:dashboard' %}" class="text-[#ff4f25] hover:text-[#cc3f1e] underline">
+                click here
+            </a>.
+        </p>
+    </div>
+</div>
 
-<script>
+{% comment %} <script>
     setTimeout(function () {
         window.location.href = "{% url 'dashboard:dashboard' %}";
-    }, 3000); // redirect setelah 3 detik ke halaman dashboard
-</script>
-
-<p>
-    If you are not redirected,
-    <a href="{% url 'dashboard:dashboard' %}">click here</a>.
-</p>
+    }, 3000); // redirect after 3 seconds to dashboard
+</script> {% endcomment %}
 {% endblock %}

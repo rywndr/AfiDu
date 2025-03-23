@@ -1,14 +1,86 @@
 {% extends "layout.html" %}
+{% load widget_tweaks %}
 
 {% block title %}
   AfiDu - Register
 {% endblock %}
 
 {% block content %}
-  <h2>Register</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-  </form>
+<div class="mx-4 my-4">
+  <!-- Register Card -->
+  <div class="bg-white rounded-lg shadow p-6 w-full">
+    <p class="text-sm text-gray-600 mb-4">
+      Please fill in the form below. Fields marked with <span class="text-red-500 text-xs">*</span> are required. Ensure your password is strong and that you confirm it correctly.
+    </p>
+    
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label for="{{ form.email.id_for_label }}" class="block text-gray-700 font-medium">
+          Email <span class="text-red-500 text-xs">*</span>
+        </label>
+        <div class="inline-block">
+          {% render_field form.email placeholder="you@example.com" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        </div>
+        {% if form.email.errors %}
+          <p class="text-red-500 text-sm">{{ form.email.errors }}</p>
+        {% endif %}
+      </div>
+      
+      <div class="mb-4">
+        <label for="{{ form.first_name.id_for_label }}" class="block text-gray-700 font-medium">
+          First Name <span class="text-red-500 text-xs">*</span>
+        </label>
+        <div class="inline-block">
+          {% render_field form.first_name placeholder="John" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        </div>
+        {% if form.first_name.errors %}
+          <p class="text-red-500 text-sm">{{ form.first_name.errors }}</p>
+        {% endif %}
+      </div>
+      
+      <div class="mb-4">
+        <label for="{{ form.last_name.id_for_label }}" class="block text-gray-700 font-medium">
+          Last Name
+        </label>
+        <div class="inline-block">
+          {% render_field form.last_name placeholder="Doe" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        </div>
+        {% if form.last_name.errors %}
+          <p class="text-red-500 text-sm">{{ form.last_name.errors }}</p>
+        {% endif %}
+      </div>
+      
+      <div class="mb-4">
+        <label for="{{ form.password1.id_for_label }}" class="block text-gray-700 font-medium">
+          Password <span class="text-red-500 text-xs">*</span>
+        </label>
+        <div class="inline-block">
+          {% render_field form.password1 placeholder="Enter a strong password" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        </div>
+        <p class="text-xs text-gray-500 mt-1">{{ form.password1.help_text }}</p>
+        {% if form.password1.errors %}
+          <p class="text-red-500 text-sm">{{ form.password1.errors }}</p>
+        {% endif %}
+      </div>
+      
+      <div class="mb-4">
+        <label for="{{ form.password2.id_for_label }}" class="block text-gray-700 font-medium">
+          Confirm Password <span class="text-red-500 text-xs">*</span>
+        </label>
+        <div class="inline-block">
+          {% render_field form.password2 placeholder="Re-enter your password" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        </div>
+        <p class="text-xs text-gray-500 mt-1">{{ form.password2.help_text }}</p>
+        {% if form.password2.errors %}
+          <p class="text-red-500 text-sm">{{ form.password2.errors }}</p>
+        {% endif %}
+      </div>
+      
+      <button type="submit" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white font-semibold py-2 px-4 rounded">
+        Register
+      </button>
+    </form>
+  </div>
+</div>
 {% endblock %}
