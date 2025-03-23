@@ -51,7 +51,7 @@
         <h4 class="text-2xl font-semibold text-[#5a5656]">Scores</h4>
       </div>
       <p class="text-gray-600">View and evaluate student scores.</p>
-      <a href="#" class="inline-block mt-4 text-green-500 hover:text-green-700 font-medium">
+      <a href="{% url 'scores:score-list' %}" class="inline-block mt-4 text-green-500 hover:text-green-700 font-medium">
         <i class="fas fa-chevron-right"></i> Go to Scores
       </a>
     </div>
@@ -75,7 +75,7 @@
         <h4 class="text-2xl font-semibold text-[#5a5656]">Report</h4>
       </div>
       <p class="text-gray-600">Generate and view student reports.</p>
-      <a href="#" class="inline-block mt-4 text-red-500 hover:text-red-700 font-medium">
+      <a href="{% url 'reports:report-list' %}" class="inline-block mt-4 text-red-500 hover:text-red-700 font-medium">
         <i class="fas fa-chevron-right"></i> Generate Reports
       </a>
     </div>
