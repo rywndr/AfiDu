@@ -166,11 +166,21 @@
 
     <script>
       // tempo solutionnn
-      document
-        .getElementById('user-menu')
-        .addEventListener('click', function () {
-          document.getElementById('dropdown-menu').classList.toggle('hidden');
-        });
+      const userMenu = document.getElementById('user-menu');
+      const dropdownMenu = document.getElementById('dropdown-menu');
+
+      // Toggle dropdown on user menu click
+      userMenu.addEventListener('click', function (e) {
+        e.stopPropagation(); // Prevent click from bubbling to document
+        dropdownMenu.classList.toggle('hidden');
+      });
+
+      // Hide dropdown when clicking outside
+      document.addEventListener('click', function (e) {
+        if (!dropdownMenu.classList.contains('hidden')) {
+          dropdownMenu.classList.add('hidden');
+        }
+      });
     </script>
   </body>
 </html>
