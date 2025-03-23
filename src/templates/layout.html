@@ -1,118 +1,176 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}AfiDu{% endblock %}</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>{% block title %}AfiDu{% endblock %}</title>
 
-  {% include 'snippets/tailwind.html' %}
+    {% include 'snippets/tailwind.html' %}
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-</head>
-<body class="relative min-h-screen flex [background-image:url('{% static 'images/abstract_doodle.png' %}')] bg-center bg-repeat [background-size:400px]">
-  <!-- overlay -->
-  <div class="absolute inset-0 bg-white/90 z-0"></div>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+  <body
+    class="relative min-h-screen flex [background-image:url('{% static 'images/abstract_doodle.png' %}')] bg-center bg-repeat [background-size:400px]"
+  >
+    <!-- overlay -->
+    <div class="absolute inset-0 bg-white/90 z-0"></div>
 
-  <!-- main layout sidebar, topbar and content -->
-  <div class="flex flex-1 z-10">
-    <!-- Sidebar -->
-    <aside class="w-48 m-4 rounded-lg shadow-lg bg-white flex flex-col justify-between">
-      <div>
-        <!-- sidebar brand -->
-        <div class="flex items-center px-4 py-5 bg-white text-white rounded-t-lg">
+    <!-- main layout sidebar, topbar and content -->
+    <div class="flex flex-1 z-10">
+      <!-- Sidebar -->
+      <aside
+        class="w-48 p-4 rounded-lg shadow-lg bg-white flex flex-col justify-between"
+      >
+        <div>
+          <!-- sidebar brand -->
+          <div
+            class="flex items-center px-4 py-5 bg-white text-white rounded-t-lg"
+          >
             <a href="{% url 'dashboard:dashboard' %}">
-              <i class="fa-solid fa-school text-2xl mr-2" style="color: #ff4f25;"></i>
+              <i
+                class="fa-solid fa-school text-2xl mr-2"
+                style="color: #ff4f25"
+              ></i>
               <span class="text-2xl text-[#ff4f25] font-bold">AfiDu</span>
             </a>
-        </div>
-
-        <!-- sidebar nav -->
-        <nav class="mt-4">
-          <ul class="space-y-1">
-            <li>
-              <a href="{% url 'dashboard:dashboard' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'dashboard' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
-                <i class="fas fa-tachometer-alt mr-2"></i>
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li>
-              <a href="{% url 'students:student-list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'student-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
-                <i class="fas fa-user-graduate mr-2"></i>
-                <span>Students</span>
-              </a>
-            </li>
-            <li>
-                <a href="{% url 'scores:score-list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 border-l-4 border-transparent text-gray-700">
-                <i class="fas fa-chart-bar mr-2"></i>
-                <span>Scores</span>
-              </a>
-            </li>
-            <li>
-              <a href="{% url 'study_materials:list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}">
-                <i class="fas fa-book mr-2"></i>
-                <span>Materials</span>
-              </a>
-            </li>
-            <li>
-                <a href="{% url 'reports:report-list' %}" class="flex items-center px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 border-l-4 border-transparent text-gray-700">
-                <i class="fas fa-file-alt mr-2"></i>
-                <span>Report</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      <!-- footer bottom of sidebar -->
-      <div class="py-4">
-        {% include 'snippets/footer.html' with extra_classes="text-[0.55rem]"  %}
-      </div>
-    </aside>
-
-    <!-- topbar and content -->
-    <main class="flex-1 flex flex-col">
-      <!-- topbar -->
-      <header class="mx-4 my-4 bg-white shadow rounded-lg px-6 py-4 flex justify-between items-center">
-        <!-- title top bar dynamic based on view -->
-        <h1 class="text-3xl font-bold text-[#5a5656] ">
-          {% if active_tab_icon %}
-            <i class="fas {{ active_tab_icon }} mr-2"></i>
-          {% endif %}
-          {{ active_tab_title|default:"Dashboard" }}
-        </h1>
-
-        <!-- user menu -->
-        <div class="relative">
-          <button id="user-menu" class="flex items-center space-x-2 focus:outline-none">
-            <img src="{% static 'images/blank_profile.png' %}" alt="Profile Picture" class="w-8 h-8 rounded-full" />
-            <span class="text-gray-700">{{ request.user.first_name }}</span>
-            <i class="fas fa-chevron-down text-gray-500"></i>
-          </button>
-          <div id="dropdown-menu" class="hidden absolute z-2 right-0 mt-2 w-38 bg-white shadow-md rounded-md overflow-hidden">
-            <a href="{% url 'myprofile:profile' %}" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">My Profile</a>
-            <a href="{% url 'register:register' %}" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Register Account</a>
-            <form action="{% url 'logout' %}" method="post" class="block">
-              {% csrf_token %}
-              <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700">Logout</button>
-            </form>
           </div>
+
+          <!-- sidebar nav -->
+          <nav class="mt-4">
+            <ul class="space-y-1">
+              <li>
+                <a
+                  href="{% url 'dashboard:dashboard' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'dashboard' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                >
+                  <i class="fas fa-tachometer-alt mr-2"></i>
+                  <span>Dashboard</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="{% url 'students:student-list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'student-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                >
+                  <i class="fas fa-user-graduate mr-2"></i>
+                  <span>Students</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="{% url 'scores:score-list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'score-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                >
+                  <i class="fas fa-chart-bar mr-2"></i>
+                  <span>Scores</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="{% url 'study_materials:list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                >
+                  <i class="fas fa-book mr-2"></i>
+                  <span>Materials</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="{% url 'reports:report-list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600{% if request.resolver_match.url_name == 'report-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                />
+                  <i class="fas fa-file-alt mr-2"></i>
+                  <span>Report</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
-      </header>
-      
-      {% block content %}
 
-      {% endblock %}
+        <!-- footer bottom of sidebar -->
+        <div class="py-4">
+          {% include 'snippets/footer.html' with extra_classes="text-[0.55rem]" %}
+        </div>
+      </aside>
 
-    </main>
-  </div>
+      <!-- topbar and content -->
+      <main class="flex-1 flex flex-col">
+        <!-- topbar -->
+        <header
+          class="mx-4 my-4 bg-white shadow rounded-lg px-6 py-4 flex justify-between items-center"
+        >
+          <!-- title top bar dynamic based on view -->
+          <h1 class="text-3xl font-bold text-[#5a5656]">
+            {% if active_tab_icon %}
+            <i class="fas {{ active_tab_icon }} mr-2"></i>
+            {% endif %} {{ active_tab_title|default:"Dashboard" }}
+          </h1>
 
-  <script>
-    // tempo solutionnn
-    document.getElementById('user-menu').addEventListener('click', function () {
-      document.getElementById('dropdown-menu').classList.toggle('hidden');
-    });
-  </script>
-</body>
+          <!-- user menu -->
+          <div class="relative">
+            <button
+              id="user-menu"
+              class="flex items-center space-x-2 focus:outline-none"
+            >
+              <img
+                src="{% static 'images/blank_profile.png' %}"
+                alt="Profile Picture"
+                class="w-8 h-8 rounded-full"
+              />
+              <span class="text-gray-700">{{ request.user.first_name }}</span>
+              <i class="fas fa-chevron-down text-gray-500"></i>
+            </button>
+            <div
+              id="dropdown-menu"
+              class="hidden absolute z-2 right-0 mt-2 w-38 bg-white shadow-md rounded-md overflow-hidden"
+            >
+              <a
+                href="{% url 'myprofile:profile' %}"
+                class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
+                >My Profile</a
+              >
+              <a
+                href="{% url 'register:register' %}"
+                class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
+                >Register Account</a
+              >
+              <form
+                action="{% url 'logout' %}"
+                method="post"
+                class="block"
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                >
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </header>
+
+        {% block content %} 
+        
+        {% endblock %}
+      </main>
+    </div>
+
+    <script>
+      // tempo solutionnn
+      document
+        .getElementById('user-menu')
+        .addEventListener('click', function () {
+          document.getElementById('dropdown-menu').classList.toggle('hidden');
+        });
+    </script>
+  </body>
 </html>
-
