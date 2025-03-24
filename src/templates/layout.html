@@ -92,6 +92,15 @@
                   <span>Report</span>
                 </a>
               </li>
+              <li>
+                <a
+                  href="{% url 'payments:payment_list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-3 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'payments' %}"
+                >
+                  <i class="fas fa-money-bill-wave mr-2"></i>
+                  <span>Payments</span>
+                </a>
+              </li>
             </ul>
           </nav>
         </div>
@@ -122,7 +131,7 @@
               class="flex items-center space-x-2 focus:outline-none"
             >
               <img
-                src="{% static 'images/blank_profile.png' %}"
+                src="{% static 'images/blank_profile.svg' %}"
                 alt="Profile Picture"
                 class="w-8 h-8 rounded-full"
               />

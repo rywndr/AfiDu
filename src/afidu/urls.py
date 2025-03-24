@@ -48,6 +48,8 @@ urlpatterns = [
     path("reports/", include(("reports.urls", "reports"), namespace="reports")),
     # path ke study_materials app
     path("study-materials/", include(("study_materials.urls", "study-materials"), namespace="study-materials")),
+    # path ke payments app
+    path("payments/", include(("payments.urls", "payments"), namespace="payments")),
 ]
 
 if settings.DEBUG:

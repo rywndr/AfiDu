@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "scores",
     "reports",
     "study_materials",
+    "payments",
 ]
 
 MIDDLEWARE = [
