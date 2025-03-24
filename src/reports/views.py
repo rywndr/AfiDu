@@ -1,9 +1,12 @@
 import os
+import io
 import tempfile
 import pythoncom
 import subprocess
+import zipfile
 
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import View
@@ -23,7 +26,7 @@ SCORE_CATEGORIES = [
 ]
 
 def convert_docx_to_pdf(docx_path, output_dir):
-    # iniatilize COM 
+    # initialize COM
     pythoncom.CoInitialize()
     command = [
         "docx2pdf",
@@ -34,25 +37,36 @@ def convert_docx_to_pdf(docx_path, output_dir):
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         raise Exception(f"Error converting DOCX to PDF: {e}")
-    
-    # uninitalize COM
+    # uninitialize COM
     pythoncom.CoUninitialize()
     
     pdf_filename = os.path.basename(docx_path).replace('.docx', '.pdf')
     return os.path.join(output_dir, pdf_filename)
 
-
 class ReportListView(View):
     template_name = "reports/report_list.html"
 
-    def get(self, request, *args, **kwargs):
-        # params dari URL
+    def get_context_data(self, request):
+        # filter params dari URL
         year = request.GET.get("year", "2025")
         semester = request.GET.get("semester", "odd")
-        
-        # get data nilai akhir siswa tiap kategori
-        students_data = []
+        search_query = request.GET.get("q", "")
+        class_filter = request.GET.get("class_filter", "")
+        per_page_str = request.GET.get("per_page", "5")
+        try:
+            per_page = int(per_page_str)
+        except ValueError:
+            per_page = 5
+
+        # queryset students
         students = Student.objects.all()
+        if search_query:
+            students = students.filter(name__icontains=search_query)
+        if class_filter:
+            students = students.filter(assigned_class=class_filter)
+
+        # siapkan list dict untuk setiap murid
+        students_data = []
         for student in students:
             scores = {}
             for key, label in SCORE_CATEGORIES:
@@ -64,34 +78,47 @@ class ReportListView(View):
                 except Score.DoesNotExist:
                     final_score = None
                 scores[key] = final_score
-            students_data.append(
-                {
-                    "student": student,
-                    "scores": scores,
-                }
-            )
+            students_data.append({
+                "student": student,
+                "scores": scores,
+            })
+
+        # paginate result
+        paginator = Paginator(students_data, per_page)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
 
         context = {
-            "students_data": students_data,
+            "students_data": page_obj.object_list,
+            "page_obj": page_obj,
+            "is_paginated": page_obj.has_other_pages(),
+            "current_per_page": str(per_page),
             "year": year,
             "semester": semester,
             "years": range(2020, 2031),
             "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
             "score_categories": SCORE_CATEGORIES,
+            "q": search_query,
+            "class_filter": class_filter,
+            "class_choices": Student._meta.get_field("assigned_class").choices,
             "active_tab_title": "Report",
             "active_tab_icon": "fa-chart-bar",
         }
+        return context
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request)
         return render(request, self.template_name, context)
 
 
 class ExportReportPDFView(View):
     def get(self, request, student_id, *args, **kwargs):
-        # ambil params filter dari URL
+        # get filter dari URL
         year = request.GET.get('year', '2025')
         semester = request.GET.get('semester', 'odd')
         student = get_object_or_404(Student, id=student_id)
         
-        # siapin data untuk di render ke template
+        #  context data untuk rendering
         data = {
             'student_name': student.name,
             'class': student.assigned_class,
@@ -123,3 +150,53 @@ class ExportReportPDFView(View):
                     return response
             else:
                 return HttpResponse("PDF file was not generated.", content_type="text/plain")
+
+
+class ExportReportsZipView(View):
+    def get(self, request, *args, **kwargs):
+        # get filter params dari URL
+        year = request.GET.get("year", "2025")
+        semester = request.GET.get("semester", "odd")
+        search_query = request.GET.get("q", "")
+        class_filter = request.GET.get("class_filter", "")
+
+        students = Student.objects.all()
+        if search_query:
+            students = students.filter(name__icontains=search_query)
+        if class_filter:
+            students = students.filter(assigned_class=class_filter)
+
+        # create in-memory zip file tiap murid
+        in_memory = io.BytesIO()
+        with zipfile.ZipFile(in_memory, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
+            for student in students:
+                data = {
+                    'student_name': student.name,
+                    'class': student.assigned_class,
+                }
+                for key, label in SCORE_CATEGORIES:
+                    try:
+                        score_obj = Score.objects.get(student=student, year=year, semester=semester, category=key)
+                        data[key] = f"{score_obj.final_score:.2f}"
+                    except Score.DoesNotExist:
+                        data[key] = "N/A"
+                template_path = os.path.join(settings.BASE_DIR, 'templates', 'reports', 'report_template.docx')
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    doc = DocxTemplate(template_path)
+                    doc.render(data)
+                    output_docx_path = os.path.join(tmpdirname, f"{student.id}_report.docx")
+                    doc.save(output_docx_path)
+                    
+                    try:
+                        pdf_path = convert_docx_to_pdf(output_docx_path, tmpdirname)
+                    except Exception as e:
+                        continue  # skip murid kalo error convert ke pdf
+                    
+                    if os.path.exists(pdf_path):
+                        with open(pdf_path, 'rb') as pdf_file:
+                            pdf_data = pdf_file.read()
+                            zipf.writestr(f"{student.name}_report.pdf", pdf_data)
+        in_memory.seek(0)
+        response = HttpResponse(in_memory.read(), content_type="application/zip")
+        response['Content-Disposition'] = 'attachment; filename="reports.zip"'
+        return response

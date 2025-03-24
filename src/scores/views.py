@@ -1,5 +1,6 @@
 from django.shortcuts import redirect, render
 from django.views import View
+from django.core.paginator import Paginator
 
 from students.models import Student
 from .forms import ScoreForm
@@ -10,7 +11,17 @@ class ScoreListView(View):
     template_name = "scores/score_list.html"
 
     def get_context_data(self, year, semester, category):
+        # get filter params dari url
+        search_query = self.request.GET.get("q", "")
+        class_filter = self.request.GET.get("class_filter", "")
+        
+        # filter murid based on search query and class
         students = Student.objects.all()
+        if search_query:
+            students = students.filter(name__icontains=search_query)
+        if class_filter:
+            students = students.filter(assigned_class=class_filter)
+
         forms = []
         for student in students:
             try:
@@ -21,9 +32,23 @@ class ScoreListView(View):
             except Score.DoesNotExist:
                 form = ScoreForm(prefix=f"student_{student.id}")
             forms.append((student, form))
+        
+        # pagination, get params default to 5
+        per_page_str = self.request.GET.get("per_page", "5")
+        try:
+            per_page = int(per_page_str)
+        except ValueError:
+            per_page = 5
+
+        paginator = Paginator(forms, per_page)
+        page_number = self.request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
 
         context = {
-            "forms": forms,
+            "forms": page_obj.object_list,
+            "page_obj": page_obj,
+            "is_paginated": page_obj.has_other_pages(),
+            "current_per_page": str(per_page),
             "year": year,
             "semester": semester,
             "category": category,
@@ -35,13 +60,17 @@ class ScoreListView(View):
                 ("listening", "Listening"),
                 ("speaking", "Speaking"),
             ],
+            # persing filter params
+            "search_query": search_query,
+            "class_filter": class_filter,
+            "class_choices": Student._meta.get_field("assigned_class").choices,
             "active_tab_title": "Score",
             "active_tab_icon": "fa-chart-bar",
         }
         return context
 
     def get(self, request, *args, **kwargs):
-        # default params
+        # default filter params
         year = request.GET.get("year", "2025")
         semester = request.GET.get("semester", "odd")
         category = request.GET.get("category", "reading")
@@ -49,7 +78,7 @@ class ScoreListView(View):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        # get filter params dari hidden input
+        # ambil filter params dari form
         year = request.POST.get("year", "2025")
         semester = request.POST.get("semester", "odd")
         category = request.POST.get("category", "reading")
