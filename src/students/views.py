@@ -13,11 +13,28 @@ from .models import Student
 
 
 # Create your views here.
-class StudentListView(LoginRequiredMixin, ListView):
+class StudentContextMixin:
+    def get_student_context(self):
+        extra = {
+            "active_tab": {
+                "title": "Students",
+                "icon": "fa-user-graduate",
+            },
+            "class_choices": Student._meta.get_field("assigned_class").choices,
+        }
+        return extra
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_student_context())
+        return context
+
+
+class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
     model = Student
     template_name = "students/student_list.html"
     context_object_name = "students"
-
+    
     def get_queryset(self):
         queryset = super().get_queryset()
         query = self.request.GET.get("q")
@@ -36,60 +53,34 @@ class StudentListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # pass pilihan class ke template untuk dropdown filter
-        context["class_choices"] = Student._meta.get_field("assigned_class").choices
-        # pass item per_page context ke template untuk pagination
+        # pass student count context ke list view
+        context["student_count"] = self.get_queryset().count()
+        # persist state item per_page
         context["current_per_page"] = self.request.GET.get("per_page", "5")
-        context["active_tab_title"] = "Students"
-        context["active_tab_icon"] = "fa-user-graduate"
         return context
 
 
-class StudentDetailView(LoginRequiredMixin, DetailView):
+class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
     model = Student
     template_name = "students/student_detail.html"
     context_object_name = "student"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Students"
-        context["active_tab_icon"] = "fa-user-graduate"
-        return context
 
-
-class StudentCreateView(LoginRequiredMixin, CreateView):
+class StudentCreateView(LoginRequiredMixin, StudentContextMixin, CreateView):
     model = Student
     form_class = StudentForm
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Students"
-        context["active_tab_icon"] = "fa-user-graduate"
-        return context
 
-
-class StudentUpdateView(LoginRequiredMixin, UpdateView):
+class StudentUpdateView(LoginRequiredMixin, StudentContextMixin, UpdateView):
     model = Student
     form_class = StudentForm
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Students"
-        context["active_tab_icon"] = "fa-user-graduate"
-        return context
 
-
-class StudentDeleteView(LoginRequiredMixin, DeleteView):
+class StudentDeleteView(LoginRequiredMixin, StudentContextMixin, DeleteView):
     model = Student
     template_name = "students/student_confirm_delete.html"
     success_url = reverse_lazy("students:student-list")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Students"
-        context["active_tab_icon"] = "fa-user-graduate"
-        return context

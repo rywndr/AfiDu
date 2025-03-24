@@ -8,9 +8,9 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
 
-  <!-- header, search, filter dan add new student -->
+  <!-- header, search, filter dan add new student button-->
   <div class="bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-    <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0">
+    <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
       <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
         <span class="px-4 text-gray-500">
           <i class="fa-solid fa-magnifying-glass"></i>
@@ -26,6 +26,10 @@
             <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
           {% endfor %}
         </select>
+        <!-- student count -->
+        <span class="text-sm text-gray-500 ml-4">
+          Total Students: {{ student_count }}
+        </span>
       </div>
     </form>
     <a href="{% url 'students:student-add' %}" 
@@ -34,7 +38,7 @@
     </a>
   </div>
 
-  <!-- students table -->
+  <!-- Students Table -->
   <div class="overflow-x-auto bg-white shadow rounded-lg">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
@@ -78,20 +82,33 @@
             {{ student.contact_number }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-center relative">
-            <div class="inline-block relative group">
-              <button type="button" class="inline-flex justify-center shadow-sm px-2 py-1 text-sm font-medium text-gray-700">
-                <i class="fa-solid fa-ellipsis-v"></i>
+            <div class="inline-block relative">
+              <button type="button" class="dropdown-button inline-flex items-center text-gray-700 hover:text-gray-900 focus:outline-none">
+                <!-- Three Dot SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="12" cy="12" r="1.5" />
+                  <circle cx="12" cy="19" r="1.5" />
+                </svg>
               </button>
-              <div class="absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-10 bg-white hidden ">
+              <div class="dropdown-content absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
                 <ul class="py-1">
                   <li>
                     <a href="{% url 'students:student-edit' student.pk %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <i class="fa-solid fa-pen-to-square mr-2"></i> Edit
+                      <!-- Edit Icon SVG -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l3 3 8-8a2.828 2.828 0 00-4-4l-8 8v3h3z" />
+                      </svg>
+                      Edit
                     </a>
                   </li>
                   <li>
                     <a href="{% url 'students:student-delete' student.pk %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                      <i class="fa-solid fa-trash mr-2"></i> Delete
+                      <!-- Delete Icon SVG -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1H9V4a1 1 0 011-1z" />
+                      </svg>
+                      Delete
                     </a>
                   </li>
                 </ul>
@@ -108,26 +125,25 @@
     </table>
   </div>
 
-    <div class="mt-6 flex items-center">
-      <!-- selector item per page -->
-      <div class="w-1/3">
-        <form method="get" id="per-page-form" class="flex items-center space-x-2">
-          <!-- persist q dan class_filter -->
-          <input type="hidden" name="q" value="{{ request.GET.q }}">
-          <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
-          <label for="per_page_select" class="text-gray-700">Items per page:</label>
-          <select name="per_page" id="per_page_select" onchange="this.form.submit()"
-            class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
-            <option value="5" {% if current_per_page == "5" %}selected{% endif %}>5</option>
-            <option value="10" {% if current_per_page == "10" %}selected{% endif %}>10</option>
-            <option value="15" {% if current_per_page == "15" %}selected{% endif %}>15</option>
-          </select>
-        </form>
-      </div>
+  <!-- item per page / pagination -->
+  <div class="mt-6 flex items-center">
+    <div class="w-1/3">
+      <form method="get" id="per-page-form" class="flex items-center space-x-2">
+        <!-- persist q danm class_filter -->
+        <input type="hidden" name="q" value="{{ request.GET.q }}">
+        <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
+        <label for="per_page_select" class="text-gray-700">Items per page:</label>
+        <select name="per_page" id="per_page_select" onchange="this.form.submit()"
+          class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
+          <option value="5" {% if current_per_page == "5" %}selected{% endif %}>5</option>
+          <option value="10" {% if current_per_page == "10" %}selected{% endif %}>10</option>
+          <option value="15" {% if current_per_page == "15" %}selected{% endif %}>15</option>
+        </select>
+      </form>
+    </div>
 
-      <!-- paiganation -->
-      <div class="w-1/3 flex justify-center">
-        {% if is_paginated %}
+    <div class="w-1/3 flex justify-center">
+      {% if is_paginated %}
           <nav>
             <ul class="flex items-center space-x-2">
               {% if page_obj.has_previous %}
@@ -188,40 +204,32 @@
               {% endif %}
             </ul>
           </nav>
-        {% endif %}
-      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 
 <script>
-    // temp javascript I'll move it later hehe
-
-    // loop semua button
-    document.querySelectorAll('[type="button"]').forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.stopPropagation();
-
-        // tutup semua dropdown kecuali yang di klik
-        document.querySelectorAll('[type="button"]').forEach(btn => {
-          if (btn !== this) {
-            btn.nextElementSibling.classList.add('hidden');
-          }
-        });
-
-        // toggle dropdown yang di klik
-        const dropdown = this.nextElementSibling;
-        dropdown.classList.toggle('hidden');
+  // tempo js
+  document.querySelectorAll('.dropdown-button').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // hide every dropdown kecuali yang di klik
+      document.querySelectorAll('.dropdown-content').forEach(drop => {
+        if (drop !== this.parentElement.querySelector('.dropdown-content')) {
+          drop.classList.add('hidden');
+        }
       });
+      // toggle dropdown yang di klik
+      const dropdown = this.parentElement.querySelector('.dropdown-content');
+      dropdown.classList.toggle('hidden');
     });
-
-    // click elsewhere untuk close all dropdown toggle
-    window.addEventListener('click', function () {
-      document.querySelectorAll('[type="button"]').forEach(button => {
-        const dropdown = button.nextElementSibling;
-        dropdown.classList.add('hidden');
-      });
+  });
+  
+  window.addEventListener('click', function() {
+    document.querySelectorAll('.dropdown-content').forEach(drop => {
+      drop.classList.add('hidden');
     });
-
+  });
 </script>
 {% endblock %}
-
