@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render
 from django.views import View
 from django.core.paginator import Paginator
+from datetime import datetime
 
 from students.models import Student
 from .forms import ScoreForm
@@ -52,7 +53,7 @@ class ScoreListView(View):
             "year": year,
             "semester": semester,
             "category": category,
-            "years": range(2020, 2031),
+            "years": range(2025, 2033),
             "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
             "categories": [
                 ("reading", "Reading"),
@@ -60,7 +61,6 @@ class ScoreListView(View):
                 ("listening", "Listening"),
                 ("speaking", "Speaking"),
             ],
-            # persing filter params
             "search_query": search_query,
             "class_filter": class_filter,
             "class_choices": Student._meta.get_field("assigned_class").choices,
@@ -70,16 +70,18 @@ class ScoreListView(View):
         return context
 
     def get(self, request, *args, **kwargs):
-        # default filter params
-        year = request.GET.get("year", "2025")
+        # default filter params: pake current year if not provided
+        current_year = str(datetime.now().year)
+        year = request.GET.get("year", current_year)
         semester = request.GET.get("semester", "odd")
         category = request.GET.get("category", "reading")
         context = self.get_context_data(year, semester, category)
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        # ambil filter params dari form
-        year = request.POST.get("year", "2025")
+        # ambil filter params dari form: pake current year if not provided
+        current_year = str(datetime.now().year)
+        year = request.POST.get("year", current_year)
         semester = request.POST.get("semester", "odd")
         category = request.POST.get("category", "reading")
         students = Student.objects.all()

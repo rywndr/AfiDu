@@ -4,6 +4,7 @@ import tempfile
 import pythoncom
 import subprocess
 import zipfile
+from datetime import datetime
 
 from django.conf import settings
 from django.core.paginator import Paginator
@@ -47,8 +48,9 @@ class ReportListView(View):
     template_name = "reports/report_list.html"
 
     def get_context_data(self, request):
-        # filter params dari URL
-        year = request.GET.get("year", "2025")
+        # pake current year as default if not provided
+        current_year = datetime.now().year
+        year = request.GET.get("year", str(current_year))
         semester = request.GET.get("semester", "odd")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
@@ -95,7 +97,7 @@ class ReportListView(View):
             "current_per_page": str(per_page),
             "year": year,
             "semester": semester,
-            "years": range(2020, 2031),
+            "years": range(2025, 2033),
             "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
             "score_categories": SCORE_CATEGORIES,
             "q": search_query,
@@ -113,12 +115,13 @@ class ReportListView(View):
 
 class ExportReportPDFView(View):
     def get(self, request, student_id, *args, **kwargs):
-        # get filter dari URL
-        year = request.GET.get('year', '2025')
+        # default ke current year if not provided
+        current_year = datetime.now().year
+        year = request.GET.get('year', str(current_year))
         semester = request.GET.get('semester', 'odd')
         student = get_object_or_404(Student, id=student_id)
         
-        #  context data untuk rendering
+        # context data untuk rendering
         data = {
             'student_name': student.name,
             'class': student.assigned_class,
@@ -154,8 +157,8 @@ class ExportReportPDFView(View):
 
 class ExportReportsZipView(View):
     def get(self, request, *args, **kwargs):
-        # get filter params dari URL
-        year = request.GET.get("year", "2025")
+        current_year = datetime.now().year
+        year = request.GET.get("year", str(current_year))
         semester = request.GET.get("semester", "odd")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
