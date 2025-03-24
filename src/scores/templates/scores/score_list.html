@@ -107,7 +107,7 @@
             {% with prefix="student_"|add:student.id|stringformat:"s" %}
             <tr class="score-row hover:bg-gray-100" data-prefix="student_{{ student.id }}">
               <td class="px-4 py-4 whitespace-nowrap">
-                <a href="{% url 'students:student-detail' student.id %}" class="text-[#ff4f25] hover:underline">
+                <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}" class="text-[#ff4f25] hover:underline">
                   {{ student.name }}
                 </a>
               </td>

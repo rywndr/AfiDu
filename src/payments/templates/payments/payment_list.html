@@ -59,7 +59,7 @@
         {% for student in students %}
           <tr class="hover:bg-gray-100">
             <td class="px-4 py-3 whitespace-nowrap">
-              <a href="{% url 'students:student-detail' student.id %}" class="text-[#ff4f25] hover:underline">
+              <a href="{% url 'students:student-detail' student.id %}?next={% url 'payments:payment_list' %}" class="text-[#ff4f25] hover:underline">
                 {{ student.name }}
               </a>
             </td>

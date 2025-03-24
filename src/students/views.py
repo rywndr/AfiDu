@@ -63,6 +63,12 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
     template_name = "students/student_detail.html"
     context_object_name = "student"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add the next URL if present
+        context['next'] = self.request.GET.get('next')
+        return context
+
 
 class StudentCreateView(LoginRequiredMixin, StudentContextMixin, CreateView):
     model = Student
