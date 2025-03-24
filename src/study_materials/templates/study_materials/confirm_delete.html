@@ -6,12 +6,44 @@
 
 {% block content %}
 
-<h1>Delete Study Material</h1>
-<p>Are you sure you want to delete "{{ object.title }}"?</p>
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Confirm Delete</button>
-</form>
-<a href="{% url 'study_materials:list' %}">Cancel</a>
+<div class="flex justify-center items-center py-8 p-2">
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
+      <!-- Header -->
+      <div class="bg-[#ff4f25] px-4 py-3">
+        <h1 class="text-xl font-bold text-white">Delete Study Material</h1>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="p-4">
+        <div class="flex items-center mb-3">
+          <div class="bg-red-100 p-2 rounded-full mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#ff4f25]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <p class="text-[#5a5656] text-base">
+            Are you sure you want to delete <span class="font-bold">{{ object.title }}</span>?
+          </p>
+        </div>
+        
+        <p class="text-gray-500 mb-4 text-xs">
+          This action cannot be undone. All data associated with this study material will be permanently removed.
+        </p>
+        
+        <form method="post" class="space-y-2">
+          {% csrf_token %}
+          <div class="flex items-center space-x-3 pt-1">
+            <button type="submit" class="inline-flex justify-center py-1.5 px-3 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] transition duration-200">
+              Confirm Delete
+            </button>
+            <a href="{% url 'study_materials:list' %}" class="inline-flex justify-center py-1.5 px-3 border border-[#5a5656] shadow-sm text-sm font-medium rounded-md text-[#5a5656] bg-white hover:bg-gray-50 transition duration-200">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
 
 {% endblock %}

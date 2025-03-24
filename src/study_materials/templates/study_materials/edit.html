@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load widget_tweaks %}
 
 {% block title %}
     AfiDu - Edit Study Material
@@ -6,11 +7,43 @@
 
 {% block content %}
 
-<h1>Edit Study Material</h1>
-<form method="post">
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit">Save Changes</button>
-</form>
-<a href="{% url 'study_materials:list' %}">Back to List</a>
+<div class="container mx-auto max-w-6xl px-4 py-8">
+  
+    <!-- Edit form card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="p-6">
+        <form method="post">
+          {% csrf_token %}
+          
+          {% for field in form %}
+            <div class="mb-4">
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
+                {{ field.label }}
+              </label>
+              <div class="mt-1">
+                {% render_field field class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-2" %}
+              </div>
+              {% if field.help_text %}
+                <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+              {% endif %}
+              {% for error in field.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          
+          <div class="flex items-center space-x-4 pt-4">
+            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b3371a] transition-all duration-200 transform hover:-translate-y-1">
+              Save Changes
+            </button>
+            <a href="{% url 'study_materials:list' %}" class="inline-flex justify-center py-2 px-4 border border-[#5a5656] shadow-sm text-sm font-medium rounded-md text-[#5a5656] bg-white hover:bg-gray-50 duration-200">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
 
 {% endblock %}
