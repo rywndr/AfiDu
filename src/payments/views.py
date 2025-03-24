@@ -77,7 +77,7 @@ class PaymentListView(LoginRequiredMixin, ListView):
         context["years"] = list(range(2025, 2033))
 
         # set active tab dan icon
-        context["active_tab_title"] = "Payment"
+        context["active_tab_title"] = "Payments"
         context["active_tab_icon"] = "fa-money-bill-wave"
         return context
 
