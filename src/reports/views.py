@@ -103,7 +103,7 @@ class ReportListView(View):
             "q": search_query,
             "class_filter": class_filter,
             "class_choices": Student._meta.get_field("assigned_class").choices,
-            "active_tab_title": "Report",
+            "active_tab_title": "Reports",
             "active_tab_icon": "fa-chart-bar",
         }
         return context

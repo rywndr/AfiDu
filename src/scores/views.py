@@ -64,7 +64,7 @@ class ScoreListView(View):
             "search_query": search_query,
             "class_filter": class_filter,
             "class_choices": Student._meta.get_field("assigned_class").choices,
-            "active_tab_title": "Score",
+            "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
         }
         return context
