@@ -1,4 +1,6 @@
 {% load static %}
+{% load nav_extras %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -48,7 +50,7 @@
               <li>
                 <a
                   href="{% url 'dashboard:dashboard' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'dashboard' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'dashboard' %}"
                 >
                   <i class="fas fa-tachometer-alt mr-2"></i>
                   <span>Dashboard</span>
@@ -57,7 +59,7 @@
               <li>
                 <a
                   href="{% url 'students:student-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'student-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'students' %}"
                 >
                   <i class="fas fa-user-graduate mr-2"></i>
                   <span>Students</span>
@@ -66,7 +68,7 @@
               <li>
                 <a
                   href="{% url 'scores:score-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'score-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'scores' %}"
                 >
                   <i class="fas fa-chart-bar mr-2"></i>
                   <span>Scores</span>
@@ -75,7 +77,7 @@
               <li>
                 <a
                   href="{% url 'study_materials:list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% if request.resolver_match.url_name == 'list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'study_materials' %}"
                 >
                   <i class="fas fa-book mr-2"></i>
                   <span>Materials</span>
@@ -84,7 +86,7 @@
               <li>
                 <a
                   href="{% url 'reports:report-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600{% if request.resolver_match.url_name == 'report-list' %} bg-[#ffdcd3] border-r-4 border-[#ff4f25] text-red-600 {% else %} border-l-4 border-transparent text-gray-700 {% endif %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'reports' %}"
                 />
                   <i class="fas fa-file-alt mr-2"></i>
                   <span>Report</span>

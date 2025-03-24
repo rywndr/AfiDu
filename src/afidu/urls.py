@@ -47,7 +47,7 @@ urlpatterns = [
     # path ke reports app
     path("reports/", include(("reports.urls", "reports"), namespace="reports")),
     # path ke study_materials app
-    path("study-materials/", include("study_materials.urls")),
+    path("study-materials/", include(("study_materials.urls", "study-materials"), namespace="study-materials")),
 ]
 
 if settings.DEBUG:
