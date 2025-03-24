@@ -67,7 +67,7 @@
           <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
           <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
           {% for key, label in score_categories %}
-            <th class="px-2 py-3 text-center text-white font-semibold">{{ label }}</th>
+            <th class="px-4 py-3 text-center text-white font-semibold">{{ label }}</th>
           {% endfor %}
           <th class="px-4 py-3 text-center text-white font-semibold">Action</th>
         </tr>
@@ -82,7 +82,7 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap">{{ item.student.assigned_class }}</td>
             {% for key, label in score_categories %}
-              <td class="px-2 py-2 text-center">
+              <td class="px-4 py-2 text-center">
                 {% with score=item.scores|get_item:key %}
                   {% if score %}
                     {{ score|floatformat:2 }}
