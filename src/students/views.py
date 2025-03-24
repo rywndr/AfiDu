@@ -16,10 +16,8 @@ from .models import Student
 class StudentContextMixin:
     def get_student_context(self):
         extra = {
-            "active_tab": {
-                "title": "Students",
-                "icon": "fa-user-graduate",
-            },
+            "active_tab_title": "Students",
+            "active_tab_icon": "fa-user-graduate",
             "class_choices": Student._meta.get_field("assigned_class").choices,
         }
         return extra
