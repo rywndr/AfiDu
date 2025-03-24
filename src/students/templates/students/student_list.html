@@ -56,7 +56,7 @@
               <img src="{{ student.profile_photo.url }}" alt="Profile" class="w-12 h-12 rounded-full object-cover">
             {% else %}
               <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                <img src="{% static 'images/blank_profile.svg' %}" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                {{ student.name|make_list|slice:":1"|join:"" }}
               </div>
             {% endif %}
           </td>
