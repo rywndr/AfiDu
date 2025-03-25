@@ -33,7 +33,7 @@
       </div>
     </form>
     <a href="{% url 'students:student-add' %}" 
-       class="bg-red-500 hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+       class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
       <i class="fa-solid fa-plus"></i>
     </a>
   </div>
@@ -149,7 +149,7 @@
               {% if page_obj.has_previous %}
                 <li>
                   <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}"
-                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition">
+                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-left"></i>
                   </a>
                 </li>
@@ -158,7 +158,7 @@
               {% if page_obj.number > 3 %}
                 <li>
                   <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page=1"
-                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
+                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
                     1
                   </a>
                 </li>
@@ -173,7 +173,7 @@
                 {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                   <li>
                     <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ i }}"
-                       class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == i %}bg-red-500 text-white{% endif %}">
+                       class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                       {{ i }}
                     </a>
                   </li>
@@ -188,7 +188,7 @@
                 {% endif %}
                 <li>
                   <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}"
-                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-red-500 text-white{% endif %}">
+                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-red-500 text-white{% endif %}">
                     {{ page_obj.paginator.num_pages }}
                   </a>
                 </li>
@@ -197,7 +197,7 @@
               {% if page_obj.has_next %}
                 <li>
                   <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}"
-                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition">
+                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-right"></i>
                   </a>
                 </li>

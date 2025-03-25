@@ -106,14 +106,14 @@
           <ul class="flex items-center space-x-2">
             {% if page_obj.has_previous %}
               <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition">
+                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                   <i class="fa-solid fa-chevron-left"></i>
                 </a>
               </li>
             {% endif %}
             {% if page_obj.number > 3 %}
               <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-[#b3371a] text-white{% endif %}">
+                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-[#b3371a] text-white{% endif %}">
                   1
                 </a>
               </li>
@@ -124,7 +124,7 @@
             {% for i in page_obj.paginator.page_range %}
               {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == i %}bg-red-500 text-white{% endif %}">
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                     {{ i }}
                   </a>
                 </li>
@@ -135,14 +135,14 @@
                 <li><span class="py-1 px-3 text-gray-600">...</span></li>
               {% endif %}
               <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
+                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
                   {{ page_obj.paginator.num_pages }}
                 </a>
               </li>
             {% endif %}
             {% if page_obj.has_next %}
               <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full py-1 px-3 transition">
+                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                   <i class="fa-solid fa-chevron-right"></i>
                 </a>
               </li>
