@@ -86,7 +86,7 @@
               <span>Edited: {{ material.edited_at|date:"M d, Y H:i" }}</span>
             </div>
           </div>
-          <button onclick="toggleDropdown(event, 'dropdown-{{ material.id }}')" type="button" class="dropdown-button absolute top-2 right-2 inline-flex items-center text-gray-700 hover:text-gray-900 focus:outline-none p-2">
+          <button onclick="toggleDropdown(event, 'dropdown-{{ material.id }}')" type="button" class="dropdown-button absolute top-2 right-2 flex items-center justify-center w-6 h-6 text-gray-700 bg-white bg-opacity-90 rounded">
             <!-- Three Dot SVG Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="5" r="1.5" />
@@ -94,7 +94,7 @@
               <circle cx="12" cy="19" r="1.5" />
             </svg>
           </button>
-          <div id="dropdown-{{ material.id }}" class="dropdown-content absolute right-2 top-12 mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
+          <div id="dropdown-{{ material.id }}" class="dropdown-content absolute right-2 top-8 mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
             <ul class="py-1">
               <li>
                 <a href="{% url 'study_materials:edit' material.id %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
