@@ -70,7 +70,12 @@ class ScoreListView(View):
         return context
 
     def get(self, request, *args, **kwargs):
-        # default filter params: pake current year if not provided
+        if "anchor_redirected" not in request.GET:
+            query_params = request.GET.copy()
+            query_params["anchor_redirected"] = "true"
+            redirect_url = f"{request.path}?{query_params.urlencode()}#score-table"
+            return redirect(redirect_url)
+
         current_year = str(datetime.now().year)
         year = request.GET.get("year", current_year)
         semester = request.GET.get("semester", "odd")
@@ -79,17 +84,14 @@ class ScoreListView(View):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        # ambil filter params dari form: pake current year if not provided
         current_year = str(datetime.now().year)
         year = request.POST.get("year", current_year)
         semester = request.POST.get("semester", "odd")
         category = request.POST.get("category", "reading")
         students = Student.objects.all()
 
-        # retain search q dan class filter dari hidden input
         search_query = request.POST.get("q", "")
         class_filter = request.POST.get("class_filter", "")
-        # get pagination params from GET, default to 5
         per_page = request.GET.get("per_page", "5")
         page = request.GET.get("page", "")
 
@@ -113,7 +115,7 @@ class ScoreListView(View):
                 score.finals = form.cleaned_data.get("finals")
                 score.save()
 
-        # redirect url tuk retain filter params
+        # redirect URL without anchor; the get method will add the anchor redirect
         redirect_url = (
             f"{request.path}?year={year}"
             f"&semester={semester}"
@@ -124,6 +126,4 @@ class ScoreListView(View):
         )
         if page:
             redirect_url += f"&page={page}"
-        # anchor tuk retain scroll position di table after submit value
-        redirect_url += "#score-table"
         return redirect(redirect_url)

@@ -11,16 +11,20 @@
   <!-- header, search, filter dan add new student button-->
   <div class="bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
     <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
+      <!-- persists params -->
+      <input type="hidden" name="year" value="{{ request.GET.year }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
+      
       <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
         <span class="px-4 text-gray-500">
           <i class="fa-solid fa-magnifying-glass"></i>
         </span>
         <input type="text" name="q" placeholder="Search students..." value="{{ request.GET.q }}"
-          class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+              class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
       </div>
       <div class="flex items-center">
         <select name="class_filter" onchange="this.form.submit()"
-          class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
+                class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
           <option value="">All Classes</option>
           {% for key, value in class_choices %}
             <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
@@ -33,14 +37,14 @@
       </div>
     </form>
     <a href="{% url 'students:student-add' %}" 
-       class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+      class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
       <i class="fa-solid fa-plus"></i>
     </a>
   </div>
 
   <!-- Students Table -->
   <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full divide-y divide-gray-200">
+    <table class="min-w-full divide-y divide-gray-200" id="student-table">
       <thead class="bg-gray-50">
         <tr>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile</th>
@@ -129,9 +133,10 @@
   <div class="mt-6 flex items-center">
     <div class="w-1/3">
       <form method="get" id="per-page-form" class="flex items-center space-x-2">
-        <!-- persist q danm class_filter -->
+        <!-- Persist the search/filter parameters -->
         <input type="hidden" name="q" value="{{ request.GET.q }}">
         <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
+        <input type="hidden" name="year" value="{{ request.GET.year }}">
         <label for="per_page_select" class="text-gray-700">Items per page:</label>
         <select name="per_page" id="per_page_select" onchange="this.form.submit()"
           class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">

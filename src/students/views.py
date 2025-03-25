@@ -8,6 +8,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from django.shortcuts import redirect
 from .forms import StudentForm
 from .models import Student
 
@@ -56,6 +57,15 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         # persist state item per_page
         context["current_per_page"] = self.request.GET.get("per_page", "5")
         return context
+    
+    # redirect to table
+    def get(self, request, *args, **kwargs):
+        if "anchor_redirected" not in request.GET:
+            query_params = request.GET.copy()
+            query_params["anchor_redirected"] = "true"
+            redirect_url = f"{request.path}?{query_params.urlencode()}#student-table"
+            return redirect(redirect_url)
+        return super().get(request, *args, **kwargs)
 
 
 class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):

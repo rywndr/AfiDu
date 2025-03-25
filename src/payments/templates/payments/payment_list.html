@@ -19,13 +19,19 @@
           {% endfor %}
         </select>
       </div>
+      <!-- persists params -->
+      <input type="hidden" name="q" value="{{ request.GET.q }}">
+      <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
   </div>
 
   <!-- srch & class filter -->
   <div class="w-full bg-white shadow rounded-lg p-6 mb-6">
     <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+      <!-- persists parms -->
       <input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
       <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
         <span class="px-4 text-gray-500">
           <i class="fa-solid fa-magnifying-glass"></i>
@@ -44,7 +50,7 @@
   </div>
 
   <!-- table -->
-  <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200">
+  <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="payment-table">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-[#ff4f25]">
         <tr>

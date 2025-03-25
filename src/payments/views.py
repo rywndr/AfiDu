@@ -80,6 +80,14 @@ class PaymentListView(LoginRequiredMixin, ListView):
         context["active_tab_title"] = "Payments"
         context["active_tab_icon"] = "fa-money-bill-wave"
         return context
+    
+    def get(self, request, *args, **kwargs):
+        if "anchor_redirected" not in request.GET:
+            query_params = request.GET.copy()
+            query_params["anchor_redirected"] = "true"
+            redirect_url = f"{request.path}?{query_params.urlencode()}#payment-table"
+            return redirect(redirect_url)
+        return super().get(request, *args, **kwargs)
 
 
 class TogglePaymentView(View):

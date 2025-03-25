@@ -9,7 +9,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
 from docx2pdf import convert
 from docxtpl import DocxTemplate
@@ -67,7 +67,7 @@ class ReportListView(View):
         if class_filter:
             students = students.filter(assigned_class=class_filter)
 
-        # siapkan list dict untuk setiap murid
+        # prepare list dict for each student
         students_data = []
         for student in students:
             scores = {}
@@ -109,6 +109,11 @@ class ReportListView(View):
         return context
 
     def get(self, request, *args, **kwargs):
+        if "anchor_redirected" not in request.GET:
+            query_params = request.GET.copy()
+            query_params["anchor_redirected"] = "true"
+            redirect_url = f"{request.path}?{query_params.urlencode()}#report-table"
+            return redirect(redirect_url)
         context = self.get_context_data(request)
         return render(request, self.template_name, context)
 
