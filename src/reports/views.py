@@ -130,6 +130,8 @@ class ExportReportPDFView(View):
         data = {
             'student_name': student.name,
             'class': student.assigned_class,
+            "year": year,
+            "semester": semester,
         }
         for key, label in SCORE_CATEGORIES:
             try:
@@ -181,6 +183,8 @@ class ExportReportsZipView(View):
                 data = {
                     'student_name': student.name,
                     'class': student.assigned_class,
+                    "year": year,
+                    "semester": semester
                 }
                 for key, label in SCORE_CATEGORIES:
                     try:
