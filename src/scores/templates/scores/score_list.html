@@ -52,6 +52,10 @@
           {% endfor %}
         </select>
       </div>
+      <!-- persist get params -->
+      <input type="hidden" name="q" value="{{ search_query }}">
+      <input type="hidden" name="class_filter" value="{{ class_filter }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
   </div>
 
@@ -74,17 +78,18 @@
           {% endfor %}
         </select>
       </div>
-      <!-- persists filter -->
+      <!-- persist filter params -->
       <input type="hidden" name="year" value="{{ year }}">
       <input type="hidden" name="semester" value="{{ semester }}">
       <input type="hidden" name="category" value="{{ category }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
   </div>
 
   <!-- /table -->
   <form method="post">
     {% csrf_token %}
-    <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200">
+    <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="score-table">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-[#ff4f25]">
           <tr>
@@ -141,7 +146,6 @@
     <input type="hidden" name="category" value="{{ category }}">
     <input type="hidden" name="q" value="{{ search_query }}">
     <input type="hidden" name="class_filter" value="{{ class_filter }}">
-  
   </form>
 
   <!-- item per_page, pagination -->
@@ -228,7 +232,7 @@
 </div>
 
 <script>
-  // Function to calc sum and final score
+  // func to calc sum and final score
   function calcSumAndFinal(prefix) {
     let sum = 0;
     const fields = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'mid_term', 'finals'];

@@ -86,6 +86,13 @@ class ScoreListView(View):
         category = request.POST.get("category", "reading")
         students = Student.objects.all()
 
+        # retain search q dan class filter dari hidden input
+        search_query = request.POST.get("q", "")
+        class_filter = request.POST.get("class_filter", "")
+        # get pagination params from GET, default to 5
+        per_page = request.GET.get("per_page", "5")
+        page = request.GET.get("page", "")
+
         for student in students:
             prefix = f"student_{student.id}"
             form = ScoreForm(request.POST, prefix=prefix)
@@ -106,6 +113,17 @@ class ScoreListView(View):
                 score.finals = form.cleaned_data.get("finals")
                 score.save()
 
-        return redirect(
-            f"{request.path}?year={year}&semester={semester}&category={category}"
+        # redirect url tuk retain filter params
+        redirect_url = (
+            f"{request.path}?year={year}"
+            f"&semester={semester}"
+            f"&category={category}"
+            f"&q={search_query}"
+            f"&class_filter={class_filter}"
+            f"&per_page={per_page}"
         )
+        if page:
+            redirect_url += f"&page={page}"
+        # anchor tuk retain scroll position di table after submit value
+        redirect_url += "#score-table"
+        return redirect(redirect_url)
