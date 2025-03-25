@@ -31,6 +31,10 @@
           {% endfor %}
         </select>
       </div>
+      <!-- persist params -->
+      <input type="hidden" name="q" value="{{ q }}">
+      <input type="hidden" name="class_filter" value="{{ class_filter }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
   </div>
 
@@ -53,11 +57,13 @@
           {% endfor %}
         </select>
       </div>
-      <!-- persist value dari period -->
+      <!-- persist params -->
       <input type="hidden" name="year" value="{{ year }}">
       <input type="hidden" name="semester" value="{{ semester }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
   </div>
+
 
   <!-- table -->
   <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200">
