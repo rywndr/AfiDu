@@ -1,48 +1,18 @@
-import os
 import io
-import tempfile
-import pythoncom
-import subprocess
 import zipfile
 from datetime import datetime
 
-from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
-from docx2pdf import convert
-from docxtpl import DocxTemplate
 
 from scores.models import Score
 from students.models import Student
 
-# Create your views here.
-# kategori tiap nilai
-SCORE_CATEGORIES = [
-    ("reading", "Reading"),
-    ("writing", "Writing"),
-    ("listening", "Listening"),
-    ("speaking", "Speaking"),
-]
+from .utils import generate_student_report_pdf, SCORE_CATEGORIES
 
-def convert_docx_to_pdf(docx_path, output_dir):
-    # initialize COM
-    pythoncom.CoInitialize()
-    command = [
-        "docx2pdf",
-        docx_path,
-        output_dir
-    ]
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"Error converting DOCX to PDF: {e}")
-    # uninitialize COM
-    pythoncom.CoUninitialize()
-    
-    pdf_filename = os.path.basename(docx_path).replace('.docx', '.pdf')
-    return os.path.join(output_dir, pdf_filename)
+# Create your views here.
 
 class ReportListView(View):
     template_name = "reports/report_list.html"
@@ -120,47 +90,29 @@ class ReportListView(View):
 
 class ExportReportPDFView(View):
     def get(self, request, student_id, *args, **kwargs):
-        # default ke current year if not provided
         current_year = datetime.now().year
         year = request.GET.get('year', str(current_year))
         semester = request.GET.get('semester', 'odd')
         student = get_object_or_404(Student, id=student_id)
         
-        # context data untuk rendering
-        data = {
-            'student_name': student.name,
-            'class': student.assigned_class,
-            "year": year,
-            "semester": semester,
-        }
-        for key, label in SCORE_CATEGORIES:
+        # pass data ke helper dengan query score and add them to a dictionary attribute for the student
+        scores_dict = {}
+        for key, _ in SCORE_CATEGORIES:
             try:
                 score_obj = Score.objects.get(student=student, year=year, semester=semester, category=key)
-                data[key] = f"{score_obj.final_score:.2f}"
+                scores_dict[key] = f"{score_obj.final_score:.2f}"
             except Score.DoesNotExist:
-                data[key] = "N/A"
+                scores_dict[key] = "N/A"
+        student.scores_dict = scores_dict
         
-        template_path = os.path.join(settings.BASE_DIR, 'templates', 'reports', 'report_template.docx')
+        # generate pdf report with the helper
+        pdf = generate_student_report_pdf(student, year, semester)
         
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            doc = DocxTemplate(template_path)
-            doc.render(data)
-            output_docx_path = os.path.join(tmpdirname, f"{student.id}_report.docx")
-            doc.save(output_docx_path)
-            
-            try:
-                pdf_path = convert_docx_to_pdf(output_docx_path, tmpdirname)
-            except Exception as e:
-                return HttpResponse(f"Error converting DOCX to PDF: {e}", content_type="text/plain")
-            
-            if os.path.exists(pdf_path):
-                with open(pdf_path, 'rb') as pdf_file:
-                    response = HttpResponse(pdf_file.read(), content_type='application/pdf')
-                    response['Content-Disposition'] = f'attachment; filename="{student.name}_report.pdf"'
-                    return response
-            else:
-                return HttpResponse("PDF file was not generated.", content_type="text/plain")
-
+        safe_name = student.name.replace(" ", "_")
+        filename = f"{safe_name}_report.pdf"
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 class ExportReportsZipView(View):
     def get(self, request, *args, **kwargs):
@@ -169,45 +121,32 @@ class ExportReportsZipView(View):
         semester = request.GET.get("semester", "odd")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
-
+        
         students = Student.objects.all()
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
             students = students.filter(assigned_class=class_filter)
-
-        # create in-memory zip file tiap murid
+        
         in_memory = io.BytesIO()
         with zipfile.ZipFile(in_memory, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
             for student in students:
-                data = {
-                    'student_name': student.name,
-                    'class': student.assigned_class,
-                    "year": year,
-                    "semester": semester
-                }
-                for key, label in SCORE_CATEGORIES:
+                # get scores for each student
+                scores_dict = {}
+                for key, _ in SCORE_CATEGORIES:
                     try:
                         score_obj = Score.objects.get(student=student, year=year, semester=semester, category=key)
-                        data[key] = f"{score_obj.final_score:.2f}"
+                        scores_dict[key] = f"{score_obj.final_score:.2f}"
                     except Score.DoesNotExist:
-                        data[key] = "N/A"
-                template_path = os.path.join(settings.BASE_DIR, 'templates', 'reports', 'report_template.docx')
-                with tempfile.TemporaryDirectory() as tmpdirname:
-                    doc = DocxTemplate(template_path)
-                    doc.render(data)
-                    output_docx_path = os.path.join(tmpdirname, f"{student.id}_report.docx")
-                    doc.save(output_docx_path)
-                    
-                    try:
-                        pdf_path = convert_docx_to_pdf(output_docx_path, tmpdirname)
-                    except Exception as e:
-                        continue  # skip murid kalo error convert ke pdf
-                    
-                    if os.path.exists(pdf_path):
-                        with open(pdf_path, 'rb') as pdf_file:
-                            pdf_data = pdf_file.read()
-                            zipf.writestr(f"{student.name}_report.pdf", pdf_data)
+                        scores_dict[key] = "N/A"
+                student.scores_dict = scores_dict
+                
+                # generate pdf report with the helper
+                pdf = generate_student_report_pdf(student, year, semester)
+                safe_name = student.name.replace(" ", "_")
+                filename = f"{safe_name}_report.pdf"
+                zipf.writestr(filename, pdf)
+        
         in_memory.seek(0)
         response = HttpResponse(in_memory.read(), content_type="application/zip")
         response['Content-Disposition'] = 'attachment; filename="reports.zip"'
