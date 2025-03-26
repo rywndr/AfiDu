@@ -125,7 +125,7 @@
           </h1>
 
           <!-- user menu -->
-          <div class="relative">
+          <div class="relative shadow-xl">
             <button
               id="user-menu"
               class="flex items-center space-x-2 focus:outline-none"
@@ -160,8 +160,9 @@
                 {% csrf_token %}
                 <button
                   type="submit"
-                  class="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100 text-[#fb2c36]"
                 >
+                  <i class="fas fa-sign-out-alt mr-1"></i>
                   Logout
                 </button>
               </form>
