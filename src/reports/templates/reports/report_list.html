@@ -18,7 +18,7 @@
         <select name="year" id="year" onchange="this.form.submit()"
                 class="mt-1 block w-full rounded border-gray-300 shadow-sm">
           {% for y in years %}
-            <option value="{{ y }}" {% if y|stringformat:"s" == year %}selected{% endif %}>{{ y }}</option>
+            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
           {% endfor %}
         </select>
       </div>
