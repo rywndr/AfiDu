@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
 
-from scores.models import Score
+from scores.models import Score, SCORE_CATEGORIES
 from students.models import Student
 
 from .utils import generate_student_report_pdf, SCORE_CATEGORIES
@@ -18,9 +18,11 @@ class ReportListView(View):
     template_name = "reports/report_list.html"
 
     def get_context_data(self, request):
-        # pake current year as default if not provided
         current_year = datetime.now().year
-        year = request.GET.get("year", str(current_year))
+        try:
+            year = int(request.GET.get("year", current_year))
+        except ValueError:
+            year = current_year
         semester = request.GET.get("semester", "odd")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
@@ -67,7 +69,7 @@ class ReportListView(View):
             "current_per_page": str(per_page),
             "year": year,
             "semester": semester,
-            "years": range(2025, 2033),
+            "years": range(current_year, current_year + 8),
             "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
             "score_categories": SCORE_CATEGORIES,
             "q": search_query,
@@ -86,7 +88,6 @@ class ReportListView(View):
             return redirect(redirect_url)
         context = self.get_context_data(request)
         return render(request, self.template_name, context)
-
 
 class ExportReportPDFView(View):
     def get(self, request, student_id, *args, **kwargs):

@@ -4,8 +4,8 @@ from django.core.paginator import Paginator
 from datetime import datetime
 
 from students.models import Student
-from .forms import ScoreForm
-from .models import Score
+from .forms import ScoreForm, ScoreConfigForm
+from .models import Score, ScoreConfig
 
 # Create your views here.
 class ScoreListView(View):
@@ -15,6 +15,7 @@ class ScoreListView(View):
         # get filter params dari url
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
+        config = ScoreConfig.objects.first() or ScoreConfig.objects.create(num_exercises=6, formula="(ex_sum + mid_term + finals) / (num_exercises + 2)")
         
         # filter murid based on search query and class
         students = Student.objects.all()
@@ -64,6 +65,7 @@ class ScoreListView(View):
             "search_query": search_query,
             "class_filter": class_filter,
             "class_choices": Student._meta.get_field("assigned_class").choices,
+            "exercise_range": range(config.num_exercises),
             "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
         }
@@ -95,27 +97,32 @@ class ScoreListView(View):
         per_page = request.GET.get("per_page", "5")
         page = request.GET.get("page", "")
 
+        # import scoreconfig to get num_exercises
+        from .models import ScoreConfig
+        config = ScoreConfig.objects.first() or ScoreConfig.objects.create(
+            num_exercises=6,
+            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)"
+        )
+
         for student in students:
             prefix = f"student_{student.id}"
-            form = ScoreForm(request.POST, prefix=prefix)
-            if form.is_valid():
-                score, created = Score.objects.get_or_create(
-                    student=student,
-                    year=year,
-                    semester=semester,
-                    category=category,
+            # get existing score instance or create a new one
+            try:
+                score_instance = Score.objects.get(
+                    student=student, year=year, semester=semester, category=category
                 )
-                score.e1 = form.cleaned_data.get("e1")
-                score.e2 = form.cleaned_data.get("e2")
-                score.e3 = form.cleaned_data.get("e3")
-                score.e4 = form.cleaned_data.get("e4")
-                score.e5 = form.cleaned_data.get("e5")
-                score.e6 = form.cleaned_data.get("e6")
-                score.mid_term = form.cleaned_data.get("mid_term")
-                score.finals = form.cleaned_data.get("finals")
-                score.save()
+            except Score.DoesNotExist:
+                score_instance = None
 
-        # redirect URL without anchor; the get method will add the anchor redirect
+            form = ScoreForm(request.POST, instance=score_instance, prefix=prefix)
+            if form.is_valid():
+                score = form.save(commit=False)
+                score.student = student
+                score.year = year
+                score.semester = semester
+                score.category = category
+                score.save()
+        # redirect url to the same page with the same filters
         redirect_url = (
             f"{request.path}?year={year}"
             f"&semester={semester}"
@@ -127,3 +134,27 @@ class ScoreListView(View):
         if page:
             redirect_url += f"&page={page}"
         return redirect(redirect_url)
+
+class ScoreConfigView(View):
+    template_name = "scores/config.html"
+
+    def get(self, request, *args, **kwargs):
+        # pake singleton pattern to avoid multiple config
+        config, _ = ScoreConfig.objects.get_or_create(
+            id=1,
+            defaults={"num_exercises": 6, "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)"}
+        )
+        context = {"form": ScoreConfigForm(instance=config), "active_tab_title": "Scores Config", "active_tab_icon": "fa-cogs"}
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        config, _ = ScoreConfig.objects.get_or_create(
+            id=1,
+            defaults={"num_exercises": 6, "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)"}
+        )
+        form = ScoreConfigForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            # redirect ke score-list after saving config
+            return redirect("scores:score-list")
+        return render(request, self.template_name, {"form": form})

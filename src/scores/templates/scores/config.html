@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% load widget_tweaks %}
+
+{% block title %}
+    AfiDu - Score Configuration
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-4">
+        <label for="{{ form.num_exercises.id_for_label }}" class="block text-sm font-medium text-gray-700">
+          Number of Exercise Scores:
+        </label>
+        {% render_field form.num_exercises class="mt-1 inline-block rounded border-gray-300 shadow-sm" %}
+      </div>
+      <div class="mb-4">
+        <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700">
+          Formula for Final Score:
+        </label>
+        {% render_field form.formula class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+        <p class="text-sm text-gray-600 mt-1">
+          You can use: <code>ex_sum</code>, <code>mid_term</code>, <code>finals</code>, and <code>num_exercises</code>.
+        </p>
+      </div>
+
+      <div class="flex space-x-2">
+        <button type="submit"
+                class="bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium py-2 px-4 rounded-full shadow w-24">
+          Save
+        </button>
+        
+        <a href="{% url 'scores:score-list' %}"
+           class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-full shadow w-24 text-center">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

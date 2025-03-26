@@ -67,40 +67,45 @@
           <i class="fa-solid fa-magnifying-glass"></i>
         </span>
         <input type="text" name="q" placeholder="Search students..." value="{{ request.GET.q }}"
-          class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+              class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
       </div>
       <div class="flex items-center">
         <select name="class_filter" onchange="this.form.submit()"
-          class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
+                class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
           <option value="">All Classes</option>
           {% for key, value in class_choices %}
             <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
           {% endfor %}
         </select>
       </div>
-      <!-- persist filter params -->
-      <input type="hidden" name="year" value="{{ year }}">
-      <input type="hidden" name="semester" value="{{ semester }}">
-      <input type="hidden" name="category" value="{{ category }}">
-      <input type="hidden" name="per_page" value="{{ current_per_page }}">
-    </form>
+    <!-- persist filter params -->
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="semester" value="{{ semester }}">
+    <input type="hidden" name="category" value="{{ category }}">
+    <input type="hidden" name="per_page" value="{{ current_per_page }}">
+  </form>
+
+  <div class="flex items-center justify-center mt-4 sm:mt-0">
+    <a href="{% url 'scores:score-config' %}"
+       class="inline-flex items-center justify-center bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium px-2 py-2 shadow rounded">
+      <i class="fa-solid fa-gear fa-lg mr-2"></i>
+      Settings
+    </a>
   </div>
+</div>
 
   <!-- /table -->
   <form method="post">
     {% csrf_token %}
     <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="score-table">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="min-w-full table-fixed divide-y divide-gray-200">
         <thead class="bg-[#ff4f25]">
           <tr>
             <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
             <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E1</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E2</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E3</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E4</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E5</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">E6</th>
+            {% for i in exercise_range %}
+              <th class="px-2 py-3 text-center text-white font-semibold">E{{ i|add:"1" }}</th>
+            {% endfor %}
             <th class="px-2 py-3 text-center text-white font-semibold">Mid Term</th>
             <th class="px-2 py-3 text-center text-white font-semibold">Finals</th>
             <th class="px-2 py-3 text-center text-white font-semibold">Score Sum</th>
@@ -109,25 +114,35 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for student, form in forms %}
-            {% with prefix="student_"|add:student.id|stringformat:"s" %}
             <tr class="score-row hover:bg-gray-100" data-prefix="student_{{ student.id }}">
               <td class="px-4 py-4 whitespace-nowrap">
-                <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}" class="text-[#ff4f25] hover:underline">
+                <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}"
+                   class="text-[#ff4f25] hover:underline">
                   {{ student.name }}
                 </a>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
-              {% for field in form %}
-                {% if field.name in "e1 e2 e3 e4 e5 e6 mid_term finals" %}
-                  <td class="px-2 py-4 whitespace-nowrap text-center">
-                    {% render_field field style="max-width: 4rem;" %}
-                  </td>
-                {% endif %}
+              {% comment %}
+                Render the dynamically created exercise fields
+              {% endcomment %}
+              {% for field in form.exercise_fields %}
+                <td class="px-2 py-4 whitespace-nowrap text-center">
+                  {% render_field field %}
+                </td>
               {% endfor %}
-              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_score_sum">0.00</td>
-              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_final_score">0.00</td>
+              <td class="px-2 py-4 whitespace-nowrap text-center">
+                {% render_field form.mid_term %}
+              </td>
+              <td class="px-2 py-4 whitespace-nowrap text-center">
+                {% render_field form.finals %}
+              </td>
+              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_score_sum">
+                {{ student.score.score_sum|floatformat:2 }}
+              </td>
+              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_final_score">
+                {{ student.score.final_score|floatformat:2 }}
+              </td>
             </tr>
-            {% endwith %}
           {% empty %}
             <tr>
               <td colspan="12" class="text-center py-4 text-gray-500">No students found.</td>
@@ -234,35 +249,47 @@
 <script>
   // func to calc sum and final score
   function calcSumAndFinal(prefix) {
+    const row = document.querySelector(`[data-prefix="${prefix}"]`);
+    if (!row) return;
+
     let sum = 0;
-    const fields = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'mid_term', 'finals'];
-    fields.forEach(function(field) {
-      let elementId = "id_" + prefix + '-' + field;
-      let input = document.getElementById(elementId);
-      if (input) {
-        let value = parseFloat(input.value);
-        if (!isNaN(value)) {
-          sum += value;
-        }
+    // Get all dynamic exercise inputs (names like "exercise_1", "exercise_2", etc.)
+    const exerciseInputs = row.querySelectorAll(`input[id*="-exercise_"]`);
+    exerciseInputs.forEach(function(input) {
+      const value = parseFloat(input.value);
+      if (!isNaN(value)) {
+        sum += value;
       }
     });
-    let sumElem = document.getElementById(prefix + '_score_sum');
-    let finalElem = document.getElementById(prefix + '_final_score');
-    if(sumElem && finalElem){
-      sumElem.textContent = sum.toFixed(2);
-      finalElem.textContent = (sum / 8).toFixed(2);
+
+  const midTermInput = row.querySelector(`input[id*="-mid_term"]`);
+  const finalsInput  = row.querySelector(`input[id*="-finals"]`);
+  const mid_term = midTermInput ? parseFloat(midTermInput.value) || 0 : 0;
+  const finals = finalsInput ? parseFloat(finalsInput.value) || 0 : 0;
+
+  sum += mid_term + finals;
+
+  const sumElem = document.getElementById(prefix + '_score_sum');
+  const finalElem = document.getElementById(prefix + '_final_score');
+  if (sumElem && finalElem) {
+    sumElem.textContent = sum.toFixed(2);
+    // For live calculation, we assume final score is the total divided by (number of exercises + 2).
+    const numExercise = exerciseInputs.length;
+    const finalScore = sum / (numExercise + 2);
+    finalElem.textContent = finalScore.toFixed(2);
     }
   }
 
   window.onload = function() {
+    // For each row, attach input listeners to recalc on change.
     document.querySelectorAll('.score-row').forEach(function(row) {
-      let prefix = row.dataset.prefix;
+      const prefix = row.dataset.prefix;
       row.querySelectorAll('input').forEach(function(input) {
         input.addEventListener('input', function() {
           calcSumAndFinal(prefix);
         });
       });
-      // calc final score based on other inputs
+      // Initial calculation.
       calcSumAndFinal(prefix);
     });
   };
