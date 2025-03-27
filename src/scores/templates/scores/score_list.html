@@ -8,296 +8,250 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8">
 
-  <!-- guilty of using internal css just to remove those horrible arrows inside number inputs for every brwser-->
-  <style>
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
-  </style>
+    <!-- guilty of using internal css just to remove those horrible arrows inside number inputs for every brwser-->
+    <style>
+      input[type=number]::-webkit-inner-spin-button,
+      input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type=number] {
+        -moz-appearance: textfield;
+      }
+    </style>
 
-  <!-- card year and cat -->
-  <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Select Period & Category</h2>
-    <form method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
-        <select name="year" id="year" onchange="this.form.submit()"
-                class="mt-1 block w-full rounded border-gray-300 shadow-sm">
-          {% for y in years %}
-            <option value="{{ y }}" {% if y|stringformat:"s" == year %}selected{% endif %}>{{ y }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="semester" class="block text-sm font-medium text-gray-700">Semester</label>
-        <select name="semester" id="semester" onchange="this.form.submit()"
-                class="mt-1 block w-full rounded border-gray-300 shadow-sm">
-          {% for key, label in semesters %}
-            <option value="{{ key }}" {% if key == semester %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-        <select name="category" id="category" onchange="this.form.submit()"
-                class="mt-1 block w-full rounded border-gray-300 shadow-sm">
-          {% for key, label in categories %}
-            <option value="{{ key }}" {% if key == category %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <!-- persist get params -->
-      <input type="hidden" name="q" value="{{ search_query }}">
-      <input type="hidden" name="class_filter" value="{{ class_filter }}">
-      <input type="hidden" name="per_page" value="{{ current_per_page }}">
-    </form>
-  </div>
-
-  <!-- card search query and filter -->
-  <div class="w-full bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-    <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
-      <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
-        <span class="px-4 text-gray-500">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </span>
-        <input type="text" name="q" placeholder="Search students..." value="{{ request.GET.q }}"
-              class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
-      </div>
-      <div class="flex items-center">
-        <select name="class_filter" onchange="this.form.submit()"
-                class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
-          <option value="">All Classes</option>
-          {% for key, value in class_choices %}
-            <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    <!-- persist filter params -->
-    <input type="hidden" name="year" value="{{ year }}">
-    <input type="hidden" name="semester" value="{{ semester }}">
-    <input type="hidden" name="category" value="{{ category }}">
-    <input type="hidden" name="per_page" value="{{ current_per_page }}">
-  </form>
-
-  <div class="flex items-center justify-center mt-4 sm:mt-0">
-    <a href="{% url 'scores:score-config' %}"
-       class="inline-flex items-center justify-center bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium px-2 py-2 shadow rounded">
-      <i class="fa-solid fa-gear fa-lg mr-2"></i>
-      Settings
-    </a>
-  </div>
-</div>
-
-  <!-- /table -->
-  <form method="post">
-    {% csrf_token %}
-    <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="score-table">
-      <table class="min-w-full table-fixed divide-y divide-gray-200">
-        <thead class="bg-[#ff4f25]">
-          <tr>
-            <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
-            <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
-            {% for i in exercise_range %}
-              <th class="px-2 py-3 text-center text-white font-semibold">E{{ i|add:"1" }}</th>
+    <!-- card year and cat -->
+    <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">Select Period & Category</h2>
+      <form method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
+          <select name="year" id="year" onchange="this.form.submit()"
+                  class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+            {% for y in years %}
+              <option value="{{ y }}" {% if y|stringformat:"s" == year %}selected{% endif %}>{{ y }}</option>
             {% endfor %}
-            <th class="px-2 py-3 text-center text-white font-semibold">Mid Term</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">Finals</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">Score Sum</th>
-            <th class="px-2 py-3 text-center text-white font-semibold">Final Score</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for student, form in forms %}
-            <tr class="score-row hover:bg-gray-100" data-prefix="student_{{ student.id }}">
-              <td class="px-4 py-4 whitespace-nowrap">
-                <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}"
-                   class="text-[#ff4f25] hover:underline">
-                  {{ student.name }}
-                </a>
-              </td>
-              <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
-              {% comment %}
-                Render the dynamically created exercise fields
-              {% endcomment %}
-              {% for field in form.exercise_fields %}
-                <td class="px-2 py-4 whitespace-nowrap text-center">
-                  {% render_field field %}
-                </td>
-              {% endfor %}
-              <td class="px-2 py-4 whitespace-nowrap text-center">
-                {% render_field form.mid_term %}
-              </td>
-              <td class="px-2 py-4 whitespace-nowrap text-center">
-                {% render_field form.finals %}
-              </td>
-              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_score_sum">
-                {{ student.score.score_sum|floatformat:2 }}
-              </td>
-              <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_final_score">
-                {{ student.score.final_score|floatformat:2 }}
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="12" class="text-center py-4 text-gray-500">No students found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <!-- button to retain score value -->
-      <button type="submit" class="hidden">
-      </button>
-    </div>
-  
-    <!-- hidden inputs persist values-->
-    <input type="hidden" name="year" value="{{ year }}">
-    <input type="hidden" name="semester" value="{{ semester }}">
-    <input type="hidden" name="category" value="{{ category }}">
-    <input type="hidden" name="q" value="{{ search_query }}">
-    <input type="hidden" name="class_filter" value="{{ class_filter }}">
-  </form>
-
-  <!-- item per_page, pagination -->
-  <div class="relative mt-6 mb-5">
-    <div class="absolute left-0">
-      <form method="get" id="per-page-form" class="flex items-center space-x-2">
-        <!-- persist filter GET -->
-        <input type="hidden" name="q" value="{{ request.GET.q }}">
-        <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
-        <input type="hidden" name="year" value="{{ year }}">
-        <input type="hidden" name="semester" value="{{ semester }}">
-        <input type="hidden" name="category" value="{{ category }}">
-        <label for="per_page_select" class="text-gray-700">Items per page:</label>
-        <select name="per_page" id="per_page_select" onchange="this.form.submit()"
-                class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
-          <option value="5" {% if current_per_page == "5" %}selected{% endif %}>5</option>
-          <option value="10" {% if current_per_page == "10" %}selected{% endif %}>10</option>
-          <option value="15" {% if current_per_page == "15" %}selected{% endif %}>15</option>
-        </select>
+          </select>
+        </div>
+        <div>
+          <label for="semester" class="block text-sm font-medium text-gray-700">Semester</label>
+          <select name="semester" id="semester" onchange="this.form.submit()"
+                  class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+            {% for key, label in semesters %}
+              <option value="{{ key }}" {% if key == semester %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+          <select name="category" id="category" onchange="this.form.submit()"
+                  class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+            {% for key, label in categories %}
+              <option value="{{ key }}" {% if key == category %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <!-- persist get params -->
+        <input type="hidden" name="q" value="{{ search_query }}">
+        <input type="hidden" name="class_filter" value="{{ class_filter }}">
+        <input type="hidden" name="per_page" value="{{ current_per_page }}">
       </form>
     </div>
-  
-    <div class="flex justify-center">
-      {% if is_paginated %}
-        <nav>
-          <ul class="flex items-center space-x-2">
-            {% if page_obj.has_previous %}
-              <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
-                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
-                  <i class="fa-solid fa-chevron-left"></i>
-                </a>
-              </li>
-            {% endif %}
-  
-            {% if page_obj.number > 3 %}
-              <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&semester={{ semester }}&category={{ category }}"
-                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
-                  1
-                </a>
-              </li>
-              {% if page_obj.number > 4 %}
-                <li><span class="py-1 px-3 text-gray-600">...</span></li>
-              {% endif %}
-            {% endif %}
-  
-            {% for i in page_obj.paginator.page_range %}
-              {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
+
+    <!-- card search query and filter -->
+    <div class="w-full bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
+        <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
+          <span class="px-4 text-gray-500">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </span>
+          <input type="text" name="q" placeholder="Search students..." value="{{ request.GET.q }}"
+                class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+        </div>
+        <div class="flex items-center">
+          <select name="class_filter" onchange="this.form.submit()"
+                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
+            <option value="">All Classes</option>
+            {% for key, value in class_choices %}
+              <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      <!-- persist filter params -->
+      <input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="semester" value="{{ semester }}">
+      <input type="hidden" name="category" value="{{ category }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
+    </form>
+
+    <div class="flex items-center justify-center mt-4 sm:mt-0">
+      <a href="{% url 'scores:score-config' %}"
+        class="inline-flex items-center justify-center bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium px-2 py-2 shadow rounded">
+        <i class="fa-solid fa-gear fa-lg mr-2"></i>
+        Settings
+      </a>
+    </div>
+  </div>
+
+    <!-- /table -->
+    <form method="post">
+      {% csrf_token %}
+      <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="score-table">
+        <table class="min-w-full table-fixed divide-y divide-gray-200">
+          <thead class="bg-[#ff4f25]">
+            <tr>
+              <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
+              <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
+              {% for i in exercise_range %}
+                <th class="px-2 py-3 text-center text-white font-semibold">E{{ i|add:"1" }}</th>
+              {% endfor %}
+              <th class="px-2 py-3 text-center text-white font-semibold">Mid Term</th>
+              <th class="px-2 py-3 text-center text-white font-semibold">Finals</th>
+              <th class="px-2 py-3 text-center text-white font-semibold">Score Sum</th>
+              <th class="px-2 py-3 text-center text-white font-semibold">Final Score</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for student, form in forms %}
+              <tr class="score-row hover:bg-gray-100" data-prefix="student_{{ student.id }}">
+                <td class="px-4 py-4 whitespace-nowrap">
+                  <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}"
+                    class="text-[#ff4f25] hover:underline">
+                    {{ student.name }}
+                  </a>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
+                {% comment %}
+                  Render the dynamically created exercise fields
+                {% endcomment %}
+                {% for field in form.exercise_fields %}
+                  <td class="px-2 py-4 whitespace-nowrap text-center">
+                    {% render_field field %}
+                  </td>
+                {% endfor %}
+                <td class="px-2 py-4 whitespace-nowrap text-center">
+                  {% render_field form.mid_term %}
+                </td>
+                <td class="px-2 py-4 whitespace-nowrap text-center">
+                  {% render_field form.finals %}
+                </td>
+                <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_score_sum">
+                  {{ student.score.score_sum|floatformat:2 }}
+                </td>
+                <td class="px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_final_score">
+                  {{ student.score.final_score|floatformat:2 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="12" class="text-center py-4 text-gray-500">No students found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <!-- button to retain score value -->
+        <button type="submit" class="hidden">
+        </button>
+      </div>
+    
+      <!-- hidden inputs persist values-->
+      <input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="semester" value="{{ semester }}">
+      <input type="hidden" name="category" value="{{ category }}">
+      <input type="hidden" name="q" value="{{ search_query }}">
+      <input type="hidden" name="class_filter" value="{{ class_filter }}">
+    </form>
+
+    <!-- item per_page, pagination -->
+    <div class="relative mt-6 mb-5">
+      <div class="absolute left-0">
+        <form method="get" id="per-page-form" class="flex items-center space-x-2">
+          <!-- persist filter GET -->
+          <input type="hidden" name="q" value="{{ request.GET.q }}">
+          <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
+          <input type="hidden" name="year" value="{{ year }}">
+          <input type="hidden" name="semester" value="{{ semester }}">
+          <input type="hidden" name="category" value="{{ category }}">
+          <label for="per_page_select" class="text-gray-700">Items per page:</label>
+          <select name="per_page" id="per_page_select" onchange="this.form.submit()"
+                  class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
+            <option value="5" {% if current_per_page == "5" %}selected{% endif %}>5</option>
+            <option value="10" {% if current_per_page == "10" %}selected{% endif %}>10</option>
+            <option value="15" {% if current_per_page == "15" %}selected{% endif %}>15</option>
+          </select>
+        </form>
+      </div>
+    
+      <div class="flex justify-center">
+        {% if is_paginated %}
+          <nav>
+            <ul class="flex items-center space-x-2">
+              {% if page_obj.has_previous %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
-                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
-                    {{ i }}
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
+                    <i class="fa-solid fa-chevron-left"></i>
                   </a>
                 </li>
               {% endif %}
-            {% endfor %}
-  
-            {% if page_obj.number < page_obj.paginator.num_pages|add:"-2" %}
-              {% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
-                <li><span class="py-1 px-3 text-gray-600">...</span></li>
+    
+              {% if page_obj.number > 3 %}
+                <li>
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&semester={{ semester }}&category={{ category }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
+                    1
+                  </a>
+                </li>
+                {% if page_obj.number > 4 %}
+                  <li><span class="py-1 px-3 text-gray-600">...</span></li>
+                {% endif %}
               {% endif %}
-              <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
-                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
-                  {{ page_obj.paginator.num_pages }}
-                </a>
-              </li>
-            {% endif %}
-  
-            {% if page_obj.has_next %}
-              <li>
-                <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
-                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
-                  <i class="fa-solid fa-chevron-right"></i>
-                </a>
-              </li>
-            {% endif %}
-          </ul>
-        </nav>
-      {% endif %}
+    
+              {% for i in page_obj.paginator.page_range %}
+                {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
+                  <li>
+                    <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
+                      class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
+                      {{ i }}
+                    </a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+    
+              {% if page_obj.number < page_obj.paginator.num_pages|add:"-2" %}
+                {% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+                  <li><span class="py-1 px-3 text-gray-600">...</span></li>
+                {% endif %}
+                <li>
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
+                    {{ page_obj.paginator.num_pages }}
+                  </a>
+                </li>
+              {% endif %}
+    
+              {% if page_obj.has_next %}
+                <li>
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
     </div>
   </div>
-</div>
 
-<!-- notifs -->
-{% include 'snippets/message_notifs.html' %}
-<script src="{% static 'js/dismiss_notifs.js' %}"></script>
+  <!-- JS -->
+  <!-- notifs -->
+  {% include 'snippets/message_notifs.html' %}
+  <script src="{% static 'js/dismiss_notifs.js' %}"></script>
 
-<script>
-  // func to calc sum and final score
-  function calcSumAndFinal(prefix) {
-    const row = document.querySelector(`[data-prefix="${prefix}"]`);
-    if (!row) return;
-
-    let sum = 0;
-    // Get all dynamic exercise inputs (names like "exercise_1", "exercise_2", etc.)
-    const exerciseInputs = row.querySelectorAll(`input[id*="-exercise_"]`);
-    exerciseInputs.forEach(function(input) {
-      const value = parseFloat(input.value);
-      if (!isNaN(value)) {
-        sum += value;
-      }
-    });
-
-  const midTermInput = row.querySelector(`input[id*="-mid_term"]`);
-  const finalsInput  = row.querySelector(`input[id*="-finals"]`);
-  const mid_term = midTermInput ? parseFloat(midTermInput.value) || 0 : 0;
-  const finals = finalsInput ? parseFloat(finalsInput.value) || 0 : 0;
-
-  sum += mid_term + finals;
-
-  const sumElem = document.getElementById(prefix + '_score_sum');
-  const finalElem = document.getElementById(prefix + '_final_score');
-  if (sumElem && finalElem) {
-    sumElem.textContent = sum.toFixed(2);
-    // For live calculation, we assume final score is the total divided by (number of exercises + 2).
-    const numExercise = exerciseInputs.length;
-    const finalScore = sum / (numExercise + 2);
-    finalElem.textContent = finalScore.toFixed(2);
-    }
-  }
-
-  window.onload = function() {
-    // For each row, attach input listeners to recalc on change.
-    document.querySelectorAll('.score-row').forEach(function(row) {
-      const prefix = row.dataset.prefix;
-      row.querySelectorAll('input').forEach(function(input) {
-        input.addEventListener('input', function() {
-          calcSumAndFinal(prefix);
-        });
-      });
-      // Initial calculation.
-      calcSumAndFinal(prefix);
-    });
-  };
-</script>
-
+  <!-- score calc -->
+  <script src="{% static 'js/scores/calc_score.js' %}"></script>
 {% endblock %}

@@ -6,157 +6,134 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-  <!-- header search, filter dan add new material -->
-  <div class="bg-white shadow rounded-lg p-4 mb-6">
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex flex-col sm:flex-row items-center gap-4">
-        <!-- search filter form -->
-        <form method="get" class="flex gap-2">
-          <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
-            <span class="px-4 text-gray-500">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </span>
-            <input type="text" name="q" placeholder="Search materials..." value="{{ request.GET.q }}"
-              class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
-          </div>
-          <select name="category_filter" onchange="this.form.submit()"
-                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-red-500">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-              <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
-            {% endfor %}
-          </select>
-        </form>
+  <div class="container mx-auto px-4 py-8">
+    <!-- header search, filter dan add new material -->
+    <div class="bg-white shadow rounded-lg p-4 mb-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <!-- search filter form -->
+          <form method="get" class="flex gap-2">
+            <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
+              <span class="px-4 text-gray-500">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </span>
+              <input type="text" name="q" placeholder="Search materials..." value="{{ request.GET.q }}"
+                class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+            </div>
+            <select name="category_filter" onchange="this.form.submit()"
+                    class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-red-500">
+              <option value="">All Categories</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
+              {% endfor %}
+            </select>
+          </form>
 
+        </div>
+        <!-- THEEE ADDD BUTTONNNN -->
+        <a href="{% url 'study_materials:upload' %}" class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+          <i class="fa-solid fa-plus"></i>
+        </a>
       </div>
-      <!-- THEEE ADDD BUTTONNNN -->
-      <a href="{% url 'study_materials:upload' %}" class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
-        <i class="fa-solid fa-plus"></i>
-      </a>
     </div>
+
+    {% if materials %}
+      {% regroup materials|dictsort:"category" by category as grouped_materials %}
+
+      {% for group in grouped_materials %}
+        <!-- cat header -->
+        <h2 class="text-2xl font-semibold text-white bg-[#ff5d5d] rounded-lg px-4 py-2 mt-8 mb-4 shadow">
+          {{ group.grouper|capfirst }}
+        </h2>
+        <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {% for material in group.list %}
+          <div class="bg-white shadow-lg rounded-lg overflow-hidden relative">
+            <a href="{{ material.file.url }}"
+              {% if material.get_file_extension == "pdf" %}target="_blank"{% else %}download{% endif %}
+              class="block">
+              <div class="h-32 w-full bg-gray-100 overflow-hidden">
+                {% if material.thumbnail %}
+                  <img src="{{ material.thumbnail.url }}" alt="{{ material.title }} Thumbnail" class="w-full h-full object-cover">
+                {% else %}
+                  <img src="{% static 'icons/pdf_icon.png' %}" alt="PDF Thumbnail" class="w-full h-full object-contain p-4">
+                {% endif %}
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-medium text-gray-800 text-center">{{ material.title }}</h3>
+              </div>
+            </a>
+            <div class="px-4 pb-4 border-t border-gray-200">
+              <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-user"></i>
+                <span>
+                  {% if material.uploaded_by %}
+                    {% if material.uploaded_by.first_name %}
+                      {{ material.uploaded_by.first_name }}
+                    {% else %}
+                      {{ material.uploaded_by.email }}
+                    {% endif %}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-clock"></i>
+                <span>Uploaded: {{ material.uploaded_at|date:"M d, Y H:i" }}</span>
+              </div>
+              <div class="text-xs text-gray-500 flex items-center gap-1">
+                <i class="fa-solid fa-edit"></i>
+                <span>Edited: {{ material.edited_at|date:"M d, Y H:i" }}</span>
+              </div>
+            </div>
+            <button onclick="toggleDropdown(event, 'dropdown-{{ material.id }}')" type="button" class="dropdown-button absolute top-2 right-2 flex items-center justify-center w-6 h-6 text-gray-700 bg-white bg-opacity-90 rounded">
+              <!-- Three Dot SVG Icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+            <div id="dropdown-{{ material.id }}" class="dropdown-content absolute right-2 top-8 mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
+              <ul class="py-1">
+                <li>
+                  <a href="{% url 'study_materials:edit' material.id %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <!-- Edit Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l3 3 8-8a2.828 2.828 0 00-4-4l-8 8v3h3z" />
+                    </svg>
+                    Edit
+                  </a>
+                </li>
+                <li>
+                  <a href="{% url 'study_materials:delete' material.id %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                    <!-- Delete Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1H9V4a1 1 0 011-1z" />
+                    </svg>
+                    Delete
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      {% else %}
+        <div class="grid place-items-center">
+          <div class="bg-white shadow-lg rounded-lg overflow-hidden relative">
+            <p class="text-center text-gray-600 p-4">No study materials found.</p>
+          </div>
+        </div>
+      {% endif %}
   </div>
 
-  {% if materials %}
-    {% regroup materials|dictsort:"category" by category as grouped_materials %}
+  <!-- JS -->
+  <!-- notifs -->
+  {% include 'snippets/message_notifs.html' %}
+  <script src="{% static 'js/dismiss_notifs.js' %}"></script>
 
-    {% for group in grouped_materials %}
-      <!-- cat header -->
-      <h2 class="text-2xl font-semibold text-white bg-[#ff5d5d] rounded-lg px-4 py-2 mt-8 mb-4 shadow">
-        {{ group.grouper|capfirst }}
-      </h2>
-      <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {% for material in group.list %}
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden relative">
-          <a href="{{ material.file.url }}"
-             {% if material.get_file_extension == "pdf" %}target="_blank"{% else %}download{% endif %}
-             class="block">
-            <div class="h-32 w-full bg-gray-100 overflow-hidden">
-              {% if material.thumbnail %}
-                <img src="{{ material.thumbnail.url }}" alt="{{ material.title }} Thumbnail" class="w-full h-full object-cover">
-              {% else %}
-                <img src="{% static 'icons/pdf_icon.png' %}" alt="PDF Thumbnail" class="w-full h-full object-contain p-4">
-              {% endif %}
-            </div>
-            <div class="p-4">
-              <h3 class="text-lg font-medium text-gray-800 text-center">{{ material.title }}</h3>
-            </div>
-          </a>
-          <div class="px-4 pb-4 border-t border-gray-200">
-            <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
-              <i class="fa-solid fa-user"></i>
-              <span>
-                {% if material.uploaded_by %}
-                  {% if material.uploaded_by.first_name %}
-                    {{ material.uploaded_by.first_name }}
-                  {% else %}
-                    {{ material.uploaded_by.email }}
-                  {% endif %}
-                {% else %}
-                  Unknown
-                {% endif %}
-              </span>
-            </div>
-            <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
-              <i class="fa-solid fa-clock"></i>
-              <span>Uploaded: {{ material.uploaded_at|date:"M d, Y H:i" }}</span>
-            </div>
-            <div class="text-xs text-gray-500 flex items-center gap-1">
-              <i class="fa-solid fa-edit"></i>
-              <span>Edited: {{ material.edited_at|date:"M d, Y H:i" }}</span>
-            </div>
-          </div>
-          <button onclick="toggleDropdown(event, 'dropdown-{{ material.id }}')" type="button" class="dropdown-button absolute top-2 right-2 flex items-center justify-center w-6 h-6 text-gray-700 bg-white bg-opacity-90 rounded">
-            <!-- Three Dot SVG Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="5" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="19" r="1.5" />
-            </svg>
-          </button>
-          <div id="dropdown-{{ material.id }}" class="dropdown-content absolute right-2 top-8 mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
-            <ul class="py-1">
-              <li>
-                <a href="{% url 'study_materials:edit' material.id %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  <!-- Edit Icon SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l3 3 8-8a2.828 2.828 0 00-4-4l-8 8v3h3z" />
-                  </svg>
-                  Edit
-                </a>
-              </li>
-              <li>
-                <a href="{% url 'study_materials:delete' material.id %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                  <!-- Delete Icon SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1H9V4a1 1 0 011-1z" />
-                  </svg>
-                  Delete
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    {% endfor %}
-    {% else %}
-      <div class="grid place-items-center">
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden relative">
-          <p class="text-center text-gray-600 p-4">No study materials found.</p>
-        </div>
-      </div>
-    {% endif %}
-</div>
-
-<!-- notifs -->
-{% include 'snippets/message_notifs.html' %}
-<script src="{% static 'js/dismiss_notifs.js' %}"></script>
-
-<script>
-    // again, ini cuma tempo
-
-    // toggle dropdown menu on click dan stop propagation so that when click ga langsung close
-    function toggleDropdown(event, id) {
-      event.stopPropagation();
-      var dropdown = document.getElementById(id);
-
-      // tutup semua dropdown menu kecuali yang lagi di klik
-      document.querySelectorAll('[id^="dropdown-"]').forEach(function(otherDropdown) {
-        if (otherDropdown !== dropdown) {
-          otherDropdown.classList.add('hidden');
-        }
-      });
-
-      // toggle dropdown
-      dropdown.classList.toggle('hidden');
-    }
-
-    // tutup dropdown menu kalo click diluar dropdown
-    window.addEventListener('click', function(event) {
-      document.querySelectorAll('[id^="dropdown-"]').forEach(function(dropdown) {
-        dropdown.classList.add('hidden');
-      });
-    });
-</script>
+  <!-- toggle dropdown -->
+  <script src="{% static 'js/toggle_dropdown.js' %}"></script>
 {% endblock %}

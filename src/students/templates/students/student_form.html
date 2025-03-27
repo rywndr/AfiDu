@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load static %}
 {% load widget_tweaks %}
 
 {% block title %}
@@ -6,120 +7,69 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto max-w-6xl px-4 py-8">
-  
-  <!-- back btn (only for editing) -->
-  {% if form.instance.pk %}
-    <div class="mb-2">
-      <a href="{% url 'students:student-detail' student.pk %}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5  h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-        </svg>
-      </a>
-    </div>
-  {% endif %}
+  <div class="container mx-auto max-w-6xl px-4 py-8">
+    
+    <!-- back btn (only for editing) -->
+    {% if form.instance.pk %}
+      <div class="mb-2">
+        <a href="{% url 'students:student-detail' student.pk %}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5  h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+    {% endif %}
 
-  <!-- card -->
-  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="p-6">
-      <form method="post" enctype="multipart/form-data" id="student-form" class="space-y-6">
-        {% csrf_token %}
-        
-        {% for field in form %}
-          <div class="space-y-2">
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
-              {{ field.label }}
-            </label>
-            
-            {% if field.field.widget.input_type == 'file' %}
-              <div class="mt-1">
-                {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
-              </div>
-            {% elif field.field.widget.input_type == 'select' %}
-              <div>
-                {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
-              </div>
-            {% else %}
-              <div>
-                {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
-              </div>
-            {% endif %}
-            
-            {% if field.help_text %}
-              <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
-            {% endif %}
-            
-            {% for error in field.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
+    <!-- card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="p-6">
+        <form method="post" enctype="multipart/form-data" id="student-form" class="space-y-6">
+          {% csrf_token %}
+          
+          {% for field in form %}
+            <div class="space-y-2">
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
+                {{ field.label }}
+              </label>
+              
+              {% if field.field.widget.input_type == 'file' %}
+                <div class="mt-1">
+                  {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
+                </div>
+              {% elif field.field.widget.input_type == 'select' %}
+                <div>
+                  {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
+                </div>
+              {% else %}
+                <div>
+                  {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
+                </div>
+              {% endif %}
+              
+              {% if field.help_text %}
+                <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+              {% endif %}
+              
+              {% for error in field.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          
+          <div class="flex items-center space-x-4 pt-4">
+            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b3371a] transition-all duration-200 transform hover:-translate-y-1">
+              Submit
+            </button>
+            <a href="{% url 'students:student-list' %}" class="inline-flex justify-center py-2 px-4 border border-[#5a5656] shadow-sm text-sm font-medium rounded-md text-[#5a5656] bg-white hover:bg-gray-50 duration-200">
+              Cancel
+            </a>
           </div>
-        {% endfor %}
-        
-        <div class="flex items-center space-x-4 pt-4">
-          <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b3371a] transition-all duration-200 transform hover:-translate-y-1">
-            Submit
-          </button>
-          <a href="{% url 'students:student-list' %}" class="inline-flex justify-center py-2 px-4 border border-[#5a5656] shadow-sm text-sm font-medium rounded-md text-[#5a5656] bg-white hover:bg-gray-50 duration-200">
-            Cancel
-          </a>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
-  <script>
-    // panggil IIFE
-    (function() {
-      // variable supaya ga infinite loop tiap perubahan value
-      let updating = false;
-      let ageField = document.getElementById("id_age");
-      let dobField = document.getElementById("id_date_of_birth");
-
-      if (ageField && dobField) {
-        // kalo age ditentukan, sesuaikan tahun di tanggal lahir dengan age yang ditentukan
-        ageField.addEventListener("change", function() {
-          if (updating) return;
-          updating = true;
-          var age = parseInt(this.value);
-          if (!isNaN(age)) {
-            var currentYear = new Date().getFullYear();
-            var computedYear = currentYear - age;
-            var currentDob = dobField.value;
-            if (!currentDob) {
-              // jika tanggal tidak ditentukan default ke January 1 dari tahun yang dihitung
-              dobField.value = computedYear + "-01-01";
-            } else {
-              // kalo tanggal ditentukan, update tahunnya aja, sisa bulan dan tanggal tetap
-              var parts = currentDob.split("-");
-              if (parts.length === 3) {
-                dobField.value = computedYear + "-" + parts[1] + "-" + parts[2];
-              } else {
-                dobField.value = computedYear + "-01-01";
-              }
-            }
-          }
-          updating = false;
-        });
-
-        // kalo tanggal lahir diubah, sesuaikan age
-        dobField.addEventListener("change", function() {
-          if (updating) return;
-          updating = true;
-          var dob = new Date(this.value);
-          if (!isNaN(dob.getTime())) {
-            var today = new Date();
-            var age = today.getFullYear() - dob.getFullYear();
-            var m = today.getMonth() - dob.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-              age--;
-            }
-            ageField.value = age;
-          }
-          updating = false;
-        });
-      }
-    })();
-  </script>
+  <!-- JS -->
+  <script src="{% static 'js/students/auto_age_count.js' %}"></script>
 {% endblock %}
 
