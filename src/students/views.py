@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -86,6 +87,13 @@ class StudentCreateView(LoginRequiredMixin, StudentContextMixin, CreateView):
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
+    def form_valid(self, form):
+        messages.success(self.request, "Student created successfully.")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to create student. Please try again.")
+        return super().form_invalid(form)
 
 class StudentUpdateView(LoginRequiredMixin, StudentContextMixin, UpdateView):
     model = Student
@@ -93,8 +101,24 @@ class StudentUpdateView(LoginRequiredMixin, StudentContextMixin, UpdateView):
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
+    def form_valid(self, form):
+        messages.success(self.request, "Student updated successfully.")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to update student. Please try again.")
+        return super().form_invalid(form)
 
 class StudentDeleteView(LoginRequiredMixin, StudentContextMixin, DeleteView):
     model = Student
     template_name = "students/student_confirm_delete.html"
     success_url = reverse_lazy("students:student-list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Student deleted successfully.")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to delete student. Please try again.")
+        return super().form_invalid(form)
+    

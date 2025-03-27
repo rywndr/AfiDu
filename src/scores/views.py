@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.contrib import messages
 from django.views import View
 from django.core.paginator import Paginator
 from datetime import datetime
@@ -155,6 +156,9 @@ class ScoreConfigView(View):
         form = ScoreConfigForm(request.POST, instance=config)
         if form.is_valid():
             form.save()
+            messages.success(request, "Configuration saved successfully.")
             # redirect ke score-list after saving config
             return redirect("scores:score-list")
+        else:
+            messages.error(request, "Failed to save configuration. Please try again.")
         return render(request, self.template_name, {"form": form})

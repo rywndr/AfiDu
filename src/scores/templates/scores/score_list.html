@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% load widget_tweaks %}
 
@@ -245,6 +246,10 @@
     </div>
   </div>
 </div>
+
+<!-- notifs -->
+{% include 'snippets/message_notifs.html' %}
+<script src="{% static 'js/dismiss_notifs.js' %}"></script>
 
 <script>
   // func to calc sum and final score

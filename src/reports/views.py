@@ -114,7 +114,7 @@ class ExportReportPDFView(View):
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
-
+    
 class ExportReportsZipView(View):
     def get(self, request, *args, **kwargs):
         current_year = datetime.now().year

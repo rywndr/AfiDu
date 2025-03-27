@@ -7,7 +7,6 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-
   <!-- header, search, filter dan add new student button-->
   <div class="bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
     <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
@@ -213,6 +212,11 @@
     </div>
   </div>
 </div>
+
+<!-- notifs -->
+{% include 'snippets/message_notifs.html' %}
+<script src="{% static 'js/dismiss_notifs.js' %}"></script>
+
 
 <script>
   // tempo js
