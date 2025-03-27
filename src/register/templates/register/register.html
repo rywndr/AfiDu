@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% load static %}
 {% load widget_tweaks %}
 
 {% block title %}
@@ -55,8 +56,12 @@
         <label for="{{ form.password1.id_for_label }}" class="block text-gray-700 font-medium">
           Password <span class="text-red-500 text-xs">*</span>
         </label>
-        <div class="inline-block">
-          {% render_field form.password1 placeholder="Enter a strong password" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        <div class="relative inline-block">
+          {% render_field form.password1 placeholder="Enter a strong password" class="w-80 px-2 py-1 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+          <button type="button" id="togglePassword1"
+                  class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none text-sm">
+            Show
+          </button>
         </div>
         <p class="text-xs text-gray-500 mt-1">{{ form.password1.help_text }}</p>
         {% if form.password1.errors %}
@@ -68,8 +73,12 @@
         <label for="{{ form.password2.id_for_label }}" class="block text-gray-700 font-medium">
           Confirm Password <span class="text-red-500 text-xs">*</span>
         </label>
-        <div class="inline-block">
-          {% render_field form.password2 placeholder="Re-enter your password" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+        <div class="relative inline-block">
+          {% render_field form.password2 placeholder="Re-enter your password" class="w-80 px-2 py-1 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
+          <button type="button" id="togglePassword2"
+                  class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none text-sm">
+            Show
+          </button>
         </div>
         <p class="text-xs text-gray-500 mt-1">{{ form.password2.help_text }}</p>
         {% if form.password2.errors %}
@@ -83,4 +92,6 @@
     </form>
   </div>
 </div>
+
+<script src="{% static 'js/register/toggle_password.js' %}"></script>
 {% endblock %}
