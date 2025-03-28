@@ -7,15 +7,25 @@ from .forms import RegistrationForm
 
 
 # Create your views here.
-class RegisterView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        # untuk menampilkan form register
-        form = RegistrationForm()
-        context = {
-            "form": form,
+class RegistrationContextMixin:
+    def get_registration_context(self):
+        return {
             "active_tab_title": "Register",
             "active_tab_icon": "fa-user-plus",
         }
+    
+    def get_context_data(self, extra_context=None):
+        context = {}
+        context.update(self.get_registration_context())
+        if extra_context:
+            context.update(extra_context)
+        return context
+
+class RegisterView(LoginRequiredMixin, RegistrationContextMixin, View):
+    def get(self, request, *args, **kwargs):
+        # untuk menampilkan form register
+        form = RegistrationForm()
+        context = self.get_context_data({"form": form})
         return render(request, "register/register.html", context)
 
     def post(self, request, *args, **kwargs):
@@ -24,20 +34,12 @@ class RegisterView(LoginRequiredMixin, View):
         if form.is_valid():
             form.save()
             return redirect("register:register_success")
-        context = {
-            "form": form,
-            "active_tab_title": "Register",
-            "active_tab_icon": "fa-user-plus",
-        }
+        context = self.get_context_data({"form": form})
         return render(request, "register/register.html", context)
 
-
-class RegisterSuccessView(LoginRequiredMixin, View):
+class RegisterSuccessView(LoginRequiredMixin, RegistrationContextMixin, View):
     def get(self, request, *args, **kwargs):
         # untuk menampilkan halaman sukses register
-        context = {
-            "active_tab_title": "Register",
-            "active_tab_icon": "fa-user-plus",
-        }
+        context = self.get_context_data()
         messages.success(request, "Your account has been successfully created!")
         return render(request, "register/register_success.html", context)
