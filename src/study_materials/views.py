@@ -6,9 +6,20 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from .forms import StudyMaterialForm
 from .models import StudyMaterial
 
-
 # Create your views here.
-class StudyMaterialListView(LoginRequiredMixin, ListView):
+class StudyMaterialContextMixin:
+    def get_study_material_context(self):
+        return {
+            "active_tab_title": "Study Materials",
+            "active_tab_icon": "fa-book-open",
+        }
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_study_material_context())
+        return context
+
+class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListView):
     model = StudyMaterial
     template_name = "study_materials/list.html"
     context_object_name = "materials"
@@ -17,7 +28,6 @@ class StudyMaterialListView(LoginRequiredMixin, ListView):
         queryset = super().get_queryset()
         q = self.request.GET.get("q", "")
         category_filter = self.request.GET.get("category_filter", "")
-
         if q:
             queryset = queryset.filter(title__icontains=q)
         if category_filter:
@@ -31,12 +41,9 @@ class StudyMaterialListView(LoginRequiredMixin, ListView):
         context["categories"] = categories
         context["q"] = self.request.GET.get("q", "")
         context["category_filter"] = self.request.GET.get("category_filter", "")
-        context["active_tab_title"] = "Study Materials"
-        context["active_tab_icon"] = "fa-book-open"
         return context
 
-
-class StudyMaterialCreateView(LoginRequiredMixin, CreateView):
+class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, CreateView):
     model = StudyMaterial
     form_class = StudyMaterialForm
     template_name = "study_materials/upload.html"
@@ -52,14 +59,7 @@ class StudyMaterialCreateView(LoginRequiredMixin, CreateView):
         messages.error(self.request, "Failed to upload study material.")
         return super().form_invalid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Study Materials"
-        context["active_tab_icon"] = "fa-book-open"
-        return context
-
-
-class StudyMaterialUpdateView(LoginRequiredMixin, UpdateView):
+class StudyMaterialUpdateView(LoginRequiredMixin, StudyMaterialContextMixin, UpdateView):
     model = StudyMaterial
     fields = ["title", "category"]
     template_name = "study_materials/edit.html"
@@ -73,14 +73,7 @@ class StudyMaterialUpdateView(LoginRequiredMixin, UpdateView):
         messages.error(self.request, "Failed to update study material.")
         return super().form_invalid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Study Materials"
-        context["active_tab_icon"] = "fa-book-open"
-        return context
-
-
-class StudyMaterialDeleteView(LoginRequiredMixin, DeleteView):
+class StudyMaterialDeleteView(LoginRequiredMixin, StudyMaterialContextMixin, DeleteView):
     model = StudyMaterial
     template_name = "study_materials/confirm_delete.html"
     success_url = reverse_lazy("study_materials:list")
@@ -92,9 +85,3 @@ class StudyMaterialDeleteView(LoginRequiredMixin, DeleteView):
     def form_invalid(self, form):
         messages.error(self.request, "Failed to delete study material.")
         return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["active_tab_title"] = "Study Materials"
-        context["active_tab_icon"] = "fa-book-open"
-        return context
