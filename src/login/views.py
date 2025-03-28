@@ -14,8 +14,14 @@ from django.urls import reverse_lazy
 from .email_backend import clear_reset_link, get_reset_email, get_reset_link
 from .forms import EmailAuthenticationForm
 
+class AuthContextMixin:
+    def get_auth_context(self, extra_context=None):
+        context = {}
+        if extra_context:
+            context.update(extra_context)
+        return context
 
-class CustomLoginView(LoginView):
+class CustomLoginView(LoginView, AuthContextMixin):
     authentication_form = EmailAuthenticationForm
     template_name = "auth/login.html"
 
@@ -39,10 +45,8 @@ class CustomLoginView(LoginView):
 
         return super().form_valid(form)
 
-
 def register(request):
     return render(request, "register.html")
-
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = "auth/password_reset_form.html"
@@ -76,13 +80,11 @@ class CustomPasswordResetView(PasswordResetView):
 
         return result
 
-
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = "auth/password_reset_done.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         # ambil reset link dari session
         reset_link = self.request.session.get("password_reset_link", None)
         reset_email = self.request.session.get("password_reset_email", None)
@@ -93,20 +95,15 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 
         return context
 
-
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "auth/password_reset_confirm.html"
     success_url = reverse_lazy("login:password_reset_complete")
-
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = "auth/password_reset_complete.html"
 
     def get(self, request, *args, **kwargs):
         # clear reset link dari session
-        if "password_reset_link" in request.session:
-            del request.session["password_reset_link"]
-        if "password_reset_email" in request.session:
-            del request.session["password_reset_email"]
-
+        request.session.pop("password_reset_link", None)
+        request.session.pop("password_reset_email", None)
         return super().get(request, *args, **kwargs)
