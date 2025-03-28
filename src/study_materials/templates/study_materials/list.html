@@ -31,7 +31,7 @@
 
         </div>
         <!-- THEEE ADDD BUTTONNNN -->
-        <a href="{% url 'study_materials:upload' %}" class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+        <a href="{% url 'study_materials:upload' %}" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-plus"></i>
         </a>
       </div>
@@ -42,7 +42,7 @@
 
       {% for group in grouped_materials %}
         <!-- cat header -->
-        <h2 class="text-2xl font-semibold text-white bg-[#ff5d5d] rounded-lg px-4 py-2 mt-8 mb-4 shadow">
+        <h2 class="text-2xl font-semibold text-white bg-[#ff4f25] rounded-lg px-4 py-2 mt-8 mb-4 shadow">
           {{ group.grouper|capfirst }}
         </h2>
         <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

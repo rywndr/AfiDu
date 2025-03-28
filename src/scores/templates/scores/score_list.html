@@ -86,11 +86,10 @@
       <input type="hidden" name="per_page" value="{{ current_per_page }}">
     </form>
 
-    <div class="flex items-center justify-center mt-4 sm:mt-0">
+    <div class="flex space-x-4">
       <a href="{% url 'scores:score-config' %}"
-        class="inline-flex items-center justify-center bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium px-2 py-2 shadow rounded">
-        <i class="fa-solid fa-gear fa-lg mr-2"></i>
-        Settings
+        class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+        <i class="fa-solid fa-gear"></i>
       </a>
     </div>
   </div>

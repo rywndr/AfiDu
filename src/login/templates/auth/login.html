@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2 class="text-2xl font-bold text-center mb-6 text-red-800">
+    <h2 class="text-2xl font-bold text-center mb-6 text-[#ff4f25]">
         AfiDu
     </h2>
 
@@ -58,19 +58,19 @@
         </div>
 
         <button type="submit"
-            class="w-full bg-red-400 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors">
+            class="w-full bg-[#ff4f25] text-white py-2 px-4 rounded-md hover:bg-[#cc3f1e] transition-colors">
             Login
         </button>
     </form>
 
     <div class="mt-4 text-left">
-        <a href="{% url 'login:password_reset' %}" class="text-red-500 hover:text-red-800 text-sm">
+        <a href="{% url 'login:password_reset' %}" class="text-[#ff4f25] hover:bg-[#cc3f1e] text-sm">
             Forgot Password?
         </a>
     </div>
     <div class="mt-2 text-sm text-left">
         <p class="font-semibold inline">Contact Admin to</p>
-        <a href="{% url 'login:register' %}" class="text-red-500 hover:text-red-800 text-sm">
+        <a href="{% url 'login:register' %}" class="text-[#ff4f25] hover:bg-[#cc3f1e] text-sm">
             Register
         </a>
     </div>
