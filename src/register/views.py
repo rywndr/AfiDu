@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect, render
-from django.views import View
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, TemplateView
 
 from .forms import RegistrationForm
 
@@ -14,32 +14,27 @@ class RegistrationContextMixin:
             "active_tab_icon": "fa-user-plus",
         }
     
-    def get_context_data(self, extra_context=None):
-        context = {}
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context.update(self.get_registration_context())
-        if extra_context:
-            context.update(extra_context)
         return context
 
-class RegisterView(LoginRequiredMixin, RegistrationContextMixin, View):
-    def get(self, request, *args, **kwargs):
+class RegisterView(LoginRequiredMixin, RegistrationContextMixin, CreateView):
+    form_class = RegistrationForm
+    template_name = "register/register.html"
+    success_url = reverse_lazy("register:register_success")
+
+    def get_context_data(self, **kwargs):
         # untuk menampilkan form register
-        form = RegistrationForm()
-        context = self.get_context_data({"form": form})
-        return render(request, "register/register.html", context)
+        return super().get_context_data(**kwargs)
 
-    def post(self, request, *args, **kwargs):
-        # untuk memproses form register
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect("register:register_success")
-        context = self.get_context_data({"form": form})
-        return render(request, "register/register.html", context)
+class RegisterSuccessView(LoginRequiredMixin, RegistrationContextMixin, TemplateView):
+    template_name = "register/register_success.html"
 
-class RegisterSuccessView(LoginRequiredMixin, RegistrationContextMixin, View):
-    def get(self, request, *args, **kwargs):
+    def get_context_data(self, **kwargs):
         # untuk menampilkan halaman sukses register
-        context = self.get_context_data()
+        return super().get_context_data(**kwargs)
+
+    def get(self, request, *args, **kwargs):
         messages.success(request, "Your account has been successfully created!")
-        return render(request, "register/register_success.html", context)
+        return super().get(request, *args, **kwargs)
