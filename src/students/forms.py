@@ -1,7 +1,7 @@
 from django import forms
 from django.forms.widgets import DateInput, Select, TextInput
 
-from .models import Student
+from .models import Student, StudentClass
 
 
 class StudentForm(forms.ModelForm):
@@ -35,3 +35,12 @@ class StudentForm(forms.ModelForm):
         current_gender = list(self.fields["gender"].choices)
         # prepend opsi kosong ke opsi gender
         self.fields["gender"].choices = [("", "Select gender")] + current_gender
+
+class StudentClassForm(forms.ModelForm):
+    class Meta:
+        model = StudentClass
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "w-full px-3 py-2 border border-gray-300 rounded", "placeholder": "Enter class name"}),
+            "description": forms.Textarea(attrs={"class": "w-full px-3 py-2 border border-gray-300 rounded", "placeholder": "Enter description", "rows": 3}),
+        }

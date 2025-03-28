@@ -25,8 +25,8 @@
           <select name="class_filter" onchange="this.form.submit()"
                   class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
             <option value="">All Classes</option>
-            {% for key, value in class_choices %}
-              <option value="{{ key }}" {% if request.GET.class_filter == key %}selected{% endif %}>{{ value }}</option>
+            {% for cls in available_classes %}
+              <option value="{{ cls.pk }}" {% if request.GET.class_filter == cls.pk|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
             {% endfor %}
           </select>
           <!-- student count -->
@@ -35,10 +35,16 @@
           </span>
         </div>
       </form>
-      <a href="{% url 'students:student-add' %}" 
-        class="bg-[#ff5d5d] hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
-        <i class="fa-solid fa-plus"></i>
-      </a>
+      <div class="flex space-x-4">
+        <a href="{% url 'students:class-list' %}"
+           class="bg-[#ff5d5d] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+          <i class="fa-solid fa-chalkboard"></i>
+        </a>
+        <a href="{% url 'students:student-add' %}" 
+           class="bg-[#ff5d5d] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+          <i class="fa-solid fa-plus"></i>
+        </a>
+      </div>
     </div>
 
     <!-- students table -->

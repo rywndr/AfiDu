@@ -11,16 +11,28 @@ from django.views.generic import (
 
 from django.shortcuts import redirect
 from .forms import StudentForm
-from .models import Student
+from .models import Student, StudentClass
 
 
 # Create your views here.
+class ClassContextMixin:
+    def get_class_context(self):
+        return {
+            "active_tab_title": "Classes",
+            "active_tab_icon": "fa-chalkboard",
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        return context
+    
 class StudentContextMixin:
     def get_student_context(self):
         extra = {
             "active_tab_title": "Students",
             "active_tab_icon": "fa-user-graduate",
-            "class_choices": Student._meta.get_field("assigned_class").choices,
+            "available_classes": StudentClass.objects.all(),
         }
         return extra
 
@@ -28,7 +40,6 @@ class StudentContextMixin:
         context = super().get_context_data(**kwargs)
         context.update(self.get_student_context())
         return context
-
 
 class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
     model = Student
@@ -121,4 +132,47 @@ class StudentDeleteView(LoginRequiredMixin, StudentContextMixin, DeleteView):
     def form_invalid(self, form):
         messages.error(self.request, "Failed to delete student. Please try again.")
         return super().form_invalid(form)
+    
+# classes
+class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
+    model = StudentClass
+    template_name = "students/class_list.html"
+    context_object_name = "classes"
+
+class StudentClassCreateView(LoginRequiredMixin, ClassContextMixin, CreateView):
+    model = StudentClass
+    fields = ["name", "description"]
+    template_name = "students/class_form.html"
+    success_url = reverse_lazy("students:class-list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Class created successfully.")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to create class. Please try again.")
+        return super().form_invalid(form)
+
+class StudentClassUpdateView(LoginRequiredMixin, ClassContextMixin, UpdateView):
+    model = StudentClass
+    fields = ["name", "description"]
+    template_name = "students/class_form.html"
+    success_url = reverse_lazy("students:class-list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Class updated successfully.")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to update class. Please try again.")
+        return super().form_invalid(form)
+
+class StudentClassDeleteView(LoginRequiredMixin, ClassContextMixin, DeleteView):
+    model = StudentClass
+    template_name = "students/class_confirm_delete.html"
+    success_url = reverse_lazy("students:class-list")
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Class deleted successfully.")
+        return super().delete(request, *args, **kwargs)
     
