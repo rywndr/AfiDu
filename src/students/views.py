@@ -172,7 +172,11 @@ class StudentClassDeleteView(LoginRequiredMixin, ClassContextMixin, DeleteView):
     template_name = "students/class_confirm_delete.html"
     success_url = reverse_lazy("students:class-list")
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         messages.success(self.request, "Class deleted successfully.")
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Failed to delete class. Please try again.")
+        return super().form_invalid(form)
     

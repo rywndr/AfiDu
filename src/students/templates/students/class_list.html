@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block title %}
     AfiDu - Class List
@@ -31,7 +32,7 @@
                 {% else %}
                 <p class="text-gray-600 mb-4 italic">No description provided.</p>
                 {% endif %}
-                <!-- Action Buttons on the right side -->
+
                 <div class="flex justify-end space-x-2">
                 <a href="{% url 'students:class-edit' class.pk %}" class="flex items-center px-2 py-2 bg-[#5a5656] hover:bg-gray-700 text-white text-xs rounded shadow transition transform hover:-translate-y-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,4 +55,8 @@
         {% endfor %}
         </div>
     </div>
+
+    <!-- notifs -->
+    {% include 'snippets/message_notifs.html' %}
+    <script src="{% static 'js/dismiss_notifs.js' %}"></script>
 {% endblock %}
