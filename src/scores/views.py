@@ -1,5 +1,6 @@
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.urls import reverse_lazy
@@ -31,7 +32,7 @@ class ScoreContextMixin:
         context.update(self.get_score_context())
         return context
 
-class ScoreListView(ScoreContextMixin, TemplateView):
+class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
     template_name = "scores/score_list.html"
 
     def get_context_data(self, **kwargs):
@@ -137,7 +138,7 @@ class ScoreListView(ScoreContextMixin, TemplateView):
             redirect_url += f"&page={page}"
         return redirect(redirect_url)
 
-class ScoreConfigView(ScoreContextMixin, UpdateView):
+class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
     model = ScoreConfig
     form_class = ScoreConfigForm
     template_name = "scores/config.html"
