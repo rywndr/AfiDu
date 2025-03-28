@@ -53,8 +53,8 @@
           <select name="class_filter" onchange="this.form.submit()"
             class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
             <option value="">All Classes</option>
-            {% for key, value in class_choices %}
-              <option value="{{ key }}" {% if class_filter == key %}selected{% endif %}>{{ value }}</option>
+            {% for cls in available_classes %}
+              <option value="{{ cls.pk }}" {% if request.GET.class_filter == cls.pk|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
             {% endfor %}
           </select>
         </div>
