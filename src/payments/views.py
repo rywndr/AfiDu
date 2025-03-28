@@ -1,24 +1,39 @@
 import calendar
 import datetime
 
-from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import ListView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from students.models import Student
+from students.models import Student, StudentClass
 from .models import Payment
 
 # Create your views here.
+class PaymentContextMixin:
+    def get_payment_context(self):
+        # set jarak tahun untuk filter dan data bulan
+        months = list(range(1, 13))
+        return {
+            "available_classes": StudentClass.objects.all(),
+            "years": list(range(2025, 2033)),
+            "months": months,
+            "month_names": {i: calendar.month_abbr[i] for i in months},
+            "active_tab_title": "Payments",
+            "active_tab_icon": "fa-money-bill-wave",
+        }
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)  # <-- use parent's context
+        context.update(self.get_payment_context())
+        return context
 
-class PaymentListView(LoginRequiredMixin, ListView):
+class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
     model = Student
     template_name = "payments/payment_list.html"
     context_object_name = "students"
     paginate_by = 5
 
     def get_paginate_by(self, queryset):
-        """Allow per_page to be set via GET parameters."""
         per_page = self.request.GET.get("per_page")
         if per_page and per_page.isdigit():
             return int(per_page)
@@ -59,26 +74,8 @@ class PaymentListView(LoginRequiredMixin, ListView):
             student_payments[student.id] = monthly_payments
         context["student_payments"] = student_payments
 
-        # singkatkan nama bulan
-        months = list(range(1, 13))
-        context["months"] = months
-        context["month_names"] = {i: calendar.month_abbr[i] for i in months}
-
-        # ambil class dari model Student
-        context["class_choices"] = Student._meta.get_field("assigned_class").choices
-
         # persist filter params
         context["current_per_page"] = self.request.GET.get("per_page", str(self.paginate_by))
-
-        # pass filter params to context
-        context["request"] = self.request
-
-        # set jarak tahun untuk filter
-        context["years"] = list(range(2025, 2033))
-
-        # set active tab dan icon
-        context["active_tab_title"] = "Payments"
-        context["active_tab_icon"] = "fa-money-bill-wave"
         return context
     
     def get(self, request, *args, **kwargs):
@@ -88,7 +85,6 @@ class PaymentListView(LoginRequiredMixin, ListView):
             redirect_url = f"{request.path}?{query_params.urlencode()}#payment-table"
             return redirect(redirect_url)
         return super().get(request, *args, **kwargs)
-
 
 class TogglePaymentView(View):
     def post(self, request, student_id, month, year):
