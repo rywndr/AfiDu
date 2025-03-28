@@ -59,7 +59,11 @@
           </div>
           <div class="pb-3 border-b border-gray-100">
             <span class="text-gray-500 font-medium w-32 inline-block">Assigned Class</span>
-            <span class="text-gray-800">{{ student.get_assigned_class_display }}</span>
+            {% if student.assigned_class %}
+              <span class="text-gray-800">{{ student.assigned_class.name }}</span>
+            {% else %}
+              <span class="text-gray-800 italic">Student hasn't yet assigned a class</span>
+            {% endif %}
           </div>
         </div>
         
