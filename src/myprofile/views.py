@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import View
 
@@ -36,7 +37,10 @@ class EditProfileView(LoginRequiredMixin, View):
         form = ProfileUpdateForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
+            messages.success(request, "Profile updated successfully.")
             return redirect("myprofile:profile")
+        else:
+            messages.error(request, "Error updating profile. Please try again.")
         context = {
             "form": form,
             "user": user,
