@@ -51,7 +51,7 @@
             <a href="{{ material.file.url }}"
               {% if material.get_file_extension == "pdf" %}target="_blank"{% else %}download{% endif %}
               class="block">
-              <div class="h-32 w-full bg-gray-100 overflow-hidden">
+              <div class="h-48 w-full bg-gray-100 overflow-hidden">
                 {% if material.thumbnail %}
                   <img src="{{ material.thumbnail.url }}" alt="{{ material.title }} Thumbnail" class="w-full h-full object-cover">
                 {% else %}
