@@ -91,6 +91,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             "class_filter": class_filter,
             "class_choices": Student._meta.get_field("assigned_class").choices,
             "exercise_range": range(config.num_exercises),
+            "score_formula": config.formula,
         })
         return context
 

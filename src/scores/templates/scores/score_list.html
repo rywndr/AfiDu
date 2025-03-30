@@ -246,7 +246,11 @@
     </div>
   </div>
 
+  <!-- div for passing score formula -->
+  <div id="score-config" data-formula="{{ score_formula|escapejs }}"></div>
+
   <!-- JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
   <!-- notifs -->
   {% include 'snippets/message_notifs.html' %}
   <script src="{% static 'js/dismiss_notifs.js' %}"></script>
