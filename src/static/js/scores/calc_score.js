@@ -1,4 +1,18 @@
 (function() {
+  function safeEvaluate(formula, scope) {
+    const allowedChars = /^[0-9+\-*/()._ a-zA-Z]+$/;
+    if (!allowedChars.test(formula)) {
+      throw new Error("Formula contains invalid characters.");
+    }
+    
+    // get  variable names and the values from the scope
+    const keys = Object.keys(scope);
+    const values = keys.map(key => scope[key]);
+
+    const evaluator = new Function(...keys, `return ${formula};`);
+    return evaluator(...values);
+  }
+
   function calcSumAndFinal(prefix) {
     const configElem = document.getElementById('score-config');
     const scoreFormula = configElem ? configElem.dataset.formula : "(ex_sum + mid_term + finals) / (num_exercises + 2)";
@@ -26,7 +40,6 @@
     }
 
     const num_exercises = exerciseInputs.length;
-
     const scope = {
       ex_sum: ex_sum,
       mid_term: mid_term,
@@ -34,13 +47,12 @@
       num_exercises: num_exercises
     };
 
-    // eval formula with math.js
     let finalScore = 0;
     try {
-      finalScore = math.evaluate(scoreFormula, scope);
+      finalScore = safeEvaluate(scoreFormula, scope);
     } catch (error) {
       console.error("Error evaluating formula:", error);
-      // fallback to default calc
+      // default calc fallback
       finalScore = scoreSum / (num_exercises + 2);
     }
 
@@ -62,3 +74,4 @@
     });
   };
 })();
+
