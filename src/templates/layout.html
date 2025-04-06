@@ -9,6 +9,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1"
     />
+    {% include 'snippets/favicon.html' %}
     <title>{% block title %}AfiDu{% endblock %}</title>
 
     {% include 'snippets/font_awesome.html' %}
@@ -29,17 +30,12 @@
       >
         <div>
           <!-- sidebar brand -->
-          <div
-            class="flex items-center px-4 py-5 bg-white text-white rounded-t-lg"
-          >
-            <a href="{% url 'dashboard:dashboard' %}">
-              <i
-                class="fa-solid fa-school text-2xl mr-2"
-                style="color: #ff4f25"
-              ></i>
-              <span class="text-2xl text-[#ff4f25] font-bold">AfiDu</span>
-            </a>
-          </div>
+            <div class="px-4 py-5 bg-white rounded-t-lg">
+              <a href="{% url 'dashboard:dashboard' %}" class="flex items-center">
+                <img src="{% static 'images/afidu.png' %}" alt="AfiDu Logo" class="w-8 h-8" />
+                <span class="text-2xl text-[#ff4f25] font-bold">AfiDu</span>
+              </a>
+            </div>
 
           <!-- sidebar nav -->
           <nav class="mt-4">
