@@ -1,13 +1,15 @@
-from django.shortcuts import redirect, render
-from django.views.generic import TemplateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.urls import reverse_lazy
 from datetime import datetime
 
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, UpdateView
+
 from students.models import Student, StudentClass
-from .forms import ScoreForm, ScoreConfigForm
+
+from .forms import ScoreConfigForm, ScoreForm
 from .models import Score, ScoreConfig
 
 # Create your views here.
@@ -26,11 +28,12 @@ class ScoreContextMixin:
                 ("speaking", "Speaking"),
             ],
         }
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_score_context())
         return context
+
 
 class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
     template_name = "scores/score_list.html"
@@ -44,20 +47,20 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         year = self.request.GET.get("year", current_year)
         semester = self.request.GET.get("semester", "odd")
         category = self.request.GET.get("category", "reading")
-        
+
         # get config
         config = ScoreConfig.objects.first() or ScoreConfig.objects.create(
             num_exercises=6,
-            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)"
+            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)",
         )
-        
+
         # filter murid based on search query and class
         students = Student.objects.all()
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
             students = students.filter(assigned_class=class_filter)
-        
+
         forms = []
         for student in students:
             try:
@@ -68,7 +71,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             except Score.DoesNotExist:
                 form = ScoreForm(prefix=f"student_{student.id}")
             forms.append((student, form))
-        
+
         # pagination, get params default to 5
         per_page_str = self.request.GET.get("per_page", "5")
         try:
@@ -78,21 +81,23 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         paginator = Paginator(forms, per_page)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        
-        context.update({
-            "forms": page_obj.object_list,
-            "page_obj": page_obj,
-            "is_paginated": page_obj.has_other_pages(),
-            "current_per_page": str(per_page),
-            "year": year,
-            "semester": semester,
-            "category": category,
-            "search_query": search_query,
-            "class_filter": class_filter,
-            "class_choices": Student._meta.get_field("assigned_class").choices,
-            "exercise_range": range(config.num_exercises),
-            "score_formula": config.formula,
-        })
+
+        context.update(
+            {
+                "forms": page_obj.object_list,
+                "page_obj": page_obj,
+                "is_paginated": page_obj.has_other_pages(),
+                "current_per_page": str(per_page),
+                "year": year,
+                "semester": semester,
+                "category": category,
+                "search_query": search_query,
+                "class_filter": class_filter,
+                "class_choices": Student._meta.get_field("assigned_class").choices,
+                "exercise_range": range(config.num_exercises),
+                "score_formula": config.formula,
+            }
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -104,12 +109,12 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         class_filter = request.POST.get("class_filter", "")
         per_page = self.request.GET.get("per_page", "5")
         page = self.request.GET.get("page", "")
-        
+
         config = ScoreConfig.objects.first() or ScoreConfig.objects.create(
             num_exercises=6,
-            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)"
+            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)",
         )
-        
+
         for student in Student.objects.all():
             prefix = f"student_{student.id}"
             try:
@@ -139,6 +144,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             redirect_url += f"&page={page}"
         return redirect(redirect_url)
 
+
 class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
     model = ScoreConfig
     form_class = ScoreConfigForm
@@ -148,13 +154,34 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
     def get_object(self, queryset=None):
         obj, created = ScoreConfig.objects.get_or_create(
             id=1,
-            defaults={"num_exercises": 6, "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)"}
+            defaults={
+                "num_exercises": 6,
+                "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)",
+            },
         )
         return obj
 
     def form_valid(self, form):
+        response = super().form_valid(form)
+        config = self.object
+
+        for score in Score.objects.all():
+            current_scores = score.exercise_scores or []
+            if len(current_scores) > config.num_exercises:
+                new_scores = current_scores[: config.num_exercises]
+            elif len(current_scores) < config.num_exercises:
+                new_scores = current_scores + [0] * (
+                    config.num_exercises - len(current_scores)
+                )
+            else:
+                new_scores = current_scores
+
+            if new_scores != current_scores:
+                score.exercise_scores = new_scores
+                score.save(update_fields=["exercise_scores"])
+
         messages.success(self.request, "Configuration saved successfully.")
-        return super().form_valid(form)
+        return response
 
     def form_invalid(self, form):
         messages.error(self.request, "Failed to save configuration. Please try again.")
