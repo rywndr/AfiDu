@@ -10,9 +10,26 @@
   <div class="mx-4 my-4">
     <!-- Register Card -->
     <div class="bg-white rounded-lg shadow p-6 w-full">
-      <p class="text-sm text-gray-600 mb-4">
-        Please fill in the form below. Fields marked with <span class="text-red-500 text-xs">*</span> are required. Ensure your password is strong and that you confirm it correctly.
-      </p>
+
+        <p class="text-sm text-gray-600 mb-4">
+            Please fill in the form below. Fields marked with <span class="text-red-500 text-xs">*</span> are required. Ensure your password is strong and that you confirm it correctly.
+        </p>
+
+        {% if form.errors %}
+            <div class="mb-4">
+              <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+                  {% if form.non_field_errors %}
+                      {% for error in form.non_field_errors %}
+                          <p>{{ error }}</p>
+                      {% endfor %}
+                  {% else %}
+                      {% if form.email.errors %}
+                          <p>{{ form.email.errors.0 }}</p>
+                      {% endif %}
+                  {% endif %}
+              </div>
+            </div>
+        {% endif %}
       
       <form method="post" class="space-y-4">
         {% csrf_token %}
@@ -23,9 +40,6 @@
           <div class="inline-block">
             {% render_field form.email placeholder="you@example.com" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
           </div>
-          {% if form.email.errors %}
-            <p class="text-red-500 text-sm">{{ form.email.errors }}</p>
-          {% endif %}
         </div>
         
         <div class="mb-4">
@@ -35,9 +49,6 @@
           <div class="inline-block">
             {% render_field form.first_name placeholder="John" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
           </div>
-          {% if form.first_name.errors %}
-            <p class="text-red-500 text-sm">{{ form.first_name.errors }}</p>
-          {% endif %}
         </div>
         
         <div class="mb-4">
@@ -47,9 +58,6 @@
           <div class="inline-block">
             {% render_field form.last_name placeholder="Doe" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
           </div>
-          {% if form.last_name.errors %}
-            <p class="text-red-500 text-sm">{{ form.last_name.errors }}</p>
-          {% endif %}
         </div>
         
         <div class="mb-4">
@@ -64,9 +72,6 @@
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-1">{{ form.password1.help_text }}</p>
-          {% if form.password1.errors %}
-            <p class="text-red-500 text-sm">{{ form.password1.errors }}</p>
-          {% endif %}
         </div>
         
         <div class="mb-4">
@@ -81,9 +86,6 @@
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-1">{{ form.password2.help_text }}</p>
-          {% if form.password2.errors %}
-            <p class="text-red-500 text-sm">{{ form.password2.errors }}</p>
-          {% endif %}
         </div>
         
         <button type="submit" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white font-semibold py-2 px-4 rounded">
