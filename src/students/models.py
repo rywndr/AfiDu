@@ -8,6 +8,20 @@ GENDER = [
     ("Female", "Female"),
 ]
 
+LEVELS = [
+    ("Beginner 1", "Beginner 1"),
+    ("Beginner 2", "Beginner 2"),
+    ("Elementary 1", "Elementary 1"),
+    ("Elementary 2", "Elementary 2"),
+    ("Elementary 3", "Elementary 3"),
+    ("Junior 1", "Junior 1"),
+    ("Junior 2", "Junior 2"),
+    ("Junior 3", "Junior 3"),
+    ("Senior 1", "Senior 1"),
+    ("Senior 2", "Senior 2"),
+    ("Senior 3", "Senior 3"),
+]
+
 phone_validator = RegexValidator(
     regex=r"^\+62\d{9,13}$",
     message="Phone number must start with +62 and contain 9-13 digits.",
@@ -37,6 +51,7 @@ class Student(models.Model):
     assigned_class = models.ForeignKey(
         StudentClass, on_delete=models.SET_NULL, null=True, blank=True
     )
+    level = models.CharField(max_length=20, choices=LEVELS)
 
     def __str__(self):
         return self.name

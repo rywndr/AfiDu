@@ -33,6 +33,7 @@ class StudentContextMixin:
             "active_tab_title": "Students",
             "active_tab_icon": "fa-user-graduate",
             "available_classes": StudentClass.objects.all(),
+            "levels": Student.level,
         }
         return extra
 

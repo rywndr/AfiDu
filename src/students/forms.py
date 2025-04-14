@@ -36,6 +36,12 @@ class StudentForm(forms.ModelForm):
         # prepend opsi kosong ke opsi gender
         self.fields["gender"].choices = [("", "Select gender")] + current_gender
 
+        # override default level to empty
+        self.fields["level"].widget = Select(attrs={"placeholder": "Select level"})
+        current_level = list(self.fields["level"].choices)
+        # prepend opsi kosong ke opsi level
+        self.fields["level"].choices = [("", "Select level")] + current_level
+
 class StudentClassForm(forms.ModelForm):
     class Meta:
         model = StudentClass

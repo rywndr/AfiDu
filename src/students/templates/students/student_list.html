@@ -57,6 +57,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Number</th>
             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
@@ -86,6 +87,9 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {{ student.assigned_class }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ student.level }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {{ student.contact_number }}
