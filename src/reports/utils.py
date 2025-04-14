@@ -31,6 +31,7 @@ def generate_student_report_pdf(student, year, semester):
     data = {
         'student_name': student.name,
         'class': student.assigned_class,
+        'level': student.level,
         'year': year,
         'semester_label': semester_label,
     }
@@ -98,6 +99,7 @@ def generate_student_report_pdf(student, year, semester):
     info_table_data = [
         ["Name:", data['student_name'], "Academic Year:", data['year']],
         ["Class:", data['class'], "Semester:", data['semester_label']],
+        ["Level:", data['level'], "", ""],
     ]
     info_table = Table(info_table_data, colWidths=[60, 150, 100, 100])
     info_table.setStyle(TableStyle([
