@@ -6,9 +6,10 @@
 {% endblock %}
 
 {% block content %}
-    <h2 class="text-2xl font-bold text-center mb-6 text-[#ff4f25]">
-        AfiDu
-    </h2>
+    <div class="flex justify-center items-center mb-6">
+        <img src="{% static 'images/afidu.png' %}" alt="AfiDu Logo" class="w-10 h-10" />
+        <span class="text-3xl text-[#ff4f25] font-bold">fiDu</span>
+    </div>
 
     {% if form.errors %}
     <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
