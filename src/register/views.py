@@ -1,4 +1,3 @@
-from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
@@ -13,7 +12,6 @@ class RegistrationContextMixin:
             "active_tab_title": "Register",
             "active_tab_icon": "fa-user-plus",
         }
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_registration_context())
@@ -34,7 +32,3 @@ class RegisterSuccessView(LoginRequiredMixin, RegistrationContextMixin, Template
     def get_context_data(self, **kwargs):
         # untuk menampilkan halaman sukses register
         return super().get_context_data(**kwargs)
-
-    def get(self, request, *args, **kwargs):
-        messages.success(request, "Your account has been successfully created!")
-        return super().get(request, *args, **kwargs)
