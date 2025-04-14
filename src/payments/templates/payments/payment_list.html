@@ -56,6 +56,7 @@
           <tr>
             <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
             <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
+            <th class="px-4 py-3 text-left text-white font-semibold">Level</th>
             {% for month in months %}
               <th class="px-4 py-3 text-center text-white font-semibold">{{ month_names|get_item:month }}</th>
             {% endfor %}
@@ -70,6 +71,7 @@
                 </a>
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.level }}</td>
               {% for month in months %}
                 <td class="px-4 py-3 whitespace-nowrap text-center">
                   <form method="post" action="{% url 'payments:toggle-payment' student.id month year %}">

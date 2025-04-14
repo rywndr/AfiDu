@@ -12,11 +12,13 @@ from students.models import Student, StudentClass
 from .forms import ScoreConfigForm, ScoreForm
 from .models import Score, ScoreConfig
 
+
 # Create your views here.
 class ScoreContextMixin:
     def get_score_context(self):
         return {
             "available_classes": StudentClass.objects.all(),
+            "level": Student.level,
             "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
             "years": range(2025, 2033),

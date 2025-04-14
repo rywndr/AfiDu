@@ -103,6 +103,7 @@
             <tr>
               <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
               <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
+              <th class="px-4 py-3 text-left text-white font-semibold">Level</th>
               {% for i in exercise_range %}
                 <th class="px-2 py-3 text-center text-white font-semibold">E{{ i|add:"1" }}</th>
               {% endfor %}
@@ -122,6 +123,7 @@
                   </a>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
                 {% comment %}
                   Render the dynamically created exercise fields
                 {% endcomment %}

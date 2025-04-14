@@ -25,6 +25,7 @@ class ReportContextMixin:
             "active_tab_icon": "fa-chart-bar",
             "class_choices": Student._meta.get_field("assigned_class").choices,
             "available_classes": StudentClass.objects.all(),
+            "levels": Student.level,
         }
     
     def get_context_data(self, **kwargs):

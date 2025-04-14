@@ -15,6 +15,7 @@ class PaymentContextMixin:
         months = list(range(1, 13))
         return {
             "available_classes": StudentClass.objects.all(),
+            "levels": Student.level,
             "years": list(range(2025, 2033)),
             "months": months,
             "month_names": {i: calendar.month_abbr[i] for i in months},
