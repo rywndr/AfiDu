@@ -5,15 +5,24 @@ from .models import StudyMaterial
 
 
 class StudyMaterialForm(forms.ModelForm):
+    MAX_UPLOAD_SIZE_MB = 10
+    ALLOWED_EXTENSIONS = ["pdf"]
+
     class Meta:
         model = StudyMaterial
         fields = ["title", "file", "category"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["file"].help_text = (
+            f"Allowed file type: {', '.join(self.ALLOWED_EXTENSIONS)}. "
+            f"Max file size: {self.MAX_UPLOAD_SIZE_MB}MB."
+        )
+
     def clean_file(self):
         file = self.cleaned_data.get("file")
-        max_size_mb = 10  # set your desired limit here (e.g., 10MB)
-
-        if file and file.size > max_size_mb * 1024 * 1024:
-            raise ValidationError(f"The file size should not exceed {max_size_mb}MB.")
-
+        if file and file.size > self.MAX_UPLOAD_SIZE_MB * 1024 * 1024:
+            raise ValidationError(
+                f"The file size should not exceed {self.MAX_UPLOAD_SIZE_MB}MB."
+            )
         return file

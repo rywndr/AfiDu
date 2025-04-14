@@ -22,11 +22,8 @@
                 <div class="mt-1">
                   {% render_field field class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-2" %}
                 </div>
-                {% if field.name == "file" %}
-                  <p class="mt-1 text-xs text-red-600">Allowed file type: PDF. Max file size: 10MB.</p>
-                {% endif %}
                 {% if field.help_text %}
-                  <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+                  <p class="mt-1 text-xs text-red-600">{{ field.help_text }}</p>
                 {% endif %}
                 {% for error in field.errors %}
                   <p class="mt-1 text-sm text-red-600">{{ error }}</p>
