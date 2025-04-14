@@ -250,10 +250,6 @@
   <div id="score-config" data-formula="{{ score_formula|escapejs }}"></div>
 
   <!-- JS -->
-  <!-- notifs -->
-  {% include 'snippets/message_notifs.html' %}
-  <script src="{% static 'js/dismiss_notifs.js' %}"></script>
-
   <!-- score calc -->
   <script src="{% static 'js/scores/calc_score.js' %}"></script>
 {% endblock %}
