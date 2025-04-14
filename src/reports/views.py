@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from scores.models import Score, SCORE_CATEGORIES
-from students.models import Student, StudentClass
+from students.models import Student, StudentClass, LEVELS
 
 from .utils import generate_student_report_pdf, SCORE_CATEGORIES
 
@@ -25,7 +25,7 @@ class ReportContextMixin:
             "active_tab_icon": "fa-chart-bar",
             "class_choices": Student._meta.get_field("assigned_class").choices,
             "available_classes": StudentClass.objects.all(),
-            "levels": Student.level,
+            "level_choices": LEVELS,
         }
     
     def get_context_data(self, **kwargs):
@@ -58,6 +58,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
         semester = self.request.GET.get("semester", "mid")
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
         per_page_str = self.request.GET.get("per_page", "5")
         try:
             per_page = int(per_page_str)
@@ -70,6 +71,8 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             students = students.filter(name__icontains=search_query)
         if class_filter:
             students = students.filter(assigned_class=class_filter)
+        if level_filter:
+            students = students.filter(level=level_filter)
 
         # prepare list dict for each student
         students_data = []
@@ -103,6 +106,8 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             "semester": semester,
             "q": search_query,
             "class_filter": class_filter,
+            "level_filter": level_filter, 
+            "level_choices": Student._meta.get_field("level").choices,  
         })
         return context
 

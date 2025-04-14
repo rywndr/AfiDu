@@ -58,6 +58,17 @@
             {% endfor %}
           </select>
         </div>
+        <div class="flex items-center">
+          <select name="level_filter" onchange="this.form.submit()"
+                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
+            <option value="">All Levels</option>
+            {% for value, label in level_choices %}
+              <option value="{{ value }}" {% if level_filter == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
         <!-- persist params -->
         <input type="hidden" name="year" value="{{ year }}">
         <input type="hidden" name="semester" value="{{ semester }}">
@@ -126,6 +137,7 @@
         <form method="get" id="per-page-form" class="flex items-center space-x-2">
           <input type="hidden" name="q" value="{{ q }}">
           <input type="hidden" name="class_filter" value="{{ class_filter }}">
+          <input type="hidden" name="level_filter" value="{{ level_filter }}">
           <input type="hidden" name="year" value="{{ year }}">
           <input type="hidden" name="semester" value="{{ semester }}">
           <label for="per_page_select" class="text-gray-700">Items per page:</label>
@@ -144,7 +156,7 @@
             <ul class="flex items-center space-x-2">
               {% if page_obj.has_previous %}
                 <li>
-                  <a href="?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}"
+                  <a href="?q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3">
                     <i class="fa-solid fa-chevron-left"></i>
                   </a>
@@ -153,7 +165,7 @@
     
               {% if page_obj.number > 3 %}
                 <li>
-                  <a href="?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&semester={{ semester }}"
+                  <a href="?q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&semester={{ semester }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
                     1
                   </a>
@@ -166,7 +178,7 @@
               {% for i in page_obj.paginator.page_range %}
                 {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                   <li>
-                    <a href="?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&semester={{ semester }}"
+                    <a href="?q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&semester={{ semester }}"
                       class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                       {{ i }}
                     </a>
@@ -179,7 +191,7 @@
                   <li><span class="py-1 px-3 text-[#5a5656]">...</span></li>
                 {% endif %}
                 <li>
-                  <a href="?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}"
+                  <a href="?q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
                     {{ page_obj.paginator.num_pages }}
                   </a>
@@ -188,7 +200,7 @@
     
               {% if page_obj.has_next %}
                 <li>
-                  <a href="?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}"
+                  <a href="?q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3">
                     <i class="fa-solid fa-chevron-right"></i>
                   </a>
@@ -201,7 +213,7 @@
     
       <div class="text-right">
         {% if students_data %}
-          <a href="{% url 'reports:export-reports-zip' %}?q={{ q }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&year={{ year }}&semester={{ semester }}"
+          <a href="{% url 'reports:export-reports-zip' %}?q={{ q }}&level_filter={{ level_filter }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&year={{ year }}&semester={{ semester }}"
             class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full py-2 px-4 shadow transition" id="export-all-btn">
             Export All as ZIP
           </a>

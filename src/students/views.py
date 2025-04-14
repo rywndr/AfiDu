@@ -33,7 +33,7 @@ class StudentContextMixin:
             "active_tab_title": "Students",
             "active_tab_icon": "fa-user-graduate",
             "available_classes": StudentClass.objects.all(),
-            "levels": Student.level,
+            "level_choices": Student._meta.get_field("level").choices,
         }
         return extra
 
@@ -51,10 +51,13 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         queryset = super().get_queryset()
         query = self.request.GET.get("q")
         class_filter = self.request.GET.get("class_filter")
+        level_filter = self.request.GET.get("level_filter")
         if query:
             queryset = queryset.filter(name__icontains=query)
         if class_filter:
             queryset = queryset.filter(assigned_class=class_filter)
+        if level_filter:
+            queryset = queryset.filter(level=level_filter)
         return queryset
 
     def get_paginate_by(self, queryset):
@@ -69,6 +72,7 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         context["student_count"] = self.get_queryset().count()
         # persist state item per_page
         context["current_per_page"] = self.request.GET.get("per_page", "5")
+        context["current_level_filter"] = self.request.GET.get("level_filter", "")
         return context
     
     # redirect to table

@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import ListView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from students.models import Student, StudentClass
+from students.models import Student, StudentClass, LEVELS
 from .models import Payment
 
 # Create your views here.
@@ -15,7 +15,7 @@ class PaymentContextMixin:
         months = list(range(1, 13))
         return {
             "available_classes": StudentClass.objects.all(),
-            "levels": Student.level,
+            "level_choices": LEVELS,
             "years": list(range(2025, 2033)),
             "months": months,
             "month_names": {i: calendar.month_abbr[i] for i in months},
@@ -50,6 +50,9 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         class_filter = self.request.GET.get("class_filter")
         if class_filter:
             qs = qs.filter(assigned_class=class_filter)
+        level_filter = self.request.GET.get("level_filter")
+        if level_filter:
+            qs = qs.filter(level=level_filter)
         return qs
 
     def get_year(self):

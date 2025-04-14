@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, UpdateView
 
-from students.models import Student, StudentClass
+from students.models import LEVELS, Student, StudentClass
 
 from .forms import ScoreConfigForm, ScoreForm
 from .models import Score, ScoreConfig
@@ -45,6 +45,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         # get filter params dari url
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
         current_year = str(datetime.now().year)
         year = self.request.GET.get("year", current_year)
         semester = self.request.GET.get("semester", "mid")
@@ -62,6 +63,8 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             students = students.filter(name__icontains=search_query)
         if class_filter:
             students = students.filter(assigned_class=class_filter)
+        if level_filter:
+            students = students.filter(level=level_filter)
 
         forms = []
         for student in students:
@@ -95,7 +98,9 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                 "category": category,
                 "search_query": search_query,
                 "class_filter": class_filter,
-                "class_choices": Student._meta.get_field("assigned_class").choices,
+                "current_level_filter": level_filter,
+                "class_choices": Student.assigned_class,
+                "level_choices": LEVELS,
                 "exercise_range": range(config.num_exercises),
                 "score_formula": config.formula,
             }
@@ -109,13 +114,9 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         category = request.POST.get("category", "reading")
         search_query = request.POST.get("q", "")
         class_filter = request.POST.get("class_filter", "")
+        level_filter = request.POST.get("level_filter", "")
         per_page = self.request.GET.get("per_page", "5")
         page = self.request.GET.get("page", "")
-
-        config = ScoreConfig.objects.first() or ScoreConfig.objects.create(
-            num_exercises=6,
-            formula="(ex_sum + mid_term + finals) / (num_exercises + 2)",
-        )
 
         for student in Student.objects.all():
             prefix = f"student_{student.id}"
@@ -140,6 +141,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             f"&category={category}"
             f"&q={search_query}"
             f"&class_filter={class_filter}"
+            f"&level_filter={level_filter}"
             f"&per_page={per_page}"
         )
         if page:
