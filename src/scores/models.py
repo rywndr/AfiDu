@@ -8,8 +8,8 @@ SCORE_CATEGORIES = [
 ]
 
 SEMESTER_CHOICES = [
-    ("odd", "Odd Semester"),
-    ("even", "Even Semester"),
+    ("mid", "MID"),
+    ("final","FINAL"),
 ]
 
 class ScoreConfig(models.Model):
@@ -25,7 +25,7 @@ class ScoreConfig(models.Model):
 class Score(models.Model):
     student = models.ForeignKey("students.Student", on_delete=models.CASCADE)
     year = models.PositiveIntegerField()
-    semester = models.CharField(max_length=4, choices=SEMESTER_CHOICES)
+    semester = models.CharField(max_length=5, choices=SEMESTER_CHOICES)
     category = models.CharField(max_length=10, choices=SCORE_CATEGORIES)
 
     # store exercise scores as a JSON field

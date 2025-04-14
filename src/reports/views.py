@@ -19,7 +19,7 @@ class ReportContextMixin:
         current_year = datetime.now().year
         return {
             "years": range(current_year, current_year + 8),
-            "semesters": [("mid", "Mid"), ("final", "Final")],
+            "semesters": [("mid", "MID"), ("final", "FINAL")],
             "score_categories": SCORE_CATEGORIES,
             "active_tab_title": "Reports",
             "active_tab_icon": "fa-chart-bar",
