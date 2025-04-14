@@ -20,7 +20,7 @@ class ScoreContextMixin:
             "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
             "years": range(2025, 2033),
-            "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
+            "semesters": [("mid", "Mid"), ("final", "Final")],
             "categories": [
                 ("reading", "Reading"),
                 ("writing", "Writing"),
@@ -45,7 +45,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         class_filter = self.request.GET.get("class_filter", "")
         current_year = str(datetime.now().year)
         year = self.request.GET.get("year", current_year)
-        semester = self.request.GET.get("semester", "odd")
+        semester = self.request.GET.get("semester", "mid")
         category = self.request.GET.get("category", "reading")
 
         # get config
@@ -103,7 +103,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         current_year = str(datetime.now().year)
         year = request.POST.get("year", current_year)
-        semester = request.POST.get("semester", "odd")
+        semester = request.POST.get("semester", "mid")
         category = request.POST.get("category", "reading")
         search_query = request.POST.get("q", "")
         class_filter = request.POST.get("class_filter", "")

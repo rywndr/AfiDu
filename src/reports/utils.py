@@ -22,10 +22,10 @@ def generate_student_report_pdf(student, year, semester):
     returns the PDF as bytes.
     """
     # map label semester
-    if semester == "odd":
-        semester_label = "1 (GANJIL)"
+    if semester == "mid":
+        semester_label = "1 (MID)"
     else:
-        semester_label = "2 (GENAP)"
+        semester_label = "2 (FINAL)"
     
     # dict for student data
     data = {

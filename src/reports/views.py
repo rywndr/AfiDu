@@ -19,7 +19,7 @@ class ReportContextMixin:
         current_year = datetime.now().year
         return {
             "years": range(current_year, current_year + 8),
-            "semesters": [("odd", "Odd Semester"), ("even", "Even Semester")],
+            "semesters": [("mid", "Mid"), ("final", "Final")],
             "score_categories": SCORE_CATEGORIES,
             "active_tab_title": "Reports",
             "active_tab_icon": "fa-chart-bar",
@@ -54,7 +54,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             year = int(self.request.GET.get("year", current_year))
         except ValueError:
             year = current_year
-        semester = self.request.GET.get("semester", "odd")
+        semester = self.request.GET.get("semester", "mid")
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
         per_page_str = self.request.GET.get("per_page", "5")
@@ -118,7 +118,7 @@ class ExportReportPDFView(ReportContextMixin, TemplateView):
     def get(self, request, student_id, *args, **kwargs):
         current_year = datetime.now().year
         year = request.GET.get('year', str(current_year))
-        semester = request.GET.get('semester', 'odd')
+        semester = request.GET.get('semester', 'mid')
         student = get_object_or_404(Student, id=student_id)
         
         # pass data ke helper with query score dan tambahkan ke dict attribute untuk student
@@ -137,7 +137,7 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         current_year = datetime.now().year
         year = request.GET.get("year", str(current_year))
-        semester = request.GET.get("semester", "odd")
+        semester = request.GET.get("semester", "mid")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
         
