@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 SCORE_CATEGORIES = [
     ("reading", "Reading"),
@@ -13,7 +14,7 @@ SEMESTER_CHOICES = [
 ]
 
 class ScoreConfig(models.Model):
-    num_exercises = models.PositiveIntegerField(default=6)
+    num_exercises = models.PositiveIntegerField(default=5)
     # formula to calc final score
     formula = models.TextField(
         default="(ex_sum + mid_term + finals) / (num_exercises + 2)"
@@ -31,9 +32,9 @@ class Score(models.Model):
     # store exercise scores as a JSON field
     exercise_scores = models.JSONField(default=list, blank=True)
     mid_term = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
+        max_digits=5, decimal_places=2, null=True, blank=True, validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
-    finals = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    finals = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, validators=[MaxValueValidator(100), MinValueValidator(0)])
 
     def save(self, *args, **kwargs):
         # get or create unique ScoreConfig
@@ -71,7 +72,7 @@ class Score(models.Model):
         config, _ = ScoreConfig.objects.get_or_create(
             id=1,
             defaults={
-                "num_exercises": 6,
+                "num_exercises": 5,
                 "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)",
             },
         )
