@@ -13,6 +13,7 @@ class StudentAdmin(admin.ModelAdmin):
         "date_of_birth",
         "gender",
         "assigned_class",
+        "level",
         "contact_number",
     )
     list_filter = ("assigned_class", "gender")
@@ -27,6 +28,6 @@ class StudentAdmin(admin.ModelAdmin):
         ),
         (
             "Contact & Class",
-            {"fields": ("contact_number", "address", "assigned_class")},
+            {"fields": ("contact_number", "address", "assigned_class", "level")},
         ),
     )
