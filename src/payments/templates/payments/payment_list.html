@@ -27,16 +27,6 @@
       </form>
     </div>
 
-    <!-- config button -->
-    <div class="w-full bg-white shadow rounded-lg p-6 mb-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-semibold text-gray-800">Payment Management</h2>
-        <a href="{% url 'payments:payment_config' %}" class="bg-[#ff4f25] hover:bg-[#e63e20] text-white rounded-full py-2 px-6 transition">
-          <i class="fa-solid fa-cog mr-2"></i>Configure Payments
-        </a>
-      </div>
-    </div>
-
     <!-- srch & class filter -->
     <div class="w-full bg-white shadow rounded-lg p-6 mb-6">
       <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
@@ -64,6 +54,12 @@
               <option value="{{ key }}" {% if request.GET.level_filter == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
+        </div>
+        
+        <div class="flex justify-between items-center ml-auto">
+            <a href="{% url 'payments:payment_config' %}" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+            <i class="fa-solid fa-cog"></i>
+            </a>
         </div>
       </form>
     </div>
