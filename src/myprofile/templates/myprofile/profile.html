@@ -23,6 +23,14 @@
           <div class="text-sm text-gray-500">
             {{ user.email }}
           </div>
+          <div class="text-sm text-gray-500">
+              Role:
+              {% if user.is_superuser %}
+                Superuser
+              {% else %}
+                Teacher
+              {% endif %}
+          </div>
         </div>
       </div>
 
