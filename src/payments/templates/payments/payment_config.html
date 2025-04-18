@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load payment_tags %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Payment Configuration</h1>
+    
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      
+      <!-- monthly fee -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Monthly Fee</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              Monthly Payment Amount (IDR)
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+              {{ form.monthly_fee }}
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">Rp</span>
+              </div>
+              {% if form.monthly_fee.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.monthly_fee.errors }}</div>
+              {% endif %}
+            </div>
+            <p class="mt-2 text-sm text-gray-500">
+              This is the monthly fee that will be applied to all students
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- sem config -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Semester Configuration</h2>
+        
+        <!-- mid -->
+        <div class="mb-6">
+          <h3 class="text-md font-medium text-gray-800 mb-3">Mid Semester</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="{{ form.mid_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                Start Month
+              </label>
+              <div class="mt-1">
+                {{ form.mid_semester_start }}
+                {% if form.mid_semester_start.errors %}
+                  <div class="text-red-600 text-sm mt-1">{{ form.mid_semester_start.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <label for="{{ form.mid_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                End Month
+              </label>
+              <div class="mt-1">
+                {{ form.mid_semester_end }}
+                {% if form.mid_semester_end.errors %}
+                  <div class="text-red-600 text-sm mt-1">{{ form.mid_semester_end.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- final -->
+        <div>
+          <h3 class="text-md font-medium text-gray-800 mb-3">Final Semester</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="{{ form.final_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                Start Month
+              </label>
+              <div class="mt-1">
+                {{ form.final_semester_start }}
+                {% if form.final_semester_start.errors %}
+                  <div class="text-red-600 text-sm mt-1">{{ form.final_semester_start.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <label for="{{ form.final_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                End Month
+              </label>
+              <div class="mt-1">
+                {{ form.final_semester_end }}
+                {% if form.final_semester_end.errors %}
+                  <div class="text-red-600 text-sm mt-1">{{ form.final_semester_end.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- visual semester schedule -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Schedule Preview</h2>
+        <div class="grid grid-cols-12 gap-1">
+          {% for i in months %}
+            <div class="text-center p-2 rounded-md text-xs" id="month-{{ i }}">
+              {{ month_names|get_item:i }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div class="flex justify-between">
+        <a href="{% url 'payments:payment_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+          <i class="fa-solid fa-arrow-left mr-2"></i> Back to Payment List
+        </a>
+        
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+          <i class="fa-solid fa-save mr-2"></i> Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // update month preview based on form inputs func
+  function updateSchedulePreview() {
+    // reset month styles
+    for (let i = 1; i <= 12; i++) {
+      const monthEl = document.getElementById(`month-${i}`);
+      monthEl.className = 'text-center p-2 rounded-md text-xs bg-gray-200 text-gray-600';
+    }
+
+    // get form values
+    const midStart = parseInt(document.getElementById('{{ form.mid_semester_start.id_for_label }}').value);
+    const midEnd = parseInt(document.getElementById('{{ form.mid_semester_end.id_for_label }}').value);
+    const finalStart = parseInt(document.getElementById('{{ form.final_semester_start.id_for_label }}').value);
+    const finalEnd = parseInt(document.getElementById('{{ form.final_semester_end.id_for_label }}').value);
+
+    // apply visual style to mid semester months
+    for (let i = midStart; i <= midEnd; i++) {
+      if (i >= 1 && i <= 12) {
+        const monthEl = document.getElementById(`month-${i}`);
+        monthEl.className = 'text-center p-2 rounded-md text-xs bg-blue-100 text-blue-800 font-medium';
+      }
+    }
+
+    // apply visual style to final semester months
+    for (let i = finalStart; i <= finalEnd; i++) {
+      if (i >= 1 && i <= 12) {
+        const monthEl = document.getElementById(`month-${i}`);
+        monthEl.className = 'text-center p-2 rounded-md text-xs bg-green-100 text-green-800 font-medium';
+      }
+    }
+  }
+
+  // event listeners for form inputs
+  document.addEventListener('DOMContentLoaded', function() {
+    const inputs = [
+      document.getElementById('{{ form.mid_semester_start.id_for_label }}'),
+      document.getElementById('{{ form.mid_semester_end.id_for_label }}'),
+      document.getElementById('{{ form.final_semester_start.id_for_label }}'),
+      document.getElementById('{{ form.final_semester_end.id_for_label }}')
+    ];
+
+    inputs.forEach(input => {
+      input.addEventListener('change', updateSchedulePreview);
+    });
+
+      
+    const feeInput = document.getElementById('{{ form.monthly_fee.id_for_label }}');
+
+    // thousan seperator as the user types IDR value
+    feeInput.addEventListener('input', function() {
+      const digitsOnly = this.value.replace(/[^\d]/g, '');
+      this.value = digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    });
+
+    // format the fee input on page load
+    if (feeInput.value) {
+      let v = feeInput.value;                  // e.g. "150000.00"
+      // drop trailing ".00" 
+      v = v.replace(/\.00$/, '');
+      // strip any non‑digit (so kill old commas/dots)
+      const digits = v.replace(/[^\d]/g, '');
+      feeInput.value = Number(digits).toLocaleString('id-ID');
+    }
+
+    // remove thousands separator before form submission
+    const form = feeInput.closest('form');
+    form.addEventListener('submit', function() {
+      let v = feeInput.value;                 
+      const raw = v.split('.').join('');
+      // append .00 so Django gets a valid decimal
+      feeInput.value = raw + '.00';
+    });
+
+    // initialize schedule preview
+    updateSchedulePreview();
+  });
+</script>
+
+
+<style>
+  /* month inputs */
+  input[type="number"] {
+    @apply mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm;
+  }
+  
+  #{{ form.monthly_fee.id_for_label }} {
+    @apply block w-full py-2 pl-10 pr-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm;
+  }
+</style>
+{% endblock %}

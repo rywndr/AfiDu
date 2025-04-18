@@ -1,13 +1,10 @@
-{% extends 'layout.html' %}
-{% load dictionary_tags %} 
-
-{% block title %}
-  AfiDu - Student Payments
-{% endblock %}
+{% extends "layout.html" %}
+{% load static %}
+{% load payment_tags %}
 
 {% block content %}
   <div class="container mx-auto px-4 py-8">
-    <!-- yr card -->
+    <!-- year card -->
     <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
       <h2 class="text-lg font-semibold text-gray-800 mb-3">Select Period</h2>
       <form method="get" id="year-selector-form" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
@@ -24,6 +21,16 @@
         <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
       </form>
+    </div>
+
+    <!-- config button -->
+    <div class="w-full bg-white shadow rounded-lg p-6 mb-6">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-800">Payment Management</h2>
+        <a href="{% url 'payments:payment_config' %}" class="bg-[#ff4f25] hover:bg-[#e63e20] text-white rounded-full py-2 px-6 transition">
+          <i class="fa-solid fa-cog mr-2"></i>Configure Payments
+        </a>
+      </div>
     </div>
 
     <!-- srch & class filter -->
@@ -65,9 +72,8 @@
             <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
             <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
             <th class="px-4 py-3 text-left text-white font-semibold">Level</th>
-            {% for month in months %}
-              <th class="px-4 py-3 text-center text-white font-semibold">{{ month_names|get_item:month }}</th>
-            {% endfor %}
+            <th class="px-4 py-3 text-center text-white font-semibold">Payment Status</th>
+            <th class="px-4 py-3 text-center text-white font-semibold">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -80,20 +86,27 @@
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.level }}</td>
-              {% for month in months %}
-                <td class="px-4 py-3 whitespace-nowrap text-center">
-                  <form method="post" action="{% url 'payments:toggle-payment' student.id month year %}">
-                    {% csrf_token %}
-                    {% with payment=student_payments|get_item:student.id|get_item:month %}
-                      <input type="checkbox" name="paid" onchange="this.form.submit()" class="h-5 w-5 text-[#ff4f25] focus:ring-[#ff4f25]" {% if payment.paid %}checked{% endif %}>
-                    {% endwith %}
-                  </form>
-                </td>
-              {% endfor %}
+              <td class="px-4 py-3 whitespace-nowrap text-center">
+                {% if student_payment_status|get_item:student.id %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fa-solid fa-check-circle mr-1"></i> Has Payments
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> No Payments
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-center">
+                <a href="{% url 'payments:payment_detail' student.id %}?year={{ year }}" 
+                   class="bg-[#ff4f25] hover:bg-[#e63e20] text-white text-sm rounded-full py-1 px-4 transition">
+                  <i class="fa-solid fa-eye mr-1"></i> View Details
+                </a>
+              </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="14" class="text-center py-4 text-gray-500">No students found.</td>
+              <td colspan="5" class="text-center py-4 text-gray-500">No students found.</td>
             </tr>
           {% endfor %}
         </tbody>
