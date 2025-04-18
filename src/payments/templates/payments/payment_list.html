@@ -80,14 +80,14 @@
         <tbody class="divide-y divide-gray-100">
           {% for student in students %}
             <tr class="hover:bg-gray-100">
-              <td class="px-4 py-3 whitespace-nowrap">
+              <td class="px-4 py-4 whitespace-nowrap">
                 <a href="{% url 'students:student-detail' student.id %}?next={% url 'payments:payment_list' %}" class="text-[#ff4f25] hover:underline">
                   {{ student.name }}
                 </a>
               </td>
-              <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ student.level }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-center">
+              <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
+              <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
+              <td class="px-4 py-4 whitespace-nowrap text-center">
                 {% if student_payment_status|get_item:student.id %}
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <i class="fa-solid fa-check-circle mr-1"></i> Has Payments
@@ -98,7 +98,7 @@
                   </span>
                 {% endif %}
               </td>
-              <td class="px-4 py-3 whitespace-nowrap text-center">
+              <td class="px-4 py-4 whitespace-nowrap text-center">
                 <a href="{% url 'payments:payment_detail' student.id %}?year={{ year }}" 
                    class="bg-[#ff4f25] hover:bg-[#e63e20] text-white text-sm rounded-full py-1 px-4 transition">
                   <i class="fa-solid fa-eye mr-1"></i> View Details
