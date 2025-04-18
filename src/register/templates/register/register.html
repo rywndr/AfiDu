@@ -59,6 +59,15 @@
             {% render_field form.last_name placeholder="Doe" class="w-80 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#ff4f25]" %}
           </div>
         </div>
+
+          <div class="mb-4">
+            <label for="{{ form.role.id_for_label }}" class="block text-gray-700 font-medium">
+              Permission <span class="text-red-500 text-xs">*</span>
+            </label>
+            <div class="inline-block">
+              {% render_field form.role %}
+            </div>
+          </div>
         
         <div class="mb-4">
           <label for="{{ form.password1.id_for_label }}" class="block text-gray-700 font-medium">
