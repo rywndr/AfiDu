@@ -140,11 +140,13 @@
                 class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
                 >My Profile</a
               >
-              <a
-                href="{% url 'register:register' %}"
-                class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
-                >Register Account</a
-              >
+              {% if user.is_superuser %}
+                  <a
+                    href="{% url 'register:register' %}"
+                    class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
+                    >Register Account</a
+                  >
+              {% endif %}
               <form
                 action="{% url 'logout' %}"
                 method="post"
