@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -93,6 +93,9 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         return context
 
     def get(self, request, *args, **kwargs):
+        # store current URL with all filters in session
+        self.request.session["payment_list_url"] = self.request.get_full_path()
+
         if "anchor_redirected" not in request.GET:
             query_params = request.GET.copy()
             query_params["anchor_redirected"] = "true"
@@ -113,6 +116,12 @@ class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Payment configuration updated successfully!")
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # default payment list URL if session URL is not available
+        context["payment_list_url"] = reverse("payments:payment_list")
+        return context
 
 
 class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailView):
@@ -135,6 +144,11 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
         # get payment config
         payment_config = PaymentConfig.get_active()
         context["payment_config"] = payment_config
+
+        # default payment list URL if session URL is not available
+        context["payment_list_url"] = reverse("payments:payment_list")
+        if year:
+            context["payment_list_url"] += f"?year={year}"
 
         # sem data
         mid_sem_months = list(
