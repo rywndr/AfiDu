@@ -53,7 +53,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
 
         # get config
         config = ScoreConfig.objects.first() or ScoreConfig.objects.create(
-            num_exercises=6,
+            num_exercises=5,
             formula="(ex_sum + mid_term + finals) / (num_exercises + 2)",
         )
 
@@ -159,7 +159,7 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         obj, created = ScoreConfig.objects.get_or_create(
             id=1,
             defaults={
-                "num_exercises": 6,
+                "num_exercises": 5,
                 "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)",
             },
         )
