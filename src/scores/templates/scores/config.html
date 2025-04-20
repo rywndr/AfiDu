@@ -6,38 +6,238 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container mx-auto px-4 py-8">
-    <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="mb-4">
-          <label for="{{ form.num_exercises.id_for_label }}" class="block text-sm font-medium text-gray-700">
-            Number of Exercise Scores:
-          </label>
-          {% render_field form.num_exercises class="mt-1 inline-block rounded border-gray-300 shadow-sm" %}
-        </div>
-        <div class="mb-4">
-          <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700">
-            Formula for Final Score:
-          </label>
-          {% render_field form.formula class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
-          <p class="text-sm text-gray-600 mt-1">
-            You can use: <code>ex_sum</code>, <code>mid_term</code>, <code>finals</code>, and <code>num_exercises</code>.
+    <div class="container mx-auto px-4 py-8">
+
+      <!-- note -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="bg-orange-100 text-[#ff4f25] p-3 rounded-lg shadow-sm border border-orange-200 max-w-xl">
+          <p class="text-sm">
+            <strong>Note:</strong> Global Default settings apply when no more specific configuration exists.
+            More specific configurations (Year → Year+Semester → Year+Semester+Category) take precedence over general ones.
           </p>
         </div>
+      </div>
 
-        <div class="flex space-x-2">
-          <button type="submit"
-                  class="bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium py-2 px-4 rounded-full shadow w-24">
-            Save
-          </button>
-          
-          <a href="{% url 'scores:score-list' %}"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-full shadow w-24 text-center">
-            Cancel
-          </a>
+      <!-- config form -->
+      <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-4 rounded">
+              <ul class="list-disc list-inside">
+                {% for err in form.non_field_errors %}
+                  <li>{{ err }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label for="{{ form.year.id_for_label }}" class="block text-sm font-medium text-gray-700">Year (optional):</label>
+              {% render_field form.year class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+              <p class="text-xs text-gray-500">Leave blank for global setting</p>
+            </div>
+            <div>
+              <label for="{{ form.semester.id_for_label }}" class="block text-sm font-medium text-gray-700">Semester (optional):</label>
+              {% render_field form.semester class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+              <p class="text-xs text-gray-500">Applies only if year is set</p>
+            </div>
+            <div>
+              <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700">Category (optional):</label>
+              {% render_field form.category class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+              <p class="text-xs text-gray-500">Applies only if year and semester are set</p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="{{ form.num_exercises.id_for_label }}" class="block text-sm font-medium text-gray-700">Number of Exercise Scores:</label>
+            {% render_field form.num_exercises class="mt-1 inline-block rounded border-gray-300 shadow-sm" %}
+          </div>
+          <div class="mb-4">
+            <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700">Formula for Final Score:</label>
+            {% render_field form.formula class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+            <p class="text-sm text-gray-600 mt-1">You can use: <code>ex_sum</code>, <code>mid_term</code>, <code>finals</code>, and <code>num_exercises</code>.</p>
+          </div>
+          <div class="flex space-x-2">
+            <button type="submit" class="bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium py-2 px-4 rounded-md shadow w-24">Save</button>
+            <a href="{% url 'scores:score-list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md shadow w-24 text-center">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- existing configs -->
+      <div class="w-full bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Existing Configurations</h2>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Scope</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Exercises</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Formula</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% regroup configs by year as year_groups %}
+                {% for year_group in year_groups %}
+                  <tr class="bg-gray-50">
+                    <td colspan="4" class="px-6 py-3">
+                      <h3 class="text-md font-semibold flex items-center">
+                        {% if year_group.grouper %}
+                          <span class="bg-gray-100 px-3 py-1 rounded-lg">Year {{ year_group.grouper }}</span>
+                        {% elif year_group.grouper == None %}
+                          <span class="bg-orange-100 text-[#ff4f25] px-3 py-1 rounded-lg">Global Default</span>
+                        {% else %}
+                          <span class="bg-gray-100 px-3 py-1 rounded-lg">Year {{ year_group.grouper }}</span>
+                        {% endif %}
+                      </h3>
+                    </td>
+                  </tr>
+                {% for config in year_group.list %}
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      {% if config.year and config.semester and config.category %}
+                        Year {{ config.year }} - {{ config.get_semester_display }} - {{ config.get_category_display }}
+                      {% elif config.year and config.semester %}
+                        Year {{ config.year }} - {{ config.get_semester_display }}
+                      {% elif config.year %}
+                        Year {{ config.year }}
+                      {% else %}
+                        Global Default
+                      {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ config.num_exercises }}</td>
+                    <td class="px-6 py-4"><code class="bg-gray-100 px-2 py-1 rounded">{{ config.formula }}</code></td>
+                    <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                      <button type="button"
+                              onclick="displayEditModal('modal-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}')"
+                              class="px-3 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 shadow">
+                        Edit
+                      </button>
+
+                      {% if config.year is not None or config.semester is not None or config.category is not None %}
+                        <button type="button"
+                                onclick="displayDeleteModal('{{ config.year|default_if_none:"" }}', '{{ config.semester|default_if_none:"" }}', '{{ config.category|default_if_none:"" }}')"
+                                class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 shadow">
+                          Delete
+                        </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+
+                  <!-- edit modal -->
+                  <div id="modal-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}" 
+                       class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden backdrop-filter backdrop-blur-sm"
+                       style="background-color: rgba(0, 0, 0, 0.25);">
+                    <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+                      <div class="bg-white px-6 py-4">
+                        <div class="flex items-start space-x-4">
+                          <div class="flex-shrink-0 bg-orange-100 h-10 w-10 flex items-center justify-center rounded-full">
+                            <i class="fa-solid fa-gear text-[#ff4f25]"></i>
+                          </div>
+                          <div class="w-full">
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Edit Configuration</h3>
+                            <form method="post">
+                              {% csrf_token %}
+                              <input type="hidden" name="edit_year" value="{{ config.year|default_if_none:'' }}">
+                              <input type="hidden" name="edit_semester" value="{{ config.semester|default_if_none:'' }}">
+                              <input type="hidden" name="edit_category" value="{{ config.category|default_if_none:'' }}">
+
+                              <div class="mb-4">
+                                <label for="id_num_exercises_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" class="block text-sm font-medium text-gray-700">Number of Exercise Scores:</label>
+                                <input type="number" name="num_exercises" id="id_num_exercises_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                       value="{{ config.num_exercises }}" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                              </div>
+                              <div class="mb-4">
+                                <label for="id_formula_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" class="block text-sm font-medium text-gray-700">Formula for Final Score:</label>
+                                <input type="text" name="formula" id="id_formula_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                       value="{{ config.formula }}" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                              </div>
+                              <div class="flex justify-end space-x-2">
+                                <button type="button" onclick="hideEditModal('modal-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}')"
+                                        class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100 shadow-sm">Cancel</button>
+                                <button type="submit"
+                                        class="bg-[#ff4f25] text-white px-4 py-2 rounded hover:bg-[#e0431d] shadow-sm">Save</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+                {% if not forloop.last %}
+                  <tr class="h-4">
+                    <td colspan="4" class="border-b border-gray-200"></td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-      </form>
+      </div>
     </div>
-  </div>
+
+    <!-- delete modal -->
+    <div id="deleteModal"
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden backdrop-filter backdrop-blur-sm"
+         style="background-color: rgba(0, 0, 0, 0.25);"
+         aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="w-full max-w-sm bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
+        <div class="bg-[#ff4f25] px-4 py-3">
+          <h1 class="text-xl font-bold text-white">Confirm Delete</h1>
+        </div>
+        <div class="p-4 text-gray-700">
+          <p>Are you sure you want to delete this configuration?</p>
+        </div>
+        <form id="deleteForm" method="post" class="flex justify-end space-x-2 p-4">
+          {% csrf_token %}
+          <button type="button" onclick="hideDeleteModal()"
+                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 shadow">Cancel</button>
+          <button type="submit"
+                  class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 shadow">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function displayEditModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+      }
+      
+      function hideEditModal(id) {
+        document.getElementById(id).classList.add('hidden');
+      }
+
+      function displayDeleteModal(year, semester, category) {
+        const form = document.getElementById('deleteForm');
+        const searchParams = new URLSearchParams();
+        if (year) searchParams.append('year', year);
+        if (semester) searchParams.append('semester', semester);
+        if (category) searchParams.append('category', category);
+        searchParams.append('action', 'delete');
+        form.action = '?' + searchParams.toString();
+        document.getElementById('deleteModal').classList.remove('hidden');
+      }
+
+      function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+      }
+      
+      document.addEventListener('click', function(event) {
+        const modalContainers = document.querySelectorAll('.modal-container');
+        modalContainers.forEach(function(container) {
+          if (container.classList.contains('hidden')) return;
+          
+          const modalContent = container.querySelector('.modal-content');
+          if (modalContent && !modalContent.contains(event.target)) {
+            container.classList.add('hidden');
+          }
+        });
+      });
+    </script>
 {% endblock %}
