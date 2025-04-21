@@ -22,7 +22,7 @@ class ScoreContextMixin:
             "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
             "years": range(2025, 2033),
-            "semesters": [("mid", "MID"), ("final", "FINALS")],
+            "semesters": [("mid", "MID"), ("final", "FINAL")],
             "categories": [
                 ("reading", "Reading"),
                 ("writing", "Writing"),
