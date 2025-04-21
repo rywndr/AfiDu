@@ -263,6 +263,8 @@
   <div id="score-config" data-formula="{{ score_formula|escapejs }}"></div>
 
   <!-- JS -->
+  <!-- score value validation -->
+  <script src="{% static 'js/scores/only_digits.js' %}"></script>
   <!-- score calc -->
   <script src="{% static 'js/scores/calc_score.js' %}"></script>
 {% endblock %}

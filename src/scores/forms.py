@@ -57,7 +57,13 @@ class ScoreForm(forms.ModelForm):
                 decimal_places=2,
                 required=False,
                 max_value=100,
-                widget=forms.NumberInput(attrs={"style": "max-width: 4rem;"}),
+                widget=forms.NumberInput(
+                    attrs={
+                        "style": "max-width: 4rem;",
+                        min: "0",
+                        "oninput": "this.value = this.value.replace(/[^0-9.]/g, '');",
+                    },
+                ),
             )
 
             if self.instance and self.instance.pk and self.instance.exercise_scores:
@@ -76,7 +82,11 @@ class ScoreForm(forms.ModelForm):
             self.fields[field].min_value = 0
             self.fields[field].initial = "0.00"
             self.fields[field].widget.attrs.update(
-                {"style": "max-width: 4rem;", "max": "100", "min": "0"}
+                {
+                    "style": "max-width: 4rem;",
+                    "max": "100",
+                    "min": "0",
+                }
             )
 
     def save(self, commit=True):
