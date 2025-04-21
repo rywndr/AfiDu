@@ -2,16 +2,17 @@ import io
 import zipfile
 from datetime import datetime
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
 
-from scores.models import Score, SCORE_CATEGORIES
-from students.models import Student, StudentClass, LEVELS
+from scores.models import SCORE_CATEGORIES, Score
+from students.models import LEVELS, Student, StudentClass
 
-from .utils import generate_student_report_pdf, SCORE_CATEGORIES
+from .utils import SCORE_CATEGORIES, generate_student_report_pdf
+
 
 # Create your views here.
 class ReportContextMixin:
@@ -27,7 +28,7 @@ class ReportContextMixin:
             "available_classes": StudentClass.objects.all(),
             "level_choices": LEVELS,
         }
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_report_context())
@@ -38,32 +39,69 @@ class ReportContextMixin:
         scores_dict = {}
         for key, _ in SCORE_CATEGORIES:
             try:
-                score_obj = Score.objects.get(student=student, year=year, semester=semester, category=key)
+                score_obj = Score.objects.get(
+                    student=student, year=year, semester=semester, category=key
+                )
                 scores_dict[key] = f"{score_obj.final_score:.2f}"
             except Score.DoesNotExist:
                 scores_dict[key] = "N/A"
         return scores_dict
+
 
 class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
     template_name = "reports/report_list.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # get filter params dari url
+        # get filter params dari url and or session
         current_year = datetime.now().year
-        try:
-            year = int(self.request.GET.get("year", current_year))
-        except ValueError:
-            year = current_year
-        semester = self.request.GET.get("semester", "mid")
-        search_query = self.request.GET.get("q", "")
-        class_filter = self.request.GET.get("class_filter", "")
-        level_filter = self.request.GET.get("level_filter", "")
-        per_page_str = self.request.GET.get("per_page", "5")
-        try:
-            per_page = int(per_page_str)
-        except ValueError:
-            per_page = 5
+        coming_back = self.request.GET.get("anchor_redirected") == "true" and not any(
+            param in self.request.GET
+            for param in [
+                "year",
+                "semester",
+                "q",
+                "class_filter",
+                "level_filter",
+                "per_page",
+            ]
+            if param != "anchor_redirected"
+        )
+
+        # get filter params from session if coming back, otherwise from URL
+        if coming_back and "reports_filters" in self.request.session:
+            filters = self.request.session.get("reports_filters", {})
+            year = filters.get("year", current_year)
+            semester = filters.get("semester", "mid")
+            search_query = filters.get("q", "")
+            class_filter = filters.get("class_filter", "")
+            level_filter = filters.get("level_filter", "")
+            per_page = filters.get("per_page", 5)
+        else:
+            # get filter params from URL
+            try:
+                year = int(self.request.GET.get("year", current_year))
+            except ValueError:
+                year = current_year
+            semester = self.request.GET.get("semester", "mid")
+            search_query = self.request.GET.get("q", "")
+            class_filter = self.request.GET.get("class_filter", "")
+            level_filter = self.request.GET.get("level_filter", "")
+            per_page_str = self.request.GET.get("per_page", "5")
+            try:
+                per_page = int(per_page_str)
+            except ValueError:
+                per_page = 5
+
+            # save current filters to session
+            self.request.session["reports_filters"] = {
+                "year": year,
+                "semester": semester,
+                "q": search_query,
+                "class_filter": class_filter,
+                "level_filter": level_filter,
+                "per_page": per_page,
+            }
 
         # queryset students
         students = Student.objects.all()
@@ -87,58 +125,83 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 except Score.DoesNotExist:
                     final_score = None
                 scores[key] = final_score
-            students_data.append({
-                "student": student,
-                "scores": scores,
-            })
+            students_data.append(
+                {
+                    "student": student,
+                    "scores": scores,
+                }
+            )
 
         # paginate result
         paginator = Paginator(students_data, per_page)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
 
-        context.update({
-            "students_data": page_obj.object_list,
-            "page_obj": page_obj,
-            "is_paginated": page_obj.has_other_pages(),
-            "current_per_page": str(per_page),
-            "year": year,
-            "semester": semester,
-            "q": search_query,
-            "class_filter": class_filter,
-            "level_filter": level_filter, 
-            "level_choices": Student._meta.get_field("level").choices,  
-        })
+        context.update(
+            {
+                "students_data": page_obj.object_list,
+                "page_obj": page_obj,
+                "is_paginated": page_obj.has_other_pages(),
+                "current_per_page": str(per_page),
+                "year": year,
+                "semester": semester,
+                "q": search_query,
+                "class_filter": class_filter,
+                "level_filter": level_filter,
+                "level_choices": Student._meta.get_field("level").choices,
+            }
+        )
         return context
 
     def get(self, request, *args, **kwargs):
+        # check if filter params are in the URL, if yes, then change da filters
+        explicit_filter_change = any(
+            param in request.GET
+            for param in [
+                "year",
+                "semester",
+                "q",
+                "class_filter",
+                "level_filter",
+                "per_page",
+            ]
+        )
+
+        # if changing filters explicitly, update the session
+        if explicit_filter_change:
+            # update session in get_context_data
+            pass
+
         if "anchor_redirected" not in request.GET:
             query_params = request.GET.copy()
             query_params["anchor_redirected"] = "true"
             redirect_url = f"{request.path}?{query_params.urlencode()}#report-table"
             return redirect(redirect_url)
+
         context = self.get_context_data()
         return render(request, self.template_name, context)
+
 
 class ExportReportPDFView(ReportContextMixin, TemplateView):
     def get(self, request, student_id, *args, **kwargs):
         current_year = datetime.now().year
-        year = request.GET.get('year', str(current_year))
-        semester = request.GET.get('semester', 'mid')
+        year = request.GET.get("year", str(current_year))
+        semester = request.GET.get("semester", "mid")
         student = get_object_or_404(Student, id=student_id)
-        
+
         # pass data ke helper with query score dan tambahkan ke dict attribute untuk student
         student.scores_dict = self.get_student_scores(student, year, semester)
-        
+
         # generate pdf report dengan helper
         pdf = generate_student_report_pdf(student, year, semester)
-        
+
         safe_name = student.name.replace(" ", "_")
         filename = f"{safe_name}_report.pdf"
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
-    
+
+
 class ExportReportsZipView(ReportContextMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         current_year = datetime.now().year
@@ -146,15 +209,17 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
         semester = request.GET.get("semester", "mid")
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
-        
+
         students = Student.objects.all()
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
             students = students.filter(assigned_class=class_filter)
-        
+
         in_memory = io.BytesIO()
-        with zipfile.ZipFile(in_memory, mode="w", compression=zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(
+            in_memory, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zipf:
             for student in students:
                 student.scores_dict = self.get_student_scores(student, year, semester)
                 # generate pdf report dengan helper
@@ -162,8 +227,8 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
                 safe_name = student.name.replace(" ", "_")
                 filename = f"{safe_name}_report.pdf"
                 zipf.writestr(filename, pdf)
-        
+
         in_memory.seek(0)
         response = HttpResponse(in_memory.read(), content_type="application/zip")
-        response['Content-Disposition'] = 'attachment; filename="reports.zip"'
+        response["Content-Disposition"] = 'attachment; filename="reports.zip"'
         return response

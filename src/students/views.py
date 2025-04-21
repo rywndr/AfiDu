@@ -143,12 +143,12 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # figure out where “next” should point, prefer ?next=... but fall back to the Referer header
+        # figure out where "next" should point, prefer ?next=... but fall back to the Referer header
         next_url = self.request.GET.get("next") or self.request.META.get(
             "HTTP_REFERER", ""
         )
 
-        # if it’s pointing at score‑list, re‑attach all session filters
+        # if it's pointing at score‑list, re‑attach all session filters
         if next_url and "scores:score-list" in next_url:
             params = {
                 "year": self.request.session.get("scores_year", ""),
@@ -163,9 +163,12 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
             query_string = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
             next_url = f"{next_url.split('?')[0]}?{query_string}"
 
+        elif next_url and "reports:report-list" in next_url:
+            next_url = f"{next_url.split('?')[0]}?anchor_redirected=true"
+
         context["next"] = next_url
 
-        # build “edit” link that bounces back to the same “next”
+        # build "edit" link that bounces back to the same "next"
         edit_base = reverse("students:student-edit", args=[self.object.pk])
         context["edit_url"] = f"{edit_base}?next={next_url}"
 
