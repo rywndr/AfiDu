@@ -17,7 +17,7 @@ class StudentForm(forms.ModelForm):
             "age": TextInput(attrs={"placeholder": "Enter age"}),
             "contact_number": TextInput(
                 attrs={
-                    "placeholder": "81 XXX XXXX",
+                    "placeholder": "812XXXXXXXX",
                     "class": "phone-input-field",
                     "data-country-code": "+62",
                 }
