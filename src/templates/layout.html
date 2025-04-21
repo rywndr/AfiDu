@@ -9,9 +9,15 @@
       name="viewport"
       content="width=device-width, initial-scale=1"
     />
-    {% include 'snippets/favicon.html' %}
-    <title>{% block title %}AfiDu{% endblock %}</title>
 
+    <title>
+        {% block title %}
+            AfiDu
+        {% endblock %}
+    </title>
+
+    <!-- includes -->
+    {% include 'snippets/favicon.html' %}
     {% include 'snippets/font_awesome.html' %}
     {% include 'snippets/tailwind.html' %}
 

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "reports",
     "study_materials",
     "payments",
+    "compressor",
 ]
 
 MIDDLEWARE = [
@@ -146,6 +147,12 @@ AUTH_USER_MODEL = "login.CustomUser"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
+COMPRESS_ROOT = BASE_DIR / "static"
+
+COMPRESS_ENABLED = True
+
+STATICFILES_FINDERS = ("compressor.finders.CompressorFinder",)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
