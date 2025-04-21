@@ -9,20 +9,18 @@
 {% block content %}
     <div class="container mx-auto px-4 py-8">
       <div class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
-        <!-- student info and year selector -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 class="text-2xl font-bold text-gray-800">{{ student.name }}</h1>
             <p class="text-gray-600">
-              <span class="font-medium">Class:</span> {{ student.assigned_class }} | 
+              <span class="font-medium">Class:</span> {{ student.assigned_class }} |
               <span class="font-medium">Level:</span> {{ student.level }}
             </p>
           </div>
-          
           <form method="get" id="year-selector-form" class="mt-4 md:mt-0">
             <div class="flex items-center space-x-2">
               <label for="year" class="font-medium text-gray-700">Year:</label>
-              <select name="year" id="year" onchange="this.form.submit()" class="rounded border-gray-300 shadow-sm">
+              <select name="year" id="year" onchange="this.form.submit()" class="py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm">
                 {% for y in years %}
                   <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
                 {% endfor %}
@@ -30,39 +28,25 @@
             </div>
           </form>
         </div>
-        
-        <!-- payment summary -->
+
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
           <h2 class="text-lg font-semibold text-gray-800 mb-3">Payment Summary</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
               <p class="text-gray-500 text-sm">Total Due</p>
-              <p class="text-xl font-bold">
-               Rp<span class="currency" data-raw="{{ total_due|floatformat:0 }}">
-                 {{ total_due|floatformat:0 }}
-               </span>
-             </p>
+              <p class="text-xl font-bold">Rp<span class="currency" data-raw="{{ total_due|floatformat:0 }}">{{ total_due|floatformat:0 }}</span></p>
             </div>
             <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
               <p class="text-gray-500 text-sm">Total Paid</p>
-              <p class="text-xl font-bold text-green-600">
-                Rp<span class="currency" data-raw="{{ total_paid|floatformat:0 }}">
-                 {{ total_paid|floatformat:0 }}
-               </span>
-              </p>
+              <p class="text-xl font-bold text-green-600">Rp<span class="currency" data-raw="{{ total_paid|floatformat:0 }}">{{ total_paid|floatformat:0 }}</span></p>
             </div>
             <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
               <p class="text-gray-500 text-sm">Total Remaining</p>
-              <p class="text-xl font-bold text-red-600">
-                Rp<span class="currency" data-raw="{{ total_remaining|floatformat:0 }}">
-                 {{ total_remaining|floatformat:0 }}
-               </span>
-
+              <p class="text-xl font-bold text-red-600">Rp<span class="currency" data-raw="{{ total_remaining|floatformat:0 }}">{{ total_remaining|floatformat:0 }}</span></p>
             </div>
           </div>
         </div>
 
-        <!-- sem payment -->
         {% for semester_key, semester in semesters.items %}
           <div class="mb-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-3">{{ semester.name }} Payments</h2>
@@ -84,50 +68,21 @@
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ month_names|get_item:payment.month }}</td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm">
                         {% if payment.paid %}
-                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <i class="fa-solid fa-check-circle mr-1"></i> Paid
-                          </span>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fa-solid fa-check-circle mr-1"></i> Paid</span>
                         {% elif payment.is_installment %}
-                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            <i class="fa-solid fa-clock mr-1"></i> Partial
-                          </span>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fa-solid fa-clock mr-1"></i> Partial</span>
                         {% else %}
-                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <i class="fa-solid fa-times-circle mr-1"></i> Unpaid
-                          </span>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-times-circle mr-1"></i> Unpaid</span>
                         {% endif %}
                       </td>
-                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                         Rp<span class="currency" data-raw="{{ payment.amount_paid|floatformat:0 }}">
-                                {{ payment.amount_paid|floatformat:0 }}
-                            </span>
-                      </td>
-                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                         Rp<span class="currency" data-raw="{{ payment.remaining_amount|floatformat:0 }}">
-                                 {{ payment.remaining_amount|floatformat:0 }}
-                           </span>
-                      </td>
-                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {% if payment.payment_date %}
-                          {{ payment.payment_date|date:"d M Y H:i" }}
-                        {% else %}
-                          -
-                        {% endif %}
-                      </td>
+                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">Rp<span class="currency" data-raw="{{ payment.amount_paid|floatformat:0 }}">{{ payment.amount_paid|floatformat:0 }}</span></td>
+                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">Rp<span class="currency" data-raw="{{ payment.remaining_amount|floatformat:0 }}">{{ payment.remaining_amount|floatformat:0 }}</span></td>
+                      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{% if payment.payment_date %}{{ payment.payment_date|date:"d M Y H:i" }}{% else %}-{% endif %}</td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        <button type="button" onclick="openPaymentModal({{ payment.id }}, {{ payment.amount_paid }}, {{ payment_config.monthly_fee }})" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
-                          <i class="fa-solid fa-money-bill-wave mr-1"></i> Update Payment
-                        </button>
-                        
+                        <button type="button" class="update-payment-btn inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]" data-id="{{ payment.id }}" data-current="{{ payment.amount_paid }}" data-fee="{{ payment_config.monthly_fee }}"><i class="fa-solid fa-money-bill-wave mr-1"></i> Update Payment</button>
                         <form method="post" action="{% url 'payments:toggle-payment' student.id payment.month year %}" class="inline-block ml-2">
                           {% csrf_token %}
-                          <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
-                            {% if payment.paid %}
-                              <i class="fa-solid fa-rotate-left mr-1"></i> Mark Unpaid
-                            {% else %}
-                              <i class="fa-solid fa-check mr-1"></i> Mark Paid
-                            {% endif %}
-                          </button>
+                          <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">{% if payment.paid %}<i class="fa-solid fa-rotate-left mr-1"></i> Mark Unpaid{% else %}<i class="fa-solid fa-check mr-1"></i> Mark Paid{% endif %}</button>
                         </form>
                       </td>
                     </tr>
@@ -137,189 +92,41 @@
             </div>
           </div>
         {% endfor %}
-        
+
         <div class="mt-6">
-            <a href="{{ request.session.payment_list_url|default:payment_list_url }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
-              <i class="fa-solid fa-arrow-left mr-2"></i> Back to Payment List
-            </a>
+          <a href="{{ request.session.payment_list_url|default:payment_list_url }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Payment List</a>
         </div>
       </div>
     </div>
 
-    <!-- payment modal -->
-    <div id="paymentModal"
-     class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden
-            backdrop-filter backdrop-blur-sm"
-     style="background-color: rgba(0, 0, 0, 0.25);"
-     aria-labelledby="modal-title"
-     role="dialog"
-     aria-modal="true"
-    >
-
-      <!-- modal content -->
-      <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+    <div id="paymentModal" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden backdrop-filter backdrop-blur-sm" style="background-color: rgba(0, 0, 0, 0.25);" role="dialog" aria-modal="true">
+      <div class="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
-            <div
-              class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 sm:mx-0 sm:h-10 sm:w-10"
-            >
-              <i class="fa-solid fa-money-bill-wave text-[#ff4f25]"></i>
-            </div>
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 sm:mx-0 sm:h-10 sm:w-10"><i class="fa-solid fa-money-bill-wave text-[#ff4f25]"></i></div>
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                Update Payment
-              </h3>
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Update Payment</h3>
               <div class="mt-4">
-                <input type="hidden" id="payment_id" value="">
+                <input type="hidden" id="payment_id">
                 <div class="mb-4">
-                  <label for="amount_paid" class="block text-sm font-medium text-gray-700">
-                    Amount Paid (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    name="amount_paid"
-                    id="amount_paid"
-                    class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    min="0"
-                  >
+                  <label for="amount_paid" class="block text-sm font-medium text-gray-700">Amount Paid (Rp)</label>
+                  <input type="number" name="amount_paid" id="amount_paid" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" min="0">
                 </div>
                 <div class="flex justify-between text-sm text-gray-500 mb-2">
                   <div>Monthly Fee: <span id="monthly_fee_display" class="font-medium">0</span></div>
-                  <div>Remaining:   <span id="remaining_display"  class="font-medium">0</span></div>
+                  <div>Remaining: <span id="remaining_display" class="font-medium">0</span></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            onclick="updatePayment()"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#ff4f25] text-base font-medium text-white hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25] sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onclick="closePaymentModal()"
-            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Cancel
-          </button>
+          <button type="button" id="save-payment-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#ff4f25] text-base font-medium text-white hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25] sm:ml-3 sm:w-auto sm:text-sm">Save</button>
+          <button type="button" id="close-payment-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
         </div>
       </div>
     </div>
 
-
-    <script>
-      function openPaymentModal(paymentId, currentAmount, monthlyFee) {
-        document.getElementById('payment_id').value = paymentId;
-        document.getElementById('amount_paid').value = currentAmount;
-        document.getElementById('monthly_fee_display').textContent = formatCurrency(monthlyFee);
-        
-        // calc and display remaining amount
-        const remaining = monthlyFee - currentAmount;
-        document.getElementById('remaining_display').textContent = formatCurrency(remaining);
-        
-        // show payment modal
-        document.getElementById('paymentModal').classList.remove('hidden');
-      }
-      
-      // close payment modal
-      function closePaymentModal() {
-        document.getElementById('paymentModal').classList.add('hidden');
-      }
-      
-      // format currency in Indonesian format
-      function formatCurrency(amount) {
-        return new Intl.NumberFormat('id-ID').format(amount);
-      }
-      
-      function updatePayment() {
-        const paymentId = document.getElementById('payment_id').value;
-        const amountPaid = document.getElementById('amount_paid').value;
-        
-        // form data
-        const formData = new FormData();
-        formData.append('amount_paid', amountPaid);
-        
-        // AJAX req to update payment
-        fetch(`/payments/update/${paymentId}/`, {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            closePaymentModal();
-            
-            // update ui for the payment row
-            const row = document.getElementById(`payment-row-${paymentId}`);
-            const cells = row.getElementsByTagName('td');
-            
-            // update payment status based on the response
-            let statusHtml = '';
-            if (data.paid) {
-              statusHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <i class="fa-solid fa-check-circle mr-1"></i> Paid
-              </span>`;
-            } else if (data.is_installment) {
-              statusHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                <i class="fa-solid fa-clock mr-1"></i> Partial
-              </span>`;
-            } else {
-              statusHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                <i class="fa-solid fa-times-circle mr-1"></i> Unpaid
-              </span>`;
-            }
-            cells[1].innerHTML = statusHtml;
-            
-            // update amount paid
-            cells[2].textContent = `Rp ${formatCurrency(amountPaid)}`;
-            
-            // update remaining amount
-            cells[3].textContent = `Rp ${formatCurrency(data.remaining_amount)}`;
-            
-            // update payment date - this would need server to return the date
-            if(amountPaid > 0) {
-              const now = new Date();
-              cells[4].textContent = now.toLocaleString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-            } else {
-              cells[4].textContent = '-';
-            }
-            
-            // reload page to update summary
-            window.location.reload();
-          } else {
-            alert('Error updating payment: ' + data.message);
-          }
-        })
-        .catch(error => {
-          alert('Error updating payment. Please try again.');
-          console.error('Error:', error);
-        });
-      }
-      
-      // close payment modal when clicking outside of it
-      window.onclick = function(event) {
-        const modal = document.getElementById('paymentModal');
-        if (event.target === modal) {
-          closePaymentModal();
-        }
-      };
-
-      document.addEventListener('DOMContentLoaded', () => {
-          document.querySelectorAll('.currency').forEach(el => {
-            const raw = el.dataset.raw.replace(/\D/g, '');  
-            const num = Number(raw);
-            el.textContent = formatCurrency(num);
-          });
-        });
-    </script>
+    <script src="{% static 'js/payments/payment_detail.js' %}"></script>
 {% endblock %}
+
