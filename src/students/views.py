@@ -163,6 +163,12 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
             query_string = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
             next_url = f"{next_url.split('?')[0]}?{query_string}"
 
+        # If coming from payment list, use stored payment_list_url
+        elif next_url and "payments:payment_list" in next_url:
+            stored_url = self.request.session.get("payment_list_url")
+            if stored_url:
+                next_url = stored_url
+
         elif next_url and "reports:report-list" in next_url:
             next_url = f"{next_url.split('?')[0]}?anchor_redirected=true"
 

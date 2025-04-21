@@ -1,6 +1,7 @@
 import calendar
 import datetime
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -108,7 +109,58 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         return context
 
     def get(self, request, *args, **kwargs):
-        # store current URL with all filters in session
+        # Check if URL parameters are present, if not, use session values if available
+        if not any(
+            key in request.GET
+            for key in ["q", "class_filter", "level_filter", "year", "per_page"]
+        ) and any(
+            key in request.session
+            for key in [
+                "payments_q",
+                "payments_class_filter",
+                "payments_level_filter",
+                "payments_year",
+                "payments_per_page",
+            ]
+        ):
+            # Build URL from session values
+            params = {
+                "q": request.session.get("payments_q", ""),
+                "class_filter": request.session.get("payments_class_filter", ""),
+                "level_filter": request.session.get("payments_level_filter", ""),
+                "year": request.session.get(
+                    "payments_year", str(datetime.date.today().year)
+                ),
+                "per_page": request.session.get(
+                    "payments_per_page", str(self.paginate_by)
+                ),
+            }
+            # Remove empty params
+            params = {k: v for k, v in params.items() if v}
+            # Redirect to the filtered URL
+            return redirect(f"{request.path}?{urlencode(params)}")
+
+        # Store filter parameters in session
+        if "q" in request.GET:
+            request.session["payments_q"] = request.GET.get("q", "")
+        if "class_filter" in request.GET:
+            request.session["payments_class_filter"] = request.GET.get(
+                "class_filter", ""
+            )
+        if "level_filter" in request.GET:
+            request.session["payments_level_filter"] = request.GET.get(
+                "level_filter", ""
+            )
+        if "year" in request.GET:
+            request.session["payments_year"] = request.GET.get(
+                "year", str(datetime.date.today().year)
+            )
+        if "per_page" in request.GET:
+            request.session["payments_per_page"] = request.GET.get(
+                "per_page", str(self.paginate_by)
+            )
+
+        # Store current URL with all filters in session
         self.request.session["payment_list_url"] = self.request.get_full_path()
 
         if "anchor_redirected" not in request.GET:
@@ -144,10 +196,28 @@ class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # add payment_list_url to the context
-        context["payment_list_url"] = self.request.session.get(
-            "payment_list_url", reverse("payments:payment_list")
-        )
+
+        # Use payment_list_url from session or reconstruct it
+        payment_list_url = self.request.session.get("payment_list_url")
+        if not payment_list_url:
+            # Reconstruct URL from session parameters
+            params = {
+                "q": self.request.session.get("payments_q", ""),
+                "class_filter": self.request.session.get("payments_class_filter", ""),
+                "level_filter": self.request.session.get("payments_level_filter", ""),
+                "year": self.request.session.get(
+                    "payments_year", str(datetime.date.today().year)
+                ),
+                "per_page": self.request.session.get("payments_per_page", "5"),
+            }
+            # Remove empty params
+            params = {k: v for k, v in params.items() if v}
+            # Build query string
+            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+            payment_list_url = f"{reverse('payments:payment_list')}?{query_string}"
+
+        context["payment_list_url"] = payment_list_url
+
         return context
 
 
@@ -229,6 +299,24 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
         )
         context["total_remaining"] = context["total_due"] - context["total_paid"]
 
+        payment_list_url = self.request.session.get("payment_list_url")
+        if not payment_list_url:
+            # Reconstruct URL from session parameters
+            params = {
+                "q": self.request.session.get("payments_q", ""),
+                "class_filter": self.request.session.get("payments_class_filter", ""),
+                "level_filter": self.request.session.get("payments_level_filter", ""),
+                "year": self.request.session.get("payments_year", str(year)),
+                "per_page": self.request.session.get("payments_per_page", "5"),
+            }
+            # Remove empty params
+            params = {k: v for k, v in params.items() if v}
+            # Build query string
+            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+            payment_list_url = f"{reverse('payments:payment_list')}?{query_string}"
+
+        context["payment_list_url"] = payment_list_url
+
         return context
 
 
@@ -245,9 +333,22 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     {"success": False, "message": f"Invalid amount: {raw}"}, status=400
                 )
 
+            old_amount = payment.amount_paid
             payment.amount_paid = amount_paid
             payment.payment_date = timezone.now() if amount_paid > 0 else None
             payment.save()
+
+            # Add a message to the session
+            if amount_paid > old_amount:
+                messages.success(
+                    request,
+                    f"Payment for {payment.student.name} updated to {amount_paid}.",
+                )
+            elif amount_paid < old_amount:
+                messages.info(
+                    request,
+                    f"Payment for {payment.student.name} reduced to {amount_paid}.",
+                )
 
             return JsonResponse(
                 {
@@ -255,6 +356,7 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     "paid": payment.paid,
                     "is_installment": payment.is_installment,
                     "remaining_amount": float(payment.remaining_amount),
+                    "message": f"Payment updated for {payment.student.name}",
                 }
             )
         except Exception as e:
@@ -265,6 +367,7 @@ class TogglePaymentView(View):
     def post(self, request, student_id, month, year):
         student = get_object_or_404(Student, id=student_id)
         payment = Payment.objects.get(student=student, year=year, month=month)
+        previous_state = payment.paid
         payment.paid = not payment.paid
 
         # if marked as paid, set amount to full fee
@@ -273,11 +376,22 @@ class TogglePaymentView(View):
             payment.amount_paid = config.monthly_fee
             payment.remaining_amount = 0
             payment.payment_date = timezone.now()
+            messages.success(
+                request,
+                f"Payment for {student.name} for {calendar.month_name[month]} {year} marked as paid.",
+            )
         else:
             payment.amount_paid = 0
             payment.remaining_amount = PaymentConfig.get_active().monthly_fee
             payment.payment_date = None
+            messages.info(
+                request,
+                f"Payment for {student.name} for {calendar.month_name[month]} {year} marked as unpaid.",
+            )
 
         payment.save()
-        # redirect ke halaman sebelumnya/fallback ke payment list
-        return redirect(request.META.get("HTTP_REFERER", "payments:payment_list"))
+
+        # Redirect to the referring page
+        return redirect(
+            request.META.get("HTTP_REFERER", reverse("payments:payment_list"))
+        )
