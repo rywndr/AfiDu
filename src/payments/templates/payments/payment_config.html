@@ -8,67 +8,61 @@
 
 {% block content %}
     <div class="container mx-auto px-4 py-8">
-      <div id="payment-config-app" class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;" 
-                  data-mid-start="{{ form.mid_semester_start.id_for_label }}"
-                  data-mid-end="{{ form.mid_semester_end.id_for_label }}"
-                  data-fin-start="{{ form.final_semester_start.id_for_label }}"
-                  data-fin-end="{{ form.final_semester_end.id_for_label }}"
-                  data-fee="{{ form.monthly_fee.id_for_label }}"
-                  data-year="{{ form.year.id_for_label }}">
-
+      <div id="payment-config-app"
+           class="bg-white shadow rounded-lg p-6 mb-6 border-t-4"
+           style="border-top-color: #ff4f25;"
+           data-mid-start="{{ form.mid_semester_start.id_for_label }}"
+           data-mid-end="{{ form.mid_semester_end.id_for_label }}"
+           data-fin-start="{{ form.final_semester_start.id_for_label }}"
+           data-fin-end="{{ form.final_semester_end.id_for_label }}"
+           data-fee="{{ form.monthly_fee.id_for_label }}"
+           data-year="{{ form.year.id_for_label }}"
+           data-config-url="{% url 'payments:payment_config' %}">
         <form method="post" class="space-y-6">
           {% csrf_token %}
-          
-          <!-- monthly fee -->
+
           <div class="bg-gray-50 p-4 rounded-lg">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-gray-800">Monthly Fee</h2>
-                <div>
-                  <label for="year-selector" class="text-sm font-medium text-gray-700 mr-2">Year:</label>
-                  <select id="year-selector" class="py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm">
-                    {% for year_option in years %}
-                      <option value="{{ year_option }}" {% if year_option == selected_year %}selected{% endif %}>{{ year_option }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    Monthly Payment Amount (IDR)
-                  </label>
-                  <div class="mt-1 relative rounded-md shadow-sm">
-                    {{ form.monthly_fee }}
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">Rp</span>
-                    </div>
-                    {% if form.monthly_fee.errors %}
-                      <div class="text-red-600 text-sm mt-1">{{ form.monthly_fee.errors }}</div>
-                    {% endif %}
-                  </div>
-                  <p class="mt-2 text-sm text-gray-500">
-                    This is the monthly fee that will be applied to all students in {{ selected_year }}
-                  </p>
-                </div>
-                <div class="hidden">
-                  {{ form.year }}
-                </div>
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold text-gray-800">Monthly Fee</h2>
+              <div>
+                <label for="year-selector" class="text-sm font-medium text-gray-700 mr-2">Year:</label>
+                <select id="year-selector" class="py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm">
+                  {% for year_option in years %}
+                    <option value="{{ year_option }}" {% if year_option == selected_year %}selected{% endif %}>{{ year_option }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
-          
-          <!-- sem config -->
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Monthly Payment Amount (IDR)</label>
+                <div class="mt-1 relative rounded-md shadow-sm">
+                  {{ form.monthly_fee }}
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rp</span>
+                  </div>
+                  {% if form.monthly_fee.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.monthly_fee.errors }}</div>
+                  {% endif %}
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                  This is the monthly fee that will be applied to all students in {{ selected_year }}
+                </p>
+              </div>
+              <div class="hidden">
+                {{ form.year }}
+              </div>
+            </div>
+          </div>
+
           <div class="bg-gray-50 p-4 rounded-lg">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Semester Configuration</h2>
-            
-            <!-- mid -->
             <div class="mb-6">
               <h3 class="text-md font-medium text-gray-800 mb-3">Mid Semester</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label for="{{ form.mid_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    Start Month
-                  </label>
+                  <label for="{{ form.mid_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">Start Month</label>
                   <div class="mt-1">
                     {{ form.mid_semester_start }}
                     {% if form.mid_semester_start.errors %}
@@ -77,9 +71,7 @@
                   </div>
                 </div>
                 <div>
-                  <label for="{{ form.mid_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    End Month
-                  </label>
+                  <label for="{{ form.mid_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">End Month</label>
                   <div class="mt-1">
                     {{ form.mid_semester_end }}
                     {% if form.mid_semester_end.errors %}
@@ -89,15 +81,11 @@
                 </div>
               </div>
             </div>
-            
-            <!-- final -->
             <div>
               <h3 class="text-md font-medium text-gray-800 mb-3">Final Semester</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label for="{{ form.final_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    Start Month
-                  </label>
+                  <label for="{{ form.final_semester_start.id_for_label }}" class="block text-sm font-medium text-gray-700">Start Month</label>
                   <div class="mt-1">
                     {{ form.final_semester_start }}
                     {% if form.final_semester_start.errors %}
@@ -106,9 +94,7 @@
                   </div>
                 </div>
                 <div>
-                  <label for="{{ form.final_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    End Month
-                  </label>
+                  <label for="{{ form.final_semester_end.id_for_label }}" class="block text-sm font-medium text-gray-700">End Month</label>
                   <div class="mt-1">
                     {{ form.final_semester_end }}
                     {% if form.final_semester_end.errors %}
@@ -119,23 +105,20 @@
               </div>
             </div>
           </div>
-          
-          <!-- visual semester schedule -->
+
           <div class="bg-gray-50 p-4 rounded-lg">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Schedule Preview</h2>
             <div class="grid grid-cols-12 gap-1">
               {% for i in months %}
-                <div class="text-center p-2 rounded-md text-xs" id="month-{{ i }}">
-                  {{ month_names|get_item:i }}
-                </div>
+                <div class="text-center p-2 rounded-md text-xs" id="month-{{ i }}">{{ month_names|get_item:i }}</div>
               {% endfor %}
             </div>
           </div>
-          
+
           <div class="flex justify-between">
-              <a href="{{ request.session.payment_list_url|default:payment_list_url }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
-                  <i class="fa-solid fa-arrow-left mr-2"></i> Back to Payment List
-              </a>
+            <a href="{{ request.session.payment_list_url|default:payment_list_url }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+              <i class="fa-solid fa-arrow-left mr-2"></i> Back to Payment List
+            </a>
             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
               <i class="fa-solid fa-save mr-2"></i> Save
             </button>
@@ -144,16 +127,6 @@
       </div>
     </div>
 
-    <script src ="{% static 'js/payments/payment_config.js' %}"></script>
-
-    <style>
-      /* month inputs */
-      input[type="number"] {
-        @apply mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm;
-      }
-      
-      #{{ form.monthly_fee.id_for_label }} {
-        @apply block w-full py-2 pl-10 pr-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm;
-      }
-    </style>
+    <script src="{% static 'js/payments/payment_config.js' %}"></script>
 {% endblock %}
+
