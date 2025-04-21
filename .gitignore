@@ -274,3 +274,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+**/src/static/src/output.css
+**/src/static/CACHE/**
