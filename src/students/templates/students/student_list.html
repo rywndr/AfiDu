@@ -105,7 +105,11 @@
               {{ student.age }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              {{ student.assigned_class }}
+              {% if student.assigned_class %}
+                <span class="text-gray-500 text-sm">{{ student.assigned_class.name }}</span>
+              {% else %}
+                <span class="text-gray-500 text-sm italic">Not assigned</span>
+              {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {{ student.level }}
