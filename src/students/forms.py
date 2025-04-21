@@ -15,7 +15,13 @@ class StudentForm(forms.ModelForm):
             "address": TextInput(attrs={"placeholder": "Enter address"}),
             "name": TextInput(attrs={"placeholder": "Enter full name"}),
             "age": TextInput(attrs={"placeholder": "Enter age"}),
-            "contact_number": TextInput(attrs={"placeholder": "+62XXXXXXXXXX"}),
+            "contact_number": TextInput(
+                attrs={
+                    "placeholder": "81 XXX XXXX",
+                    "class": "phone-input-field",
+                    "data-country-code": "+62",
+                }
+            ),
             "profile_photo": forms.ClearableFileInput(),
             "gender": Select(),
         }
@@ -42,11 +48,23 @@ class StudentForm(forms.ModelForm):
         # prepend opsi kosong ke opsi level
         self.fields["level"].choices = [("", "Select level")] + current_level
 
+
 class StudentClassForm(forms.ModelForm):
     class Meta:
         model = StudentClass
         fields = ["name", "description"]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "w-full px-3 py-2 border border-gray-300 rounded", "placeholder": "Enter class name"}),
-            "description": forms.Textarea(attrs={"class": "w-full px-3 py-2 border border-gray-300 rounded", "placeholder": "Enter description", "rows": 3}),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded",
+                    "placeholder": "Enter class name",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded",
+                    "placeholder": "Enter description",
+                    "rows": 3,
+                }
+            ),
         }

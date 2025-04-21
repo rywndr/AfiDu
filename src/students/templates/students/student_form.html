@@ -34,33 +34,57 @@
           {% csrf_token %}
           
           {% for field in form %}
-            <div class="space-y-2">
-              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
-                {{ field.label }}
-              </label>
-              
-              {% if field.field.widget.input_type == 'file' %}
-                <div class="mt-1">
-                  {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
+            {% if field.name == 'contact_number' %}
+                <div class="space-y-2">
+                  <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
+                    {{ field.label }}
+                  </label>
+                  <div class="w-3/4 flex rounded-md overflow-hidden border border-gray-300">
+                    <div class="bg-gray-100 flex items-center justify-center px-2 border-r border-gray-300 text-gray-600 font-medium">
+                      +62
+                    </div>
+                    <div class="relative flex-1">
+                      {% render_field field class="phone-input-field shadow-sm block w-full sm:text-sm p-2 focus:ring-0 focus:outline-none border-0" placeholder="81 XXX XXXX" %}
+                    </div>
+                  </div>
+                  
+                  {% if field.help_text %}
+                    <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+                  {% endif %}
+                  
+                  {% for error in field.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %}
                 </div>
-              {% elif field.field.widget.input_type == 'select' %}
-                <div>
-                  {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
-                </div>
-              {% else %}
-                <div>
-                  {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
-                </div>
-              {% endif %}
-              
-              {% if field.help_text %}
-                <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
-              {% endif %}
-              
-              {% for error in field.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            </div>
+            {% else %}
+              <div class="space-y-2">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#5a5656]">
+                  {{ field.label }}
+                </label>
+                
+                {% if field.field.widget.input_type == 'file' %}
+                  <div class="mt-1">
+                    {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
+                  </div>
+                {% elif field.field.widget.input_type == 'select' %}
+                  <div>
+                    {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
+                  </div>
+                {% else %}
+                  <div>
+                    {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
+                  </div>
+                {% endif %}
+                
+                {% if field.help_text %}
+                  <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
+                {% endif %}
+                
+                {% for error in field.errors %}
+                  <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
           {% endfor %}
 
           {% if next %}
@@ -82,5 +106,5 @@
 
   <!-- JS -->
   <script src="{% static 'js/students/auto_age_count.js' %}"></script>
+  <script src="{% static 'js/students/phone_input.js' %}"></script>
 {% endblock %}
-
