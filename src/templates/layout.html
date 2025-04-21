@@ -113,7 +113,7 @@
           <!-- title top bar dynamic based on view -->
           <h1 class="text-3xl font-bold text-[#5a5656]">
             {% if active_tab_icon %}
-            <i class="fas {{ active_tab_icon }} mr-2"></i>
+                <i class="fas {{ active_tab_icon }} mr-2"></i>
             {% endif %} {{ active_tab_title|default:"Dashboard" }}
           </h1>
 
@@ -133,7 +133,7 @@
             </button>
             <div
               id="dropdown-menu"
-              class="hidden absolute z-2 right-0 mt-2 w-48 bg-white shadow-md rounded-md overflow-hidden"
+              class="hidden absolute z-2 right-0 mt-2 bg-white shadow-md rounded-md overflow-hidden {% if user.is_superuser %} w-48 {% else %} w-32 {% endif %}"
             >
               <a
                 href="{% url 'myprofile:profile' %}"

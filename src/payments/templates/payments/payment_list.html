@@ -58,8 +58,11 @@
         </div>
         
         <div class="flex justify-between items-center ml-auto">
-            <a href="{% url 'payments:payment_config' %}" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
-            <i class="fa-solid fa-cog"></i>
+            <a href="" title="Download Payment Card"  class="bg-[#ff4f25] hover:bg-[#cc3f1e] mr-3 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+            <i class="fa-solid fa-download"></i>
+            </a>
+            <a href="{% url 'payments:payment_config' %}" title="Payment Configuration"  class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+            <i class="fa-solid fa-gear"></i>
             </a>
         </div>
       </form>

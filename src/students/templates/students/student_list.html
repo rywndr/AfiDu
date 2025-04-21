@@ -51,11 +51,15 @@
       </form>
 
       <div class="flex space-x-4">
-        <a href="{% url 'students:class-list' %}"
+        <a href="{% url 'students:class-list' %}" title="Class configuration"
            class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-chalkboard"></i>
         </a>
-        <a href="{% url 'students:student-add' %}" 
+        <a href="" title="Download student registration form"
+           class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+          <i class="fa-solid fa-download"></i>
+        </a>
+        <a href="{% url 'students:student-add' %}"  title="Add new student"
            class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-plus"></i>
         </a>

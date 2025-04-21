@@ -114,7 +114,7 @@
                 </td>
               {% endfor %}
               <td class="px-4 py-2 whitespace-nowrap text-center">
-                <button type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}'" 
+                <button title="Download student report"  type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}'" 
                         class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full p-2 shadow" id="export-report-btn">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13 7h-2V3H9v4H7l3 3 3-3zM5 13v2h10v-2H5z" />
@@ -214,7 +214,7 @@
     
       <div class="text-right">
         {% if students_data %}
-          <a href="{% url 'reports:export-reports-zip' %}?q={{ q }}&level_filter={{ level_filter }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&year={{ year }}&semester={{ semester }}"
+          <a href="{% url 'reports:export-reports-zip' %}?q={{ q }}&level_filter={{ level_filter }}&class_filter={{ class_filter }}&per_page={{ current_per_page }}&year={{ year }}&semester={{ semester }}" title="Export all reports as ZIP file"
             class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full py-2 px-4 shadow transition" id="export-all-btn">
             Export All as ZIP
           </a>
