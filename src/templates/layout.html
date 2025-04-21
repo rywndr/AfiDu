@@ -18,8 +18,8 @@
 
     <!-- includes -->
     {% include 'snippets/favicon.html' %}
-    {% include 'snippets/font_awesome.html' %}
     {% include 'snippets/tailwind.html' %}
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
 
   </head>
   <body
@@ -60,7 +60,7 @@
                   href="{% url 'students:student-list' %}"
                   class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'students' %}"
                 >
-                  <i class="fas fa-user-graduate mr-2"></i>
+                  <i class="fa-solid fa-user-graduate mr-2"></i>
                   <span>Students</span>
                 </a>
               </li>
