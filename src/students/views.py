@@ -1,5 +1,6 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -9,7 +10,6 @@ from django.views.generic import (
     UpdateView,
 )
 
-from django.shortcuts import redirect
 from .forms import StudentForm
 from .models import Student, StudentClass
 
@@ -26,7 +26,8 @@ class ClassContextMixin:
         context = super().get_context_data(**kwargs)
         context.update(self.get_class_context())
         return context
-    
+
+
 class StudentContextMixin:
     def get_student_context(self):
         extra = {
@@ -42,39 +43,88 @@ class StudentContextMixin:
         context.update(self.get_student_context())
         return context
 
+
 class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
     model = Student
     template_name = "students/student_list.html"
     context_object_name = "students"
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        # get filters from request or session
         query = self.request.GET.get("q")
         class_filter = self.request.GET.get("class_filter")
         level_filter = self.request.GET.get("level_filter")
+        per_page = self.request.GET.get("per_page")
+
+        # store filters in session if provided in request
+        if query is not None:
+            self.request.session["student_search_query"] = query
+        elif "student_search_query" in self.request.session:
+            query = self.request.session["student_search_query"]
+
+        if class_filter is not None:
+            self.request.session["student_class_filter"] = class_filter
+        elif "student_class_filter" in self.request.session:
+            class_filter = self.request.session["student_class_filter"]
+
+        if level_filter is not None:
+            self.request.session["student_level_filter"] = level_filter
+        elif "student_level_filter" in self.request.session:
+            level_filter = self.request.session["student_level_filter"]
+
+        if per_page is not None:
+            self.request.session["student_per_page"] = per_page
+        elif "student_per_page" in self.request.session:
+            per_page = self.request.session["student_per_page"]
+
+        # apply filters to queryset
         if query:
             queryset = queryset.filter(name__icontains=query)
         if class_filter:
             queryset = queryset.filter(assigned_class=class_filter)
         if level_filter:
             queryset = queryset.filter(level=level_filter)
+
         return queryset
 
     def get_paginate_by(self, queryset):
         per_page = self.request.GET.get("per_page")
+        if per_page is None and "student_per_page" in self.request.session:
+            per_page = self.request.session["student_per_page"]
         if per_page in ["5", "10", "15"]:
             return int(per_page)
         return 5
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # pass student count context ke list view
+
+        # cet filters from request or session
+        query = self.request.GET.get(
+            "q", self.request.session.get("student_search_query", "")
+        )
+        class_filter = self.request.GET.get(
+            "class_filter", self.request.session.get("student_class_filter", "")
+        )
+        level_filter = self.request.GET.get(
+            "level_filter", self.request.session.get("student_level_filter", "")
+        )
+        per_page = self.request.GET.get(
+            "per_page", self.request.session.get("student_per_page", "5")
+        )
+
+        # pass student count context to list view
         context["student_count"] = self.get_queryset().count()
-        # persist state item per_page
-        context["current_per_page"] = self.request.GET.get("per_page", "5")
-        context["current_level_filter"] = self.request.GET.get("level_filter", "")
+
+        # add filter values to context
+        context["current_query"] = query
+        context["current_class_filter"] = class_filter
+        context["current_level_filter"] = level_filter
+        context["current_per_page"] = per_page
+
         return context
-    
+
     # redirect to table
     def get(self, request, *args, **kwargs):
         if "anchor_redirected" not in request.GET:
@@ -92,8 +142,12 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add the next URL if present
-        context['next'] = self.request.GET.get('next')
+        next_url = self.request.GET.get("next", self.request.META.get("HTTP_REFERER"))
+        if next_url:
+            context["next"] = next_url
+            context["edit_url"] = (
+                f"{{% url 'students:student-edit' student.pk %}}?next={next_url}"
+            )
         return context
 
 
@@ -106,10 +160,11 @@ class StudentCreateView(LoginRequiredMixin, StudentContextMixin, CreateView):
     def form_valid(self, form):
         messages.success(self.request, "Student created successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to create student. Please try again.")
         return super().form_invalid(form)
+
 
 class StudentUpdateView(LoginRequiredMixin, StudentContextMixin, UpdateView):
     model = Student
@@ -117,13 +172,25 @@ class StudentUpdateView(LoginRequiredMixin, StudentContextMixin, UpdateView):
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
 
+    def get_success_url(self):
+        next_url = self.request.GET.get("next")
+        if next_url:
+            return next_url
+        return reverse_lazy("students:student-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["next"] = self.request.GET.get("next")
+        return context
+
     def form_valid(self, form):
         messages.success(self.request, "Student updated successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to update student. Please try again.")
         return super().form_invalid(form)
+
 
 class StudentDeleteView(LoginRequiredMixin, StudentContextMixin, DeleteView):
     model = Student
@@ -133,16 +200,18 @@ class StudentDeleteView(LoginRequiredMixin, StudentContextMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, "Student deleted successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to delete student. Please try again.")
         return super().form_invalid(form)
-    
+
+
 # classes
 class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
     model = StudentClass
     template_name = "students/class_list.html"
     context_object_name = "classes"
+
 
 class StudentClassCreateView(LoginRequiredMixin, ClassContextMixin, CreateView):
     model = StudentClass
@@ -153,10 +222,11 @@ class StudentClassCreateView(LoginRequiredMixin, ClassContextMixin, CreateView):
     def form_valid(self, form):
         messages.success(self.request, "Class created successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to create class. Please try again.")
         return super().form_invalid(form)
+
 
 class StudentClassUpdateView(LoginRequiredMixin, ClassContextMixin, UpdateView):
     model = StudentClass
@@ -167,10 +237,11 @@ class StudentClassUpdateView(LoginRequiredMixin, ClassContextMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Class updated successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to update class. Please try again.")
         return super().form_invalid(form)
+
 
 class StudentClassDeleteView(LoginRequiredMixin, ClassContextMixin, DeleteView):
     model = StudentClass
@@ -180,8 +251,7 @@ class StudentClassDeleteView(LoginRequiredMixin, ClassContextMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, "Class deleted successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Failed to delete class. Please try again.")
         return super().form_invalid(form)
-    

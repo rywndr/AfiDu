@@ -11,13 +11,20 @@
     
     <!-- back btn (only for editing) -->
     {% if form.instance.pk %}
-      <div class="mb-2">
-        <a href="{% url 'students:student-detail' student.pk %}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5  h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-          </svg>
-        </a>
-      </div>
+        {% if next %}
+            <a href="{{ next }}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+            </a>
+            {% else %}
+            <a href="{% url 'students:student-detail' student.pk %}" class="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Back to Details
+            </a>
+        {% endif %}
     {% endif %}
 
     <!-- card -->
@@ -55,6 +62,10 @@
               {% endfor %}
             </div>
           {% endfor %}
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
           
           <div class="flex items-center space-x-4 pt-4">
             <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#cc3f1e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b3371a] transition-all duration-200 transform hover:-translate-y-1">
