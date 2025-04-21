@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal, InvalidOperation
 
 from django import forms
@@ -10,6 +11,7 @@ class PaymentConfigForm(forms.ModelForm):
     class Meta:
         model = PaymentConfig
         fields = [
+            "year",
             "monthly_fee",
             "mid_semester_start",
             "mid_semester_end",
@@ -17,6 +19,15 @@ class PaymentConfigForm(forms.ModelForm):
             "final_semester_end",
         ]
         widgets = {
+            "year": forms.Select(
+                attrs={
+                    "class": (
+                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
+                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
+                    ),
+                }
+            ),
             "monthly_fee": forms.TextInput(
                 attrs={
                     "placeholder": "0",
@@ -77,6 +88,13 @@ class PaymentConfigForm(forms.ModelForm):
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_year = datetime.date.today().year
+        self.fields["year"].widget.choices = [
+            (y, str(y)) for y in range(current_year - 2, current_year + 8)
+        ]
 
     def clean_monthly_fee(self):
         raw = self.cleaned_data.get("monthly_fee")

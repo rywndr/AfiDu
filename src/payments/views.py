@@ -22,19 +22,34 @@ class PaymentContextMixin:
     def get_payment_context(self):
         # set jarak tahun untuk filter dan data bulan
         months = list(range(1, 13))
+        current_year = datetime.date.today().year
+        years_range = list(range(current_year, current_year + 8))
+
+        # get selected year from request, defaults to current year
+        selected_year = self.request.GET.get("config_year")
+        if not (
+            selected_year
+            and selected_year.isdigit()
+            and int(selected_year) in years_range
+        ):
+            selected_year = current_year
+        else:
+            selected_year = int(selected_year)
+
         return {
             "available_classes": StudentClass.objects.all(),
             "level_choices": LEVELS,
-            "years": list(range(2025, 2033)),
+            "years": years_range,
+            "selected_year": selected_year,
             "months": months,
             "month_names": {i: calendar.month_abbr[i] for i in months},
             "active_tab_title": "Payments",
             "active_tab_icon": "fa-money-bill-wave",
-            "payment_config": PaymentConfig.get_active(),
+            "payment_config": PaymentConfig.get_active(selected_year),
         }
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)  # <-- use parent's context
+        context = super().get_context_data(**kwargs)
         context.update(self.get_payment_context())
         return context
 
@@ -111,7 +126,17 @@ class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
     success_url = reverse_lazy("payments:payment_config")
 
     def get_object(self, queryset=None):
-        return PaymentConfig.get_active()
+        selected_year = self.request.GET.get("config_year")
+        if selected_year and selected_year.isdigit():
+            year = int(selected_year)
+        else:
+            year = datetime.date.today().year
+        return PaymentConfig.get_active(year)
+
+    def get_success_url(self):
+        # keep year parameter when redirecting after save
+        year = self.object.year
+        return f"{reverse('payments:payment_config')}?config_year={year}"
 
     def form_valid(self, form):
         messages.success(self.request, "Payment configuration updated successfully!")
@@ -119,8 +144,10 @@ class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # default payment list URL if session URL is not available
-        context["payment_list_url"] = reverse("payments:payment_list")
+        # add payment_list_url to the context
+        context["payment_list_url"] = self.request.session.get(
+            "payment_list_url", reverse("payments:payment_list")
+        )
         return context
 
 
@@ -142,7 +169,7 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
         student = self.get_object()
 
         # get payment config
-        payment_config = PaymentConfig.get_active()
+        payment_config = PaymentConfig.get_active(year)
         context["payment_config"] = payment_config
 
         # default payment list URL if session URL is not available

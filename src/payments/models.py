@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 
 from django.core.validators import MinValueValidator
@@ -7,6 +8,12 @@ from students.models import Student
 
 
 class PaymentConfig(models.Model):
+    year = models.IntegerField(
+        default=datetime.date.today().year,
+        validators=[MinValueValidator(2020)],
+        help_text="Year this configuration applies to",
+    )
+
     # monthly fee in IDR
     monthly_fee = models.DecimalField(
         max_digits=12,
@@ -30,21 +37,31 @@ class PaymentConfig(models.Model):
         default=9, validators=[MinValueValidator(1)]
     )
 
-    # ensure only one active payment config
+    # ensure only one active payment config per year
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        # each year has only one active config
+        unique_together = ["year", "is_active"]
 
     def save(self, *args, **kwargs):
         if self.is_active:
-            # deactivate other payment configs
-            PaymentConfig.objects.exclude(pk=self.pk).update(is_active=False)
+            # deactivate other payment configs for the same year
+            PaymentConfig.objects.filter(year=self.year).exclude(pk=self.pk).update(
+                is_active=False
+            )
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_active(cls):
-        """get active config or defaults"""
-        config = cls.objects.filter(is_active=True).first()
+    def get_active(cls, year=None):
+        """get active config for specified year or defaults"""
+        if year is None:
+            year = datetime.date.today().year
+
+        config = cls.objects.filter(year=year, is_active=True).first()
         if not config:
             config = cls.objects.create(
+                year=year,
                 monthly_fee=150000,
                 mid_semester_start=1,
                 mid_semester_end=3,
@@ -55,7 +72,7 @@ class PaymentConfig(models.Model):
         return config
 
     def __str__(self):
-        return f"Payment Config (Monthly: {self.monthly_fee} IDR)"
+        return f"Payment Config {self.year} (Monthly: {self.monthly_fee} IDR)"
 
 
 class Payment(models.Model):
@@ -81,7 +98,7 @@ class Payment(models.Model):
         return f"{self.student.name} - {self.month}/{self.year} - {status}"
 
     def save(self, *args, **kwargs):
-        config = PaymentConfig.get_active()
+        config = PaymentConfig.get_active(self.year)
 
         # calc how much student owes
         diff = config.monthly_fee - self.amount_paid
