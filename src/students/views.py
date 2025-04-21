@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -142,12 +142,33 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        next_url = self.request.GET.get("next", self.request.META.get("HTTP_REFERER"))
-        if next_url:
-            context["next"] = next_url
-            context["edit_url"] = (
-                f"{{% url 'students:student-edit' student.pk %}}?next={next_url}"
-            )
+
+        # figure out where “next” should point, prefer ?next=... but fall back to the Referer header
+        next_url = self.request.GET.get("next") or self.request.META.get(
+            "HTTP_REFERER", ""
+        )
+
+        # if it’s pointing at score‑list, re‑attach all session filters
+        if next_url and "scores:score-list" in next_url:
+            params = {
+                "year": self.request.session.get("scores_year", ""),
+                "semester": self.request.session.get("scores_semester", ""),
+                "category": self.request.session.get("scores_category", ""),
+                "q": self.request.session.get("scores_search_query", ""),
+                "class_filter": self.request.session.get("scores_class_filter", ""),
+                "level_filter": self.request.session.get("scores_level_filter", ""),
+                "per_page": self.request.session.get("scores_per_page", "5"),
+            }
+            # re‑serialize into a querystring
+            query_string = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
+            next_url = f"{next_url.split('?')[0]}?{query_string}"
+
+        context["next"] = next_url
+
+        # build “edit” link that bounces back to the same “next”
+        edit_base = reverse("students:student-edit", args=[self.object.pk])
+        context["edit_url"] = f"{edit_base}?next={next_url}"
+
         return context
 
 

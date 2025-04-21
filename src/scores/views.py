@@ -42,14 +42,37 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # get filter params dari url
+
+        # get filter params from URL or session
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
         level_filter = self.request.GET.get("level_filter", "")
         current_year = str(datetime.now().year)
-        year = self.request.GET.get("year", current_year)
-        semester = self.request.GET.get("semester", "mid")
-        category = self.request.GET.get("category", "reading")
+
+        # if params exist in GET, update session
+        if self.request.GET:
+            year = self.request.GET.get("year", current_year)
+            semester = self.request.GET.get("semester", "mid")
+            category = self.request.GET.get("category", "reading")
+            per_page_str = self.request.GET.get("per_page", "5")
+
+            # store filter values in session
+            self.request.session["scores_year"] = year
+            self.request.session["scores_semester"] = semester
+            self.request.session["scores_category"] = category
+            self.request.session["scores_search_query"] = search_query
+            self.request.session["scores_class_filter"] = class_filter
+            self.request.session["scores_level_filter"] = level_filter
+            self.request.session["scores_per_page"] = per_page_str
+        else:
+            # get values from session/use defaults
+            year = self.request.session.get("scores_year", current_year)
+            semester = self.request.session.get("scores_semester", "mid")
+            category = self.request.session.get("scores_category", "reading")
+            search_query = self.request.session.get("scores_search_query", "")
+            class_filter = self.request.session.get("scores_class_filter", "")
+            level_filter = self.request.session.get("scores_level_filter", "")
+            per_page_str = self.request.session.get("scores_per_page", "5")
 
         # get config
         config = None
@@ -115,7 +138,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             forms.append((student, form))
 
         # pagination, get params default to 5
-        per_page_str = self.request.GET.get("per_page", "5")
         try:
             per_page = int(per_page_str)
         except ValueError:
@@ -146,14 +168,35 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         current_year = str(datetime.now().year)
-        year = request.POST.get("year", current_year)
-        semester = request.POST.get("semester", "mid")
-        category = request.POST.get("category", "reading")
-        search_query = request.POST.get("q", "")
-        class_filter = request.POST.get("class_filter", "")
-        level_filter = request.POST.get("level_filter", "")
-        per_page = self.request.GET.get("per_page", "5")
+        # get values from session first, then fall back to POST data
+        year = request.POST.get(
+            "year", request.session.get("scores_year", current_year)
+        )
+        semester = request.POST.get(
+            "semester", request.session.get("scores_semester", "mid")
+        )
+        category = request.POST.get(
+            "category", request.session.get("scores_category", "reading")
+        )
+        search_query = request.POST.get(
+            "q", request.session.get("scores_search_query", "")
+        )
+        class_filter = request.POST.get(
+            "class_filter", request.session.get("scores_class_filter", "")
+        )
+        level_filter = request.POST.get(
+            "level_filter", request.session.get("scores_level_filter", "")
+        )
+        per_page = request.session.get("scores_per_page", "5")
         page = self.request.GET.get("page", "")
+
+        # update session
+        request.session["scores_year"] = year
+        request.session["scores_semester"] = semester
+        request.session["scores_category"] = category
+        request.session["scores_search_query"] = search_query
+        request.session["scores_class_filter"] = class_filter
+        request.session["scores_level_filter"] = level_filter
 
         for student in Student.objects.all():
             prefix = f"student_{student.id}"
@@ -280,7 +323,7 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             semester = request.GET.get("semester") or None
             category = request.GET.get("category") or None
 
-            # dont allow deleting the global default
+            # jst dont allow deleting da global default
             if year is None and semester is None and category is None:
                 messages.error(request, "Cannot delete global default configuration.")
                 return redirect(self.get_success_url())
@@ -422,4 +465,26 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         return super().form_invalid(form)
 
     def get_success_url(self):
+        # build URL from session values to maintain filters when returning
+        year = self.request.session.get("scores_year")
+        semester = self.request.session.get("scores_semester")
+        category = self.request.session.get("scores_category")
+        search_query = self.request.session.get("scores_search_query", "")
+        class_filter = self.request.session.get("scores_class_filter", "")
+        level_filter = self.request.session.get("scores_level_filter", "")
+        per_page = self.request.session.get("scores_per_page", "5")
+
+        # if deleting configuration, return to score list with filters
+        if self.request.GET.get("action") == "delete":
+            return (
+                f"{reverse_lazy('scores:score-list')}"
+                f"?year={year}"
+                f"&semester={semester}"
+                f"&category={category}"
+                f"&q={search_query}"
+                f"&class_filter={class_filter}"
+                f"&level_filter={level_filter}"
+                f"&per_page={per_page}"
+            )
+
         return self.request.path
