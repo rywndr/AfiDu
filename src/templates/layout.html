@@ -134,7 +134,7 @@
                 alt="Profile Picture"
                 class="w-8 h-8 rounded-full"
               />
-              <span class="text-gray-700">{{ request.user.first_name }}</span>
+              <span class="text-gray-700">{% if request.user.first_name %} {{ request.user.first_name }} {% else %} user {% endif %}</span>
               <i class="fas fa-chevron-down text-gray-500"></i>
             </button>
             <div
