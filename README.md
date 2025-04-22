@@ -195,7 +195,7 @@ then visit `http://127.0.0.1:8000` in your browser to access the app.
 
 [mit license](./LICENSE)
 
-## 👨‍💻 Contributors
+## 👨‍💻 contributors
 
 - [sudo](https://github.com/rywndr)
 - [mizu](https://github.com/Miizzuuu)
