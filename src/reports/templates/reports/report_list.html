@@ -75,15 +75,16 @@
         <input type="hidden" name="year" value="{{ year }}">
         <input type="hidden" name="semester" value="{{ semester }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
-        <input type="hidden" name="page" value="{{ page_obj.number|default:1 }}">
         <input type="hidden" name="anchor_redirected" value="true">
         
         <div class="ml-auto">
-          <a href="?year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&page={{ page_obj.number|default:1 }}&anchor_redirected=true" 
-             class="bg-gray-500 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition"
-             title="Clear filters">
-            <i class="fa-solid fa-filter-circle-xmark"></i>
-          </a>
+            {% if q or class_filter or level_filter %}
+              <a href="?year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true"
+                 class="bg-gray-500 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition"
+                 title="Clear filters">
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+              </a>
+          {% endif %}
         </div>
       </form>
     </div>

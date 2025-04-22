@@ -51,6 +51,11 @@
       </form>
 
       <div class="flex space-x-4">
+        {% if current_query or current_class_filter or current_level_filter %}
+            <a href="?q=&class_filter=&level_filter=&year={{ year }}&per_page={{ current_per_page }}"title="Clear Filters" class="bg-gray-500 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition mr-3">
+              <i class="fa-solid fa-filter-circle-xmark"></i>
+            </a>
+        {% endif %}
         <a href="{% url 'students:class-list' %}" title="Class configuration"
            class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-chalkboard"></i>
