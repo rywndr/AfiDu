@@ -15,12 +15,21 @@
             <strong>Note:</strong> Global Default settings apply when no more specific configuration exists.
             More specific configurations (Year → Year+Semester → Year+Semester+Category) take precedence over general ones.
           </p>
+          <p class="text-sm mt-2">
+            <strong>Formula Variables:</strong>
+            <ul class="list-disc list-inside ml-2">
+              <li><code>ex_sum</code> - Sum of all exercise scores</li>
+              <li><code>mid_term</code> - Midterm exam score</li>
+              <li><code>finals</code> - Final exam score</li>
+              <li><code>num_exercises</code> - Number of exercises configured</li>
+            </ul>
+          </p>
         </div>
       </div>
 
       <!-- config form -->
       <div class="w-full bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
-        <form method="post" novalidate>
+        <form method="post" novalidate id="configForm">
           {% csrf_token %}
 
           {% if form.non_field_errors %}
@@ -57,8 +66,9 @@
           </div>
           <div class="mb-4">
             <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700">Formula for Final Score:</label>
-            {% render_field form.formula class="mt-1 block w-full rounded border-gray-300 shadow-sm" %}
+            {% render_field form.formula class="mt-1 block w-full rounded border-gray-300 shadow-sm" id="formulaField" %}
             <p class="text-sm text-gray-600 mt-1">You can use: <code>ex_sum</code>, <code>mid_term</code>, <code>finals</code>, and <code>num_exercises</code>.</p>
+            <p id="formulaError" class="text-sm text-red-600 mt-1 hidden">Formula is invalid. Please use only allowed variables and mathematical operators.</p>
           </div>
           <div class="flex space-x-2">
             <button type="submit" class="bg-[#ff4f25] hover:bg-[#e0431d] text-white font-medium py-2 px-4 rounded-md shadow w-24">Save</button>
@@ -131,17 +141,17 @@
 
                   <!-- edit modal -->
                   <div id="modal-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}" 
-                       class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden backdrop-filter backdrop-blur-sm"
+                       class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden"
                        style="background-color: rgba(0, 0, 0, 0.25);">
                     <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
-                      <div class="bg-white px-6 py-4">
+                      <div class="bg-white px-6 py-4 modal-content">
                         <div class="flex items-start space-x-4">
                           <div class="flex-shrink-0 bg-orange-100 h-10 w-10 flex items-center justify-center rounded-full">
                             <i class="fa-solid fa-gear text-[#ff4f25]"></i>
                           </div>
                           <div class="w-full">
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Edit Configuration</h3>
-                            <form method="post">
+                            <form method="post" class="edit-form">
                               {% csrf_token %}
                               <input type="hidden" name="edit_year" value="{{ config.year|default_if_none:'' }}">
                               <input type="hidden" name="edit_semester" value="{{ config.semester|default_if_none:'' }}">
@@ -155,7 +165,8 @@
                               <div class="mb-4">
                                 <label for="id_formula_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" class="block text-sm font-medium text-gray-700">Formula for Final Score:</label>
                                 <input type="text" name="formula" id="id_formula_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
-                                       value="{{ config.formula }}" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                                       value="{{ config.formula }}" class="formula-field mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                                <p class="formula-error text-sm text-red-600 mt-1 hidden">Formula is invalid. Please use only allowed variables and mathematical operators.</p>
                               </div>
                               <div class="flex justify-end space-x-2">
                                 <button type="button" onclick="hideEditModal('modal-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}')"
@@ -184,10 +195,10 @@
 
     <!-- delete modal -->
     <div id="deleteModal"
-         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden backdrop-filter backdrop-blur-sm"
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto hidden"
          style="background-color: rgba(0, 0, 0, 0.25);"
          aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="w-full max-w-sm bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
+      <div class="w-full max-w-sm bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 modal-content">
         <div class="bg-[#ff4f25] px-4 py-3">
           <h1 class="text-xl font-bold text-white">Confirm Delete</h1>
         </div>
@@ -205,6 +216,57 @@
     </div>
 
     <script>
+      // Formula validation regex
+      const validFormulaRegex = /^[0-9\s().*+\/-]+$|^(?=.*(?:ex_sum|mid_term|finals|num_exercises))[a-zA-Z0-9\s().*+\/-_]+$/;
+      const allowedVars = ["ex_sum", "mid_term", "finals", "num_exercises"];
+      
+      // function to validate formula
+      function validateFormula(formula) {
+        
+        // check if formula contains only allowed variables and operators
+        const vars = formula.match(/[a-zA-Z_]+[a-zA-Z0-9_]*/g) || [];
+        const validVars = vars.every(v => allowedVars.includes(v));
+        
+        return {
+          valid: validVars && validFormulaRegex.test(formula),
+          formula: formula
+        };
+      }
+      
+      // add validation to main form
+      document.getElementById('configForm')?.addEventListener('submit', function(e) {
+        const formulaField = document.getElementById('formulaField');
+        const formulaError = document.getElementById('formulaError');
+        
+        const result = validateFormula(formulaField.value);
+        formulaField.value = result.formula; 
+        
+        if (!result.valid) {
+          e.preventDefault();
+          formulaError.classList.remove('hidden');
+        } else {
+          formulaError.classList.add('hidden');
+        }
+      });
+
+      // add validation to edit forms
+      document.querySelectorAll('.edit-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+          const formulaField = form.querySelector('.formula-field');
+          const formulaError = form.querySelector('.formula-error');
+          
+          const result = validateFormula(formulaField.value);
+          formulaField.value = result.formula; 
+          
+          if (!result.valid) {
+            e.preventDefault();
+            formulaError.classList.remove('hidden');
+          } else {
+            formulaError.classList.add('hidden');
+          }
+        });
+      });
+
       function displayEditModal(id) {
         document.getElementById(id).classList.remove('hidden');
       }
@@ -228,16 +290,31 @@
         document.getElementById('deleteModal').classList.add('hidden');
       }
       
-      document.addEventListener('click', function(event) {
-        const modalContainers = document.querySelectorAll('.modal-container');
-        modalContainers.forEach(function(container) {
-          if (container.classList.contains('hidden')) return;
-          
-          const modalContent = container.querySelector('.modal-content');
+      // handle modal close when clicking outside
+      document.addEventListener('mousedown', function(event) {
+        // don't handle if clicking on a button that opens modals
+        if (event.target.closest('button[onclick^="displayEditModal"]') || 
+            event.target.closest('button[onclick^="displayDeleteModal"]')) {
+          return;
+        }
+        
+        // handle edit modals
+        const editModals = document.querySelectorAll('[id^="modal-"]:not(.hidden)');
+        editModals.forEach(function(modal) {
+          const modalContent = modal.querySelector('.bg-white.rounded-lg');
           if (modalContent && !modalContent.contains(event.target)) {
-            container.classList.add('hidden');
+            modal.classList.add('hidden');
           }
         });
+        
+        // handle delete modal
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal && !deleteModal.classList.contains('hidden')) {
+          const modalContent = deleteModal.querySelector('.max-w-sm');
+          if (modalContent && !modalContent.contains(event.target)) {
+            deleteModal.classList.add('hidden');
+          }
+        }
       });
     </script>
 {% endblock %}
