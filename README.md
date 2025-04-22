@@ -1,189 +1,201 @@
-# 🎓 AfiDu - Student Management System for an English Learning Center
+# AfiDu - student management system for an english learning center
 
-![AfiDu Logo]()
+<p align="center">
+  <img src="./src/static/images/afidu.png" alt="AfiDu Logo" width="101" height="154" />
+</p>
 
-## 📋 Overview
+## 📋 overview
 
 AfiDu is a student data management system designed for an English tutorial center (known as "BIMBEL" in Indonesia). This app simplifies student management, score tracking, payment processing, and study material organization for English learning center.
 
-## ✨ Stuff you can do
+## ✨ stuff you can do
 
-### 👨‍🎓 Student Management
+### 👨‍🎓 student management
 
-- Add, edit, and delete student records
-- Assign students to specific levels or classes
-- Configure classes and levels
-- Advanced filtering options for quick student lookup
+- add, edit, and delete student records
+- assign students to specific levels or classes
+- configure classes and levels
+- advanced filtering options for quick student lookup
 
-### 📊 Score Tracking
+### 📊 score tracking
 
-- Record student scores by year, semester, and category
-- Configure unique scoring systems based on your needs
-- Customize formulas for calculating final scores
-- Real-time score calculation
-- Filtering options for easy data access
+- record student scores by year, semester, and category
+- configure unique scoring systems based on your needs
+- customize formulas for calculating final scores
+- real-time score calculation
+- filtering options for easy data access
 
-### 📚 Study Materials
+### 📚 study materials
 
-- Upload PDF study materials
-- View and edit material names and categories
-- Filter materials by category
-- Document preview functionality
+- upload pdf study materials
+- view and edit material names and categories
+- filter materials by category
+- document preview functionality
 
-### 📝 Reports
+### 📝 reports
 
-- Generate individual student reports
-- Export all reports as ZIP based on applied filters
-- Comprehensive score reporting from the score tracking system
+- generate individual student reports
+- export all reports as zip based on applied filters
+- comprehensive score reporting from the score tracking system
 
-### 💰 Payment Management
+### 💰 payment management
 
-- Configure monthly fees
-- Set mid-semester and final semester payment periods
-- Detailed payment summaries showing:
-  - Total due amount
-  - Total paid amount
-  - Remaining balance
-  - Monthly payment status
-- Configure payment settings by year and semester
-- Install payments in multiple transactions
+- configure monthly fees
+- set mid-semester and final semester payment periods
+- detailed payment summaries showing:
+  - total due amount
+  - total paid amount
+  - remaining balance
+  - monthly payment status
+- configure payment settings by year
+- install payments in multiple transactions
 
-### 👥 User Roles
+### 👥 user roles
 
-- **Teacher**: Access to the app
-- **Superuser**: Full access including admin page and ability to create new accounts
+- **teacher**: access to the app
+- **superuser**: full access including admin page and ability to create new accounts
 
-## 🛠️ Tech Used
+## 🛠️ tech used
 
-- **Framework**: Django
-- **Frontend**:
-  - Tailwind - Utility first css framework
-  - FontAwesome - Icon library
-- **Database**: PostgreSQL (using NeonDB)/SQLite (optional)
-- **Email**: Custom email backend for password reset link
+- **framework**: django
+- **frontend**:
+  - tailwind - utility first css framework
+  - fontAwesome - icon library
+- **database**: postgresql (using neondb)/sqlite (optional)
+- **email**: custom email backend for password reset link (optimized for use locally)
 
-## 🖼️ UI
+## 🖼️ ui
 
-<sub><sup>UI screenshot coming soon<sub><sup>
+<sub><sup>ui screenshot coming soon<sub><sup>
 
-## 🎬 Demo
+## 🎬 demo
 
 <sub><sup>video demo coming soon<sub><sup>
 
-## ⚙️ Installation & Setup
+## ⚙️ installation & setup
 
-### Prerequisites
+### prerequisites
 
-1.  Python 3.8+
-2.  Node.js and npm
-3.  Poppler (for generating study materials thumbnail)
-4.  Git
+1.  python 3.8+
+2.  node.js and npm
+3.  poppler (for generating study materials thumbnail)
+4.  git
 
-### Installing Poppler
+### installing poppler
 
-#### Windows
+#### windows
 
 ```bash
-# Using Chocolatey
+# using chocolatey
 choco install poppler
 
-# OR download the latest build from from: https://github.com/oschwartz10612/poppler-windows/releases
-# Add the bin directory to your PATH environment variable
+# or download the latest build from from: https://github.com/oschwartz10612/poppler-windows/releases
+# add the bin directory to your path environment variable
 
 ```
 
 #### macOS
 
 ```bash
-# Using Homebrew
+# using homebrew
 brew install poppler
 
 ```
 
-#### Linux (Ubuntu/Debian)
+#### linux (ubuntu/debian)
 
 ```bash
 sudo apt-get update
 sudo apt-get install poppler-utils
 ```
 
-### Setting up the Project
+### setting up the Project
 
-1.  **Clone the repository**
+1.  **clone the repository**
 
     ```bash
     git clone https://github.com/rywndr/afidu.git
     cd afidu
     ```
 
-2.  **Create and activate a virtual environment**
+2.  **create and activate a virtual environment**
 
     ```bash
     python -m venv .venv
 
-    # On Windows
+    # on windows
     .venv\Scripts\activate
 
-    # On macOS/Linux
+    # on macos/linux
     source .venv/bin/activate
     ```
 
-3.  **Install Python dependencies**
+3.  **install python dependencies**
 
     ```bash
     pip install -r requirements.txt
     ```
 
-4.  **Install Node.js dependencies**
+4.  **install node.js dependencies**
 
     ```bash
     npm install
     ```
 
-5.  **Set up environment variables**
+5.  **set up environment variables**
 
     ```bash
-    # Copy example environment file
+    # copy .env.example to .env
+
     cp .env.example .env
 
-    # Edit the .env file with your database credentials and other settings
+    # edit the .env file with your database credentials and other settings
     ```
 
-6.  **Run database migrations**
+6.  **run database migrations**
 
     ```bash
     python manage.py migrate
     ```
 
-7.  **Create a superuser**
+7.  **create a superuser**
 
     ```bash
     python manage.py createsuperuser
     ```
 
-### Running the app
+### run the app
 
-You need to run both the Django development server and the Tailwind CSS compiler in separate terminal windows:
+you need to run both the django development server and the tailwind css compiler in separate terminal windows:
 
-**Terminal 1 - Run Tailwind CSS compiler:**
+**terminal 1 - run tailwind css compiler:**
 
 ```bash
 npx tailwindcss -i ./static/src/input.css -o ./static/src/output.css --watch
 ```
 
-**Terminal 2 - Run Django server:**
+**terminal 2 - run django server:**
 
 ```bash
 python manage.py runserver
 ```
 
-Then visit `http://127.0.0.1:8000` in your browser to access the app.
+then visit `http://127.0.0.1:8000` in your browser to access the app.
 
-## 📄 License
+## 🎨 color palette
 
-[MIT License]()
+| color   | hex code  | preview                                                                               |
+| ------- | --------- | ------------------------------------------------------------------------------------- |
+| primary | `#ff4f25` | ![](https://img.shields.io/badge/-_-ff4f25?style=flat&labelColor=ff4f25&color=ff4f25) |
+| shade1  | `#cc3f1e` | ![](https://img.shields.io/badge/-_-cc3f1e?style=flat&labelColor=cc3f1e&color=cc3f1e) |
+| shade2  | `#b3371a` | ![](https://img.shields.io/badge/-_-b3371a?style=flat&labelColor=b3371a&color=b3371a) |
+| grey    | `#5a5656` | ![](https://img.shields.io/badge/-_-5a5656?style=flat&labelColor=5a5656&color=5a5656) |
+
+## 📄 license
+
+[mit license](./LICENSE)
 
 ## 👨‍💻 Contributors
 
-- [Haikhal Roywendra](https://github.com/rywndr)
-- [Mizu](https://github.com/Miizzuuu)
+- [sudo](https://github.com/rywndr)
+- [mizu](https://github.com/Miizzuuu)
