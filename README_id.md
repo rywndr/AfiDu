@@ -111,11 +111,10 @@ sudo apt install poppler-utils
 
 1.  **clone repository**
 
-````bash
+```bash
 git clone https://github.com/rywndr/afidu.git
 cd afidu
-    ```
-````
+```
 
 2. **buat dan aktifkan virtual environment**
 
