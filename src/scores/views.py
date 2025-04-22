@@ -56,6 +56,13 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             category = self.request.GET.get("category", "reading")
             per_page_str = self.request.GET.get("per_page", "5")
 
+            if year in ("", "None"):
+                year = current_year
+            if semester in ("", "None"):
+                semester = "mid"
+            if category in ("", "None"):
+                category = "reading"
+
             # store filter values in session
             self.request.session["scores_year"] = year
             self.request.session["scores_semester"] = semester
