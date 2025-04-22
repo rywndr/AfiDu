@@ -114,23 +114,49 @@ class PaymentConfigForm(forms.ModelForm):
         ms, me = cleaned.get("mid_semester_start"), cleaned.get("mid_semester_end")
         fs, fe = cleaned.get("final_semester_start"), cleaned.get("final_semester_end")
 
-        if ms and me and ms > me:
+        # basic validation for start/end months
+        if ms is not None and me is not None and ms > me:
             self.add_error(
                 "mid_semester_end",
                 "Mid semester end month cannot be before start month",
             )
-        if fs and fe and fs > fe:
+
+        if fs is not None and fe is not None and fs > fe:
             self.add_error(
                 "final_semester_end",
                 "Final semester end month cannot be before start month",
             )
 
-        if ms and me and fs and fe:
-            mid_set = set(range(ms, me + 1))
-            final_set = set(range(fs, fe + 1))
-            if mid_set & final_set:
-                self.add_error(
-                    None, "Mid semester and final semester months cannot overlap"
-                )
+        # check for overlapping semesters
+        if all(v is not None for v in [ms, me, fs, fe]):
+            # create range for both semesters
+            mid_semester_range = set(range(ms, me + 1))
+            final_semester_range = set(range(fs, fe + 1))
+
+            # check ovverlap
+            overlap = mid_semester_range.intersection(final_semester_range)
+            if overlap:
+                # generate month names for err msg
+                month_names = [
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ]
+                overlapping_months = [month_names[m - 1] for m in overlap]
+
+                error_msg = f"Semesters cannot overlap. Overlapping month(s): {', '.join(overlapping_months)}"
+
+                # add detailed error to both semester end fields
+                self.add_error("mid_semester_end", error_msg)
+                self.add_error("final_semester_end", error_msg)
 
         return cleaned
