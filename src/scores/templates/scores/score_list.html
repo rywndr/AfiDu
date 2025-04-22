@@ -100,7 +100,7 @@
       </form>
 
       <div class="flex space-x-4">
-          {% if current_query or current_class_filter or current_level_filter %}
+          {% if search_query or class_filter or current_level_filter %}
               <a href="{% url 'scores:score-list' %}?year={{ year }}&semester={{ semester }}&category={{ category }}&per_page={{ current_per_page }}"
                  title="Clear Filters"
                  class="bg-gray-500 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
