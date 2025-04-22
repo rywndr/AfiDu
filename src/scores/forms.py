@@ -1,5 +1,3 @@
-import re
-
 from django import forms
 
 from .models import SCORE_CATEGORIES, SEMESTER_CHOICES, Score, ScoreConfig
@@ -114,9 +112,6 @@ class ScoreConfigForm(forms.ModelForm):
             "year": forms.Select(),
             "semester": forms.Select(choices=[("", "-------")] + SEMESTER_CHOICES),
             "category": forms.Select(choices=[("", "-------")] + SCORE_CATEGORIES),
-            "formula": forms.TextInput(
-                attrs={"class": "formula-input"}
-            ),  # Add a class for JS targeting
         }
 
     def __init__(self, *args, **kwargs):
@@ -130,55 +125,3 @@ class ScoreConfigForm(forms.ModelForm):
         self.fields["year"].required = False
         self.fields["semester"].required = False
         self.fields["category"].required = False
-
-    def clean_formula(self):
-        formula = self.cleaned_data.get("formula")
-        if formula:
-            # Replace 'x' with '*' for multiplication
-            formula = formula.replace("x", "*")
-
-            # Remove all whitespace for easier processing
-            formula_no_spaces = formula.replace(" ", "")
-
-            # Define valid tokens: variables, operators, parentheses and numbers
-            valid_vars = ["ex_sum", "mid_term", "finals", "num_exercises"]
-            valid_operators = [
-                "+",
-                "-",
-                "*",
-                "/",
-                "(",
-                ")",
-                ".",
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-            ]
-
-            # Extract all variable-like tokens
-            var_pattern = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
-            variables = var_pattern.findall(formula_no_spaces)
-
-            # Check if all variables are valid
-            invalid_vars = [var for var in variables if var not in valid_vars]
-            if invalid_vars:
-                raise forms.ValidationError(
-                    f"Invalid variable(s) in formula: {', '.join(invalid_vars)}. "
-                    f"Only these variables are allowed: {', '.join(valid_vars)}"
-                )
-
-            # Check for invalid characters
-            for char in formula_no_spaces:
-                if not char.isalnum() and char not in valid_operators and char != "_":
-                    raise forms.ValidationError(
-                        f"Invalid character in formula: '{char}'"
-                    )
-
-        return formula
