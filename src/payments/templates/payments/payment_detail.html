@@ -30,7 +30,14 @@
         </div>
 
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-3">Payment Summary</h2>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
+            <h2 class="text-lg font-semibold text-gray-800">Payment Summary</h2>
+            <div class="mt-2 md:mt-0 flex items-center">
+              <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+                <i class="fa-solid fa-calendar-day mr-1"></i> Monthly Fee: Rp<span class="currency monthly-fee-display" data-raw="{{ payment_config.monthly_fee|floatformat:0 }}">{{ payment_config.monthly_fee|floatformat:0 }}</span>
+              </span>
+            </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
               <p class="text-gray-500 text-sm">Total Due</p>
@@ -110,11 +117,10 @@
                 <input type="hidden" id="payment_id">
                 <div class="mb-4">
                   <label for="amount_paid" class="block text-sm font-medium text-gray-700">Amount Paid (Rp)</label>
-                  <input type="number" name="amount_paid" id="amount_paid" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" min="0">
+                  <input type="text" name="amount_paid" id="amount_paid" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 p-1 rounded-md" min="0">
                 </div>
-                <div class="flex justify-between text-sm text-gray-500 mb-2">
-                  <div>Monthly Fee: <span id="monthly_fee_display" class="font-medium">0</span></div>
-                  <div>Remaining: <span id="remaining_display" class="font-medium">0</span></div>
+                <div class="flex justify-end text-sm text-gray-500 mb-2">
+                  <div>Remaining: Rp<span id="remaining_display" class="font-medium">0</span></div>
                 </div>
               </div>
             </div>
