@@ -333,7 +333,7 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             # jst dont allow deleting da global default
             if year is None and semester is None and category is None:
                 messages.error(request, "Cannot delete global default configuration.")
-                return redirect(self.get_success_url())
+                return redirect(self.request.path)
 
             try:
                 config = ScoreConfig.objects.get(
@@ -341,10 +341,10 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
                 )
                 config.delete()
                 messages.success(request, "Configuration deleted successfully.")
-                return redirect(self.get_success_url())
+                return redirect(self.request.path)
             except ScoreConfig.DoesNotExist:
                 messages.error(request, "Configuration not found.")
-                return redirect(self.get_success_url())
+                return redirect(self.request.path)
 
         return super().post(request, *args, **kwargs)
 
