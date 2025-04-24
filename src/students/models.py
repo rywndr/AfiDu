@@ -9,6 +9,7 @@ GENDER = [
 ]
 
 LEVELS = [
+    ("Mix Class", "Mix Class"),
     ("Beginner 1", "Beginner 1"),
     ("Beginner 2", "Beginner 2"),
     ("Elementary 1", "Elementary 1"),
@@ -27,6 +28,7 @@ phone_validator = RegexValidator(
     message="Phone number must start with +62 and contain 9-13 digits.",
 )
 
+
 class StudentClass(models.Model):
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -37,6 +39,7 @@ class StudentClass(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Student(models.Model):
     profile_photo = models.ImageField(
