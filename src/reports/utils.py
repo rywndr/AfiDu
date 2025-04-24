@@ -43,28 +43,53 @@ def generate_student_report_pdf(student, year, semester):
         else:
             return "(Poor)"
 
+    writing_score = student.scores_dict.get("writing", 0)
+    reading_score = student.scores_dict.get("reading", 0)
+    speaking_score = student.scores_dict.get("speaking", 0)
+    listening_score = student.scores_dict.get("listening", 0)
+
     # calculate avg score
     scores = []
     if hasattr(student, "scores_dict"):
-        for key in ["writing", "reading", "speaking", "listening"]:
-            if key in student.scores_dict and student.scores_dict[key] not in [
-                None,
-                "N/A",
-                "",
-            ]:
+        for key, value in [
+            ("writing", writing_score),
+            ("reading", reading_score),
+            ("speaking", speaking_score),
+            ("listening", listening_score),
+        ]:
+            if value not in [None, "N/A", ""]:
                 try:
-                    scores.append(float(student.scores_dict[key]))
+                    score_value = float(value)
+                    scores.append(score_value)
                 except (ValueError, TypeError):
                     pass
 
-    avg_score = sum(scores) / len(scores) if scores else 0
+    # calc avg valid score
+    avg_score = sum(scores) / len(scores) if scores else 0.0
 
     # overall comment based on avg score
-    overall_comment = "Good!! Tingkatkan terus nak"
-    if avg_score < 60:
-        overall_comment = "Perlu lebih banyak latihan"
-    elif avg_score > 90:
-        overall_comment = "Excellent!! Pertahankan prestasimu"
+    if avg_score >= 96.0:
+        overall_comment = "Excellent!! Outstanding achievement across all skills. Teruskan prestasi yang luar biasa!"
+    elif avg_score >= 91.0:
+        overall_comment = "Very Good!! Strong performance with minimal areas for improvement. Teruskan kerja yang hebat!"
+    elif avg_score >= 86.0:
+        overall_comment = "Great!! Solid understanding with good application of skills. Teruskan usaha yang baik!"
+    elif avg_score >= 81.0:
+        overall_comment = (
+            "Good!! Demonstrating competence in most areas. Tingkatkan terus kemampuan!"
+        )
+    elif avg_score >= 76.0:
+        overall_comment = "Satisfactory plus! Showing promise with room for growth. Terus berlatih untuk kemajuan!"
+    elif avg_score >= 71.0:
+        overall_comment = "Satisfactory! Meeting basic expectations. Perlu latihan tambahan untuk meningkat!"
+    elif avg_score >= 66.0:
+        overall_comment = "Fair! Developing skills but needs consistent practice. Perlu lebih banyak latihan rutin!"
+    elif avg_score >= 60.0:
+        overall_comment = "Passing! Fundamental understanding present but requires significant improvement. Perlu bimbingan tambahan!"
+    elif avg_score >= 50.0:
+        overall_comment = "Needs improvement! Struggling with fundamental concepts. Perlu perhatian khusus dan latihan intensif!"
+    else:
+        overall_comment = "Requires immediate attention! Significant challenges with core skills. Perlu program remedial segera!"
 
     # in memory buffer for PDF
     pdf_buffer = io.BytesIO()
