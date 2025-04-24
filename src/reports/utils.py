@@ -3,7 +3,9 @@ from datetime import date
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
+    Paragraph,
     SimpleDocTemplate,
     Spacer,
     Table,
@@ -69,45 +71,58 @@ def generate_student_report_pdf(student, year, semester):
 
     # overall comment based on avg score
     if avg_score >= 96.0:
-        overall_comment = "Excellent!! Outstanding achievement across all skills. Teruskan prestasi yang luar biasa!"
+        overall_comment = "Excellent!! Teruskan prestasi yang luar biasa!"
     elif avg_score >= 91.0:
-        overall_comment = "Very Good!! Strong performance with minimal areas for improvement. Teruskan kerja yang hebat!"
+        overall_comment = "Very Good!! Teruskan kerja yang hebat!"
     elif avg_score >= 86.0:
-        overall_comment = "Great!! Solid understanding with good application of skills. Teruskan usaha yang baik!"
+        overall_comment = "Great!! Teruskan usaha yang baik!"
     elif avg_score >= 81.0:
-        overall_comment = (
-            "Good!! Demonstrating competence in most areas. Tingkatkan terus kemampuan!"
-        )
+        overall_comment = "Good!! Tingkatkan terus kemampuan!"
     elif avg_score >= 76.0:
-        overall_comment = "Satisfactory plus! Showing promise with room for growth. Terus berlatih untuk kemajuan!"
+        overall_comment = "Satisfactory plus! Terus berlatih untuk kemajuan!"
     elif avg_score >= 71.0:
-        overall_comment = "Satisfactory! Meeting basic expectations. Perlu latihan tambahan untuk meningkat!"
+        overall_comment = "Satisfactory! Perlu latihan tambahan untuk meningkat!"
     elif avg_score >= 66.0:
-        overall_comment = "Fair! Developing skills but needs consistent practice. Perlu lebih banyak latihan rutin!"
+        overall_comment = "Fair! Perlu lebih banyak latihan rutin!"
     elif avg_score >= 60.0:
-        overall_comment = "Passing! Fundamental understanding present but requires significant improvement. Perlu bimbingan tambahan!"
+        overall_comment = "Passing! Perlu bimbingan tambahan!"
     elif avg_score >= 50.0:
-        overall_comment = "Needs improvement! Struggling with fundamental concepts. Perlu perhatian khusus dan latihan intensif!"
+        overall_comment = (
+            "Needs improvement! Perlu perhatian khusus dan latihan intensif!"
+        )
     else:
-        overall_comment = "Requires immediate attention! Significant challenges with core skills. Perlu program remedial segera!"
+        overall_comment = "Requires immediate attention!. Perlu program remedial!"
 
     # in memory buffer for PDF
     pdf_buffer = io.BytesIO()
 
-    # set up reportlab PDF document
+    # set up reportlab PDF document with reduced margins to accommodate the border
     doc = SimpleDocTemplate(
         pdf_buffer,
         pagesize=A4,
-        rightMargin=30,
-        leftMargin=30,
-        topMargin=30,
-        bottomMargin=30,
+        rightMargin=25,
+        leftMargin=25,
+        topMargin=25,
+        bottomMargin=25,
     )
 
     elements = []
 
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import Paragraph
+    # add border toframe func
+    def add_border_to_page(canvas, doc):
+        canvas.saveState()
+        canvas.setStrokeColor(colors.black)
+        canvas.setLineWidth(1)
+        # draw rectangle around content
+        canvas.rect(
+            doc.leftMargin - 5,
+            doc.bottomMargin - 5,
+            doc.width + 10,
+            doc.height + 10,
+        )
+        canvas.restoreState()
+
+    doc.build(elements, onFirstPage=add_border_to_page, onLaterPages=add_border_to_page)
 
     report_style = ParagraphStyle(
         "ReportTitle",
@@ -133,8 +148,8 @@ def generate_student_report_pdf(student, year, semester):
     elements.append(Spacer(1, 10))
 
     student_info_data = [
-        ["NAME", ":", student.name, "", "", ""],
-        ["LEVEL", ":", student.level, "", "", ""],
+        ["NAME", ":", student.name.upper(), "", "", ""],
+        ["LEVEL", ":", student.level.upper(), "", "", ""],
         ["DATE", ":", date.today().strftime("%d %B %Y").upper(), "", "", ""],
     ]
     student_info_table = Table(student_info_data, colWidths=[60, 10, 200, 50, 10, 210])
@@ -158,10 +173,17 @@ def generate_student_report_pdf(student, year, semester):
     speaking_score = student.scores_dict.get("speaking", 0)
     listening_score = student.scores_dict.get("listening", 0)
 
-    writing_text = f"{writing_score}\n{get_score_comment(writing_score)}"
-    reading_text = f"{reading_score}\n{get_score_comment(reading_score)}"
-    speaking_text = f"{speaking_score}\n{get_score_comment(speaking_score)}"
-    listening_text = f"{listening_score}\n{get_score_comment(listening_score)}"
+    def create_score_cell(score):
+        score_text = f"{score}"
+        comment_text = f"{get_score_comment(score)}"
+
+        # score value and score comment
+        return f"{score_text}\n\n{comment_text}\n\n\n"
+
+    writing_text = create_score_cell(writing_score)
+    reading_text = create_score_cell(reading_score)
+    speaking_text = create_score_cell(speaking_score)
+    listening_text = create_score_cell(listening_score)
 
     scores_data = [
         ["WRITING", "READING", "SPEAKING", "LISTENING"],
@@ -181,13 +203,11 @@ def generate_student_report_pdf(student, year, semester):
                 ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 5),
                 ("TOPPADDING", (0, 0), (-1, 0), 5),
-                (
-                    "BOTTOMPADDING",
-                    (0, 1),
-                    (-1, 1),
-                    10,
-                ),
-                ("TOPPADDING", (0, 1), (-1, 1), 10),
+                ("BOTTOMPADDING", (0, 1), (-1, 1), 15),
+                ("TOPPADDING", (0, 1), (-1, 1), 15),
+                ("LINEBEFORE", (1, 0), (1, -1), 1, colors.black),
+                ("LINEBEFORE", (2, 0), (2, -1), 1, colors.black),
+                ("LINEBEFORE", (3, 0), (3, -1), 1, colors.black),
             ]
         )
     )
@@ -207,8 +227,8 @@ def generate_student_report_pdf(student, year, semester):
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("ALIGN", (0, 0), (0, -1), "LEFT"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 20),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 25),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
             ]
         )
     )
@@ -264,9 +284,6 @@ def generate_student_report_pdf(student, year, semester):
     elements.append(positioning_table)
     elements.append(Spacer(1, 30))
 
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import Paragraph
-
     teacher_style = ParagraphStyle(
         "Teacher",
         fontName="Helvetica-Bold",
@@ -300,7 +317,7 @@ def generate_student_report_pdf(student, year, semester):
         [ista_text, "", "____________________"],
     ]
 
-    elements.append(Spacer(1, 170))
+    elements.append(Spacer(1, 120))
 
     signature_table = Table(signature_data, colWidths=[180, 180, 180])
     signature_table.setStyle(
@@ -314,8 +331,7 @@ def generate_student_report_pdf(student, year, semester):
     )
     elements.append(signature_table)
 
-    # build PDF document
-    doc.build(elements)
+    doc.build(elements, onFirstPage=add_border_to_page, onLaterPages=add_border_to_page)
 
     # get PDF content
     pdf = pdf_buffer.getvalue()
