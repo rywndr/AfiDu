@@ -63,7 +63,7 @@
               <i class="fa-solid fa-filter-circle-xmark"></i>
             </a>
           {% endif %}
-          <a href="" title="Download Payment Card" class="bg-[#ff4f25] hover:bg-[#cc3f1e] mr-3 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
+          <a href="{% static 'docs/student_payment_card.pdf' %}" target="_blank" title="Download Payment Card" class="bg-[#ff4f25] hover:bg-[#cc3f1e] mr-3 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
             <i class="fa-solid fa-download"></i>
           </a>
           <a href="{% url 'payments:payment_config' %}" title="Payment Configuration" class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
