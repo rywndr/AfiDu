@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Payment, PaymentConfig
+from .models import Payment, PaymentConfig, PaymentInstallment
 
 
 # Register your models here.
@@ -50,3 +50,16 @@ class PaymentAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} payments marked as paid.")
 
     mark_as_paid.short_description = "Mark selected payments as fully paid"
+
+
+@admin.register(PaymentInstallment)
+class PaymentInstallmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "payment",
+        "installment_number",
+        "amount",
+        "payment_date",
+    )
+    list_filter = ("payment_date", "installment_number")
+    search_fields = ("payment__student__name",)
+    date_hierarchy = "payment_date"
