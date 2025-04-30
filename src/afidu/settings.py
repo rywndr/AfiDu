@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "reports",
     "study_materials",
     "payments",
+    "documents",
     "compressor",
 ]
 
