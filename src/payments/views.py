@@ -93,11 +93,12 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         year = self.get_year()
         context["year"] = year
 
-        # payment dicts untuk tiap murid - only check if any payments exist
+        # payment dicts untuk tiap murid - check for full or partial payments
         student_payment_status = {}
         for student in context["students"]:
             payments = Payment.objects.filter(student=student, year=year)
-            has_payments = payments.filter(paid=True).exists()
+            # check if payment is fully paid OR has a partial payment (amount_paid > 0)
+            has_payments = payments.filter(paid=True).exists() or payments.filter(amount_paid__gt=0).exists()
             student_payment_status[student.id] = has_payments
 
         context["student_payment_status"] = student_payment_status
