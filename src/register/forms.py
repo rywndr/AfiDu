@@ -66,21 +66,38 @@ class RegistrationForm(forms.ModelForm):
         
         # password validation only if password is provided
         if password:
+            error_messages = []
+            
             # check password length
             if len(password) < 8:
-                self.add_error(None, "Password must be at least 8 characters long.")
+                error_messages.append("Password must be at least 8 characters long")
                 
             # check for at least one digit
             if not re.search(r'\d', password):
-                self.add_error(None, "Password must contain at least one number.")
+                error_messages.append("contain at least one number")
                 
             # check for at least one uppercase letter
             if not re.search(r'[A-Z]', password):
-                self.add_error(None, "Password must contain at least one uppercase letter.")
+                error_messages.append("contain at least one uppercase letter")
                 
             # check for at least one lowercase letter
             if not re.search(r'[a-z]', password):
-                self.add_error(None, "Password must contain at least one lowercase letter.")
+                error_messages.append("contain at least one lowercase letter")
+            
+            # add combined err message if any validation failed
+            if error_messages:
+                # format err message properly
+                if len(error_messages) == 1:
+                    self.add_error(None, error_messages[0])
+                else:
+                    # First err keeps its original format
+                    formatted_message = error_messages[0]
+                    # add remaining errs with proper conjunction
+                    for msg in error_messages[1:-1]:
+                        formatted_message += f", {msg}"
+                    if len(error_messages) > 1:
+                        formatted_message += f" and {error_messages[-1]}"
+                    self.add_error(None, formatted_message + ".")
         
         return cleaned_data
 
