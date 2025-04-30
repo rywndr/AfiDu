@@ -33,25 +33,293 @@
     // set cursor position
     input.setSelectionRange(start + cursorAdjust, end + cursorAdjust);
     
-    // update remaining display
+    // Update remaining display and total if this is part of installment inputs
+    if (input.classList.contains('installment-input')) {
+      updateInstallmentTotal();
+    } else {
+      // Standard single payment input
+      const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
+      document.getElementById('remaining_display').textContent = formatCurrency(fee - rawValue);
+    }
+  }
+  
+  // Calculate the total from all installment inputs
+  function updateInstallmentTotal() {
+    const inputs = document.querySelectorAll('.installment-input');
+    let total = 0;
+    
+    inputs.forEach(input => {
+      total += parseCurrency(input.value);
+    });
+    
+    document.getElementById('total_paid').value = total;
+    
+    // Update the remaining amount display
     const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
-    document.getElementById('remaining_display').textContent = formatCurrency(fee - rawValue);
+    document.getElementById('remaining_display').textContent = formatCurrency(fee - total);
+  }
+  
+  // Create a new installment input field
+  function createInstallmentInput(number, value = 0) {
+    const container = document.createElement('div');
+    container.className = 'installment-input-container flex items-center space-x-2';
+    container.dataset.installmentNumber = number;
+    
+    const label = document.createElement('label');
+    label.className = 'text-sm font-medium text-gray-700 w-1/3';
+    label.textContent = `Installment ${number}`;
+    
+    const inputWrapper = document.createElement('div');
+    inputWrapper.className = 'flex-1 relative';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = `installment_${number}`;
+    input.value = formatCurrency(value);
+    input.className = 'installment-input mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 p-1 rounded-md';
+    
+    // Add event listeners to the new input
+    input.addEventListener('input', function() {
+      formatCurrencyInput(this);
+    });
+    
+    input.addEventListener('focus', function() {
+      formatCurrencyInput(this);
+    });
+    
+    inputWrapper.appendChild(input);
+    
+    let removeButton = null;
+    // Only add a remove button if it's not the first installment
+    if (number > 1) {
+      removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'text-red-500 hover:text-red-700';
+      removeButton.innerHTML = '<i class="fa-solid fa-times"></i>';
+      
+      removeButton.addEventListener('click', function() {
+        container.remove();
+        updateInstallmentNumbers();
+        updateInstallmentTotal();
+      });
+    }
+    
+    container.appendChild(label);
+    container.appendChild(inputWrapper);
+    if (removeButton) {
+      container.appendChild(removeButton);
+    }
+    
+    return container;
+  }
+  
+  // Update the numbering of installment inputs after deleting one
+  function updateInstallmentNumbers() {
+    const containers = document.querySelectorAll('.installment-input-container');
+    containers.forEach((container, idx) => {
+      const number = idx + 1;
+      container.dataset.installmentNumber = number;
+      
+      // Update label text
+      const label = container.querySelector('label');
+      label.textContent = `Installment ${number}`;
+      
+      // Update input name
+      const input = container.querySelector('input');
+      input.name = `installment_${number}`;
+      
+      // Only the first installment should not have a remove button
+      if (number === 1) {
+        const removeButton = container.querySelector('button');
+        if (removeButton) {
+          removeButton.remove();
+        }
+      }
+    });
+    
+    // Update the current installment count in the header
+    document.getElementById('current-installment').textContent = containers.length;
   }
 
   // open modal
-  function openPaymentModal(id, current, fee){
+  function openPaymentModal(id, current, fee, isInstallment, currentInstallment){
+    // Reset modal
     document.getElementById('payment_id').value = id;
-    // format the amount paid right when opening the modal
-    document.getElementById('amount_paid').value = formatCurrency(current);
-    document.getElementById('remaining_display').textContent = formatCurrency(fee - current);
+    document.getElementById('monthly_fee_display').textContent = formatCurrency(fee);
+    document.getElementById('is_installment').value = isInstallment;
+    document.getElementById('current_installment').value = currentInstallment || 0;
+    document.getElementById('total_paid').value = current;
+    
+    // Reset toggle
+    const toggle = document.getElementById('installment-toggle');
+    toggle.checked = isInstallment;
+    updateToggleState();
+    
+    // For installment payments, show installment inputs
+    if (isInstallment) {
+      // Show installment section
+      document.getElementById('single-payment-section').classList.add('hidden');
+      const installmentSection = document.getElementById('installment-payment-section');
+      installmentSection.classList.remove('hidden');
+      
+      // Clear any existing installment inputs
+      const inputsContainer = document.getElementById('installment-inputs-container');
+      inputsContainer.innerHTML = '';
+      
+      // If this is an existing installment payment
+      if (current > 0) {
+        // First, try to fetch the payment details and installment history
+        fetch(`/payments/get-installment-data/${id}/`)
+          .then(response => response.json())
+          .then(data => {
+            // Show installment history if we have records
+            if (data.installment_records && data.installment_records.length > 0) {
+              populateInstallmentHistory(data.installment_records);
+              document.getElementById('installment-history').classList.remove('hidden');
+            } else {
+              document.getElementById('installment-history').classList.add('hidden');
+            }
+            
+            // Create installment inputs based on the installment data
+            const installmentsToShow = currentInstallment > 0 ? currentInstallment : 1;
+            
+            if (data.success && data.installment_details) {
+              // Use the stored installment amounts
+              for (let i = 1; i <= installmentsToShow; i++) {
+                const key = `installment_${i}`;
+                const amount = data.installment_details[key] ? 
+                  parseInt(data.installment_details[key]) : 
+                  (current / installmentsToShow);
+                
+                const input = createInstallmentInput(i, amount);
+                inputsContainer.appendChild(input);
+              }
+            } else {
+              // Fallback if we can't get the individual amounts
+              const averageAmount = current / installmentsToShow;
+              for (let i = 1; i <= installmentsToShow; i++) {
+                const input = createInstallmentInput(i, averageAmount);
+                inputsContainer.appendChild(input);
+              }
+            }
+            
+            // Update installment numbers and total
+            updateInstallmentNumbers();
+            updateInstallmentTotal();
+          })
+          .catch(error => {
+            console.error('Error fetching installment data:', error);
+            document.getElementById('installment-history').classList.add('hidden');
+            
+            // If the fetch fails, fall back to evenly distributed amounts
+            const installmentsToShow = currentInstallment > 0 ? currentInstallment : 1;
+            const averageAmount = current / installmentsToShow;
+            for (let i = 1; i <= installmentsToShow; i++) {
+              const input = createInstallmentInput(i, averageAmount);
+              inputsContainer.appendChild(input);
+            }
+            
+            // Update installment numbers and total
+            updateInstallmentNumbers();
+            updateInstallmentTotal();
+          });
+      } else {
+        // Hide installment history for new payments
+        document.getElementById('installment-history').classList.add('hidden');
+        
+        // Create first empty installment input
+        const input = createInstallmentInput(1);
+        inputsContainer.appendChild(input);
+      }
+      
+      // Update max installments display
+      document.getElementById('max-installments').textContent = document.getElementById('max-installments').textContent || '2';
+      
+      // Update remaining display
+      document.getElementById('remaining_display').textContent = formatCurrency(fee - current);
+    } else {
+      // Show single payment section
+      document.getElementById('installment-payment-section').classList.add('hidden');
+      document.getElementById('single-payment-section').classList.remove('hidden');
+      
+      // Set the value of the single payment input
+      document.getElementById('amount_paid').value = formatCurrency(current);
+      document.getElementById('remaining_display').textContent = formatCurrency(fee - current);
+    }
+    
+    // Show the modal
     document.getElementById('paymentModal').classList.remove('hidden');
     
-    // focus on the input after modal is visible
+    // Focus on the appropriate input
     setTimeout(() => {
-      const amountInput = document.getElementById('amount_paid');
-      amountInput.focus();
-      amountInput.select();
+      if (isInstallment) {
+        const input = document.querySelector('.installment-input');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      } else {
+        const amountInput = document.getElementById('amount_paid');
+        amountInput.focus();
+        amountInput.select();
+      }
     }, 100);
+  }
+  
+  // Populate the installment history table
+  function populateInstallmentHistory(records) {
+    const tableBody = document.getElementById('installment-history-body');
+    tableBody.innerHTML = '';
+    
+    records.forEach(record => {
+      const row = document.createElement('tr');
+      row.className = 'border-t border-gray-100';
+      
+      const numberCell = document.createElement('td');
+      numberCell.className = 'py-1 px-2';
+      numberCell.textContent = record.number;
+      
+      const amountCell = document.createElement('td');
+      amountCell.className = 'py-1 px-2';
+      amountCell.textContent = `Rp ${formatCurrency(record.amount)}`;
+      
+      const dateCell = document.createElement('td');
+      dateCell.className = 'py-1 px-2';
+      dateCell.textContent = record.date;
+      
+      row.appendChild(numberCell);
+      row.appendChild(amountCell);
+      row.appendChild(dateCell);
+      
+      tableBody.appendChild(row);
+    });
+  }
+  
+  // Update the toggle state and show/hide relevant sections
+  function updateToggleState() {
+    const toggle = document.getElementById('installment-toggle');
+    const isInstallment = toggle.checked;
+    const toggleDot = document.querySelector('.toggle-dot');
+    
+    document.getElementById('is_installment').value = isInstallment;
+    
+    // Update the toggle's visual state to match its actual state
+    if (isInstallment) {
+      toggleDot.classList.add('transform', 'translate-x-4');
+      document.getElementById('single-payment-section').classList.add('hidden');
+      document.getElementById('installment-payment-section').classList.remove('hidden');
+      
+      // Ensure there's at least one installment input
+      const inputsContainer = document.getElementById('installment-inputs-container');
+      if (!inputsContainer.querySelector('.installment-input-container')) {
+        const input = createInstallmentInput(1);
+        inputsContainer.appendChild(input);
+      }
+    } else {
+      toggleDot.classList.remove('transform', 'translate-x-4');
+      document.getElementById('installment-payment-section').classList.add('hidden');
+      document.getElementById('single-payment-section').classList.remove('hidden');
+    }
   }
 
   // hide modal
@@ -62,10 +330,31 @@
   // send update to server
   function updatePayment(){
     const id = document.getElementById('payment_id').value;
-    // parse the formatted value back to a number
-    const paid = parseCurrency(document.getElementById('amount_paid').value);
+    const isInstallment = document.getElementById('installment-toggle').checked;
     const fd = new FormData();
-    fd.append('amount_paid', paid);
+    
+    let amountPaid = 0;
+    
+    if (isInstallment) {
+      // Sum all installment inputs
+      const inputs = document.querySelectorAll('.installment-input');
+      inputs.forEach((input, index) => {
+        const value = parseCurrency(input.value);
+        amountPaid += value;
+        // Add each installment amount to the form data for future reference
+        fd.append(`installment_${index + 1}`, value);
+      });
+      
+      // Get the current number of installments
+      fd.append('installment_count', inputs.length);
+    } else {
+      // Just use the single payment amount
+      amountPaid = parseCurrency(document.getElementById('amount_paid').value);
+    }
+    
+    // Add the total amount to the form data
+    fd.append('amount_paid', amountPaid);
+    fd.append('is_installment', isInstallment);
 
     fetch(`/payments/update/${id}/`, {
       method:'POST',
@@ -80,37 +369,37 @@
     .catch(()=>alert('error updating payment'));
   }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    // initial currency format
-    document.querySelectorAll('.currency').forEach(el=>{
+  document.addEventListener('DOMContentLoaded', () => {
+    // Format all currency displays
+    document.querySelectorAll('.currency').forEach(el => {
       const num = Number(el.dataset.raw.replace(/\D/g,''));
       el.textContent = formatCurrency(num);
     });
     
-    // bind btns
-    document.querySelectorAll('.update-payment-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+    // Bind update payment buttons
+    document.querySelectorAll('.update-payment-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
         openPaymentModal(
           btn.dataset.id,
           Number(btn.dataset.current),
-          Number(btn.dataset.fee)
+          Number(btn.dataset.fee),
+          btn.dataset.isInstallment === 'true',
+          Number(btn.dataset.currentInstallment)
         );
       });
     });
     
-    // Format amount as user types
+    // Format amount as user types in the single payment input
     const amountInput = document.getElementById('amount_paid');
     if (amountInput) {
       amountInput.addEventListener('input', function() {
         formatCurrencyInput(this);
       });
       
-      // Also format when the input gains focus
       amountInput.addEventListener('focus', function() {
         formatCurrencyInput(this);
       });
       
-      // Handle arrow keys and backspace properly
       amountInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -119,11 +408,64 @@
       });
     }
     
+    // Toggle between single and installment payment
+    const installmentToggle = document.getElementById('installment-toggle');
+    if (installmentToggle) {
+      installmentToggle.addEventListener('change', function() {
+        updateToggleState();
+        
+        // Apply toggle styling
+        const toggleDot = document.querySelector('.toggle-dot');
+        if (this.checked) {
+          toggleDot.classList.add('transform', 'translate-x-4');
+        } else {
+          toggleDot.classList.remove('transform', 'translate-x-4');
+        }
+      });
+    }
+    
+    // Add new installment input
+    const addInstallmentBtn = document.getElementById('add-installment-btn');
+    if (addInstallmentBtn) {
+      addInstallmentBtn.addEventListener('click', function() {
+        const inputsContainer = document.getElementById('installment-inputs-container');
+        const currentCount = inputsContainer.querySelectorAll('.installment-input-container').length;
+        const maxInstallments = parseInt(document.getElementById('max-installments').textContent) || 2;
+        
+        // Check if we're at the maximum allowed installments
+        if (currentCount >= maxInstallments) {
+          alert(`Maximum of ${maxInstallments} installments allowed.`);
+          return;
+        }
+        
+        // Create and append a new installment input
+        const newInput = createInstallmentInput(currentCount + 1);
+        inputsContainer.appendChild(newInput);
+        
+        // Update the current installment count
+        updateInstallmentNumbers();
+        
+        // Focus on the new input
+        const input = newInput.querySelector('input');
+        input.focus();
+      });
+    }
+    
+    // Modal control buttons
     document.getElementById('close-payment-btn').addEventListener('click', closePaymentModal);
     document.getElementById('save-payment-btn').addEventListener('click', updatePayment);
-    window.addEventListener('click', e=>{
-      if(e.target===document.getElementById('paymentModal')) closePaymentModal();
+    window.addEventListener('click', e => {
+      if (e.target === document.getElementById('paymentModal')) closePaymentModal();
     });
+    
+    // Apply initial toggle styling
+    const toggle = document.getElementById('installment-toggle');
+    const toggleDot = document.querySelector('.toggle-dot');
+    if (toggle && toggleDot) {
+      if (toggle.checked) {
+        toggleDot.classList.add('transform', 'translate-x-4');
+      }
+    }
   });
 
   // expose for inline use if needed

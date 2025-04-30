@@ -50,6 +50,18 @@
                   This is the monthly fee that will be applied to all students in {{ selected_year }}
                 </p>
               </div>
+              <div>
+                <label for="{{ form.max_installments.id_for_label }}" class="block text-sm font-medium text-gray-700">Maximum Installments</label>
+                <div class="mt-1">
+                  {{ form.max_installments }}
+                  {% if form.max_installments.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.max_installments.errors }}</div>
+                  {% endif %}
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                  Maximum number of installment payments allowed per month
+                </p>
+              </div>
               <div class="hidden">
                 {{ form.year }}
               </div>

@@ -13,6 +13,7 @@ class PaymentConfigForm(forms.ModelForm):
         fields = [
             "year",
             "monthly_fee",
+            "max_installments",
             "mid_semester_start",
             "mid_semester_end",
             "final_semester_start",
@@ -36,6 +37,18 @@ class PaymentConfigForm(forms.ModelForm):
                         "block w-full py-2 pl-10 pr-3 "
                         "border border-gray-300 bg-white rounded-md shadow-sm "
                         "focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
+                    ),
+                }
+            ),
+            "max_installments": forms.NumberInput(
+                attrs={
+                    "min": 1,
+                    "max": 10,
+                    "aria-label": "Maximum number of installments",
+                    "class": (
+                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
+                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
                 }
             ),

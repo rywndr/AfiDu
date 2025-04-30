@@ -3,6 +3,7 @@ import datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
+import pytz
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
@@ -16,7 +17,7 @@ from django.views.generic import DetailView, ListView, UpdateView, View
 from students.models import LEVELS, Student, StudentClass
 
 from .forms import PaymentConfigForm
-from .models import Payment, PaymentConfig
+from .models import Payment, PaymentConfig, PaymentInstallment
 
 
 class PaymentContextMixin:
@@ -327,6 +328,8 @@ class UpdatePaymentView(LoginRequiredMixin, View):
         payment = get_object_or_404(Payment, id=payment_id)
         try:
             raw = request.POST.get("amount_paid", "0").strip()
+            is_installment = request.POST.get("is_installment") == "true"
+            
             try:
                 amount_paid = Decimal(raw)
             except InvalidOperation:
@@ -335,21 +338,113 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                 )
 
             old_amount = payment.amount_paid
+            config = PaymentConfig.get_active(payment.year)
+            
+            # For installment payments, check if we're within the maximum allowed installments
+            installment_count = int(request.POST.get("installment_count", "1"))
+            if is_installment and installment_count > config.max_installments:
+                return JsonResponse(
+                    {"success": False, 
+                     "message": f"Maximum number of installments ({config.max_installments}) reached for this payment period."},
+                    status=400
+                )
+
+            # Set the payment amount and date
             payment.amount_paid = amount_paid
             payment.payment_date = timezone.now() if amount_paid > 0 else None
+            
+            # Store individual installment records when handling installment payments
+            installment_details = {}
+            if is_installment and amount_paid > 0:
+                # Get the existing installments to determine what's new
+                existing_installments = {
+                    i.installment_number: i 
+                    for i in payment.installments.all()
+                }
+                
+                # Process each installment from the form
+                for i in range(1, installment_count + 1):
+                    key = f"installment_{i}"
+                    if key in request.POST:
+                        # Get the installment amount
+                        try:
+                            inst_amount = Decimal(request.POST.get(key))
+                        except InvalidOperation:
+                            inst_amount = Decimal('0')
+                        
+                        # If there's an amount, create or update the installment record
+                        if inst_amount > 0:
+                            if i in existing_installments:
+                                # Update existing installment amount if it changed
+                                installment = existing_installments[i]
+                                if installment.amount != inst_amount:
+                                    installment.amount = inst_amount
+                                    installment.save()
+                            else:
+                                # Create new installment record
+                                installment = PaymentInstallment.objects.create(
+                                    payment=payment,
+                                    installment_number=i,
+                                    amount=inst_amount
+                                )
+                            
+                            installment_details[key] = str(inst_amount)
+                
+                # Remove any installments that no longer exist
+                payment.installments.filter(installment_number__gt=installment_count).delete()
+            
+            # Important: Set installment flag based on user's choice, not just on amount
+            if is_installment:
+                payment.is_installment = True
+                payment.current_installment = installment_count
+            elif amount_paid == 0:
+                # Only reset installment status if the payment is being reset to zero
+                payment.is_installment = False
+                payment.current_installment = 0
+                # Clear installment data
+                payment.installments.all().delete()
+                if f"payment_{payment_id}_installment_data" in request.session:
+                    del request.session[f"payment_{payment_id}_installment_data"]
+            
+            # Paid status still depends on whether the full amount is paid
+            # But we no longer affect is_installment when amount_paid reaches the full fee
             payment.save()
 
             # Add a message to the session
             if amount_paid > old_amount:
-                messages.success(
-                    request,
-                    f"Payment for {payment.student.name} updated to {amount_paid}.",
-                )
+                if payment.is_installment:
+                    if payment.paid:
+                        messages.success(
+                            request,
+                            f"Final installment for {payment.student.name} completed. Full payment of {amount_paid} received via {payment.current_installment} installments.",
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            f"Installment {payment.current_installment}/{config.max_installments} for {payment.student.name} recorded: {amount_paid}.",
+                        )
+                else:
+                    messages.success(
+                        request,
+                        f"Payment for {payment.student.name} updated to {amount_paid}.",
+                    )
             elif amount_paid < old_amount:
                 messages.info(
                     request,
                     f"Payment for {payment.student.name} reduced to {amount_paid}.",
                 )
+
+            # Get all installment records for this payment to return to the frontend
+            installment_records = []
+            if is_installment:
+                for inst in payment.installments.all().order_by("installment_number"):
+                    # Convert to Jakarta timezone (Asia/Jakarta)
+                    jakarta_time = timezone.localtime(inst.payment_date, pytz.timezone('Asia/Jakarta'))
+                    installment_records.append({
+                        "number": inst.installment_number,
+                        "amount": float(inst.amount),
+                        "date": jakarta_time.strftime("%d %b %Y"),  # Format as day month year without time
+                    })
 
             return JsonResponse(
                 {
@@ -357,6 +452,9 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     "paid": payment.paid,
                     "is_installment": payment.is_installment,
                     "remaining_amount": float(payment.remaining_amount),
+                    "current_installment": payment.current_installment,
+                    "installment_details": installment_details,
+                    "installment_records": installment_records,
                     "message": f"Payment updated for {payment.student.name}",
                 }
             )
@@ -377,6 +475,9 @@ class TogglePaymentView(View):
             payment.amount_paid = config.monthly_fee
             payment.remaining_amount = 0
             payment.payment_date = timezone.now()
+            # Reset installment information when fully paid
+            payment.is_installment = False
+            payment.current_installment = 0
             messages.success(
                 request,
                 f"Payment for {student.name} for {calendar.month_name[month]} {year} marked as paid.",
@@ -385,6 +486,9 @@ class TogglePaymentView(View):
             payment.amount_paid = 0
             payment.remaining_amount = PaymentConfig.get_active().monthly_fee
             payment.payment_date = None
+            # Reset installment information when marked as unpaid
+            payment.is_installment = False
+            payment.current_installment = 0
             messages.info(
                 request,
                 f"Payment for {student.name} for {calendar.month_name[month]} {year} marked as unpaid.",
@@ -396,3 +500,43 @@ class TogglePaymentView(View):
         return redirect(
             request.META.get("HTTP_REFERER", reverse("payments:payment_list"))
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class GetInstallmentDataView(LoginRequiredMixin, View):
+    def get(self, request, payment_id):
+        payment = get_object_or_404(Payment, id=payment_id)
+        
+        # Check if we have installment data in the session
+        session_key = f"payment_{payment_id}_installment_data"
+        installment_details = request.session.get(session_key, {})
+        
+        # Get actual installment records from database
+        installment_records = []
+        for installment in payment.installments.all().order_by('installment_number'):
+            # Convert to Jakarta timezone (Asia/Jakarta)
+            jakarta_time = timezone.localtime(installment.payment_date, pytz.timezone('Asia/Jakarta'))
+            installment_records.append({
+                "number": installment.installment_number,
+                "amount": float(installment.amount),
+                "date": jakarta_time.strftime("%d %b %Y"),  # Format as day month year without time
+            })
+        
+        # If no installment data in session and this is an installment payment,
+        # create a default set of equal installments for the input fields
+        if not installment_details and payment.is_installment and payment.current_installment > 0:
+            if installment_records:
+                # If we have actual records, use those values
+                for installment in installment_records:
+                    installment_details[f"installment_{installment['number']}"] = str(installment['amount'])
+            else:
+                # Otherwise create equal installments for display purposes
+                average_amount = payment.amount_paid / payment.current_installment
+                for i in range(1, payment.current_installment + 1):
+                    installment_details[f"installment_{i}"] = str(average_amount)
+                
+        return JsonResponse({
+            "success": True, 
+            "installment_details": installment_details,
+            "installment_records": installment_records,
+        })

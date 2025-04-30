@@ -22,4 +22,9 @@ urlpatterns = [
         views.TogglePaymentView.as_view(),
         name="toggle-payment",
     ),
+    path(
+        "get-installment-data/<int:payment_id>/",
+        views.GetInstallmentDataView.as_view(),
+        name="get-installment-data",
+    ),
 ]

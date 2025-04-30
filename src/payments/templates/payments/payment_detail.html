@@ -74,10 +74,12 @@
                     <tr class="hover:bg-gray-50" id="payment-row-{{ payment.id }}">
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ month_names|get_item:payment.month }}</td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm">
-                        {% if payment.paid %}
+                        {% if payment.paid and payment.is_installment %}
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fa-solid fa-check-circle mr-1"></i> Paid ({{ payment.current_installment }} Installments)</span>
+                        {% elif payment.paid %}
                           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fa-solid fa-check-circle mr-1"></i> Paid</span>
                         {% elif payment.is_installment %}
-                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fa-solid fa-clock mr-1"></i> Partial</span>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fa-solid fa-clock mr-1"></i> Installment {{ payment.current_installment }}/{{ payment_config.max_installments }}</span>
                         {% else %}
                           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-times-circle mr-1"></i> Unpaid</span>
                         {% endif %}
@@ -86,7 +88,7 @@
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">Rp<span class="currency" data-raw="{{ payment.remaining_amount|floatformat:0 }}">{{ payment.remaining_amount|floatformat:0 }}</span></td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{% if payment.payment_date %}{{ payment.payment_date|date:"d M Y H:i" }}{% else %}-{% endif %}</td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        <button type="button" class="update-payment-btn inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]" data-id="{{ payment.id }}" data-current="{{ payment.amount_paid }}" data-fee="{{ payment_config.monthly_fee }}"><i class="fa-solid fa-money-bill-wave mr-1"></i> Update Payment</button>
+                        <button type="button" class="update-payment-btn inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]" data-id="{{ payment.id }}" data-current="{{ payment.amount_paid }}" data-fee="{{ payment_config.monthly_fee }}" data-is-installment="{{ payment.is_installment|lower }}" data-current-installment="{{ payment.current_installment }}"><i class="fa-solid fa-money-bill-wave mr-1"></i> Update Payment</button>
                         <form method="post" action="{% url 'payments:toggle-payment' student.id payment.month year %}" class="inline-block ml-2">
                           {% csrf_token %}
                           <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">{% if payment.paid %}<i class="fa-solid fa-rotate-left mr-1"></i> Mark Unpaid{% else %}<i class="fa-solid fa-check mr-1"></i> Mark Paid{% endif %}</button>
@@ -113,18 +115,76 @@
             <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 sm:mx-0 sm:h-10 sm:w-10"><i class="fa-solid fa-money-bill-wave text-[#ff4f25]"></i></div>
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
               <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Update Payment</h3>
-              <div class="mt-4">
-                <input type="hidden" id="payment_id">
-                <div class="mb-4">
+              
+              <!-- Single Payment Section -->
+              <div id="single-payment-section">
+                <div class="mt-4 mb-4">
                   <label for="amount_paid" class="block text-sm font-medium text-gray-700">Amount Paid (Rp)</label>
                   <input type="text" name="amount_paid" id="amount_paid" class="mt-1 focus:ring-[#ff4f25] focus:border-[#ff4f25] block w-full shadow-sm sm:text-sm border-gray-300 p-1 rounded-md" min="0">
                 </div>
-                <div class="flex justify-end text-sm text-gray-500 mb-2">
-                  <div>Remaining: Rp<span id="remaining_display" class="font-medium">0</span></div>
+              </div>
+              
+              <!-- Installment Payment Section -->
+              <div id="installment-payment-section" class="hidden">
+                <div class="mt-2 mb-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fa-solid fa-clock mr-1"></i> Installment payments (<span id="current-installment">1</span>/<span id="max-installments">{{ payment_config.max_installments }}</span>)
+                  </span>
+                </div>
+                
+                <!-- Installment History Section -->
+                <div id="installment-history" class="mt-3 mb-4 hidden">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">Installment History</h4>
+                  <div class="bg-gray-50 p-2 rounded-md max-h-32 overflow-y-auto">
+                    <table class="min-w-full text-xs">
+                      <thead>
+                        <tr class="border-b border-gray-200">
+                          <th class="text-left py-1 px-2">#</th>
+                          <th class="text-left py-1 px-2">Amount</th>
+                          <th class="text-left py-1 px-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody id="installment-history-body">
+                        <!-- Installment history will be populated dynamically -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div class="mt-4 space-y-3" id="installment-inputs-container">
+                  <!-- Installment inputs will be generated dynamically -->
+                </div>
+                
+                <div class="mt-3 mb-2 text-right">
+                  <button type="button" id="add-installment-btn" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+                    <i class="fa-solid fa-plus mr-1"></i> Add Installment
+                  </button>
+                </div>
+              </div>
+              
+              <div class="flex justify-between text-sm text-gray-500 mb-2">
+                <div id="payment-type-toggle">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="installment-toggle" class="sr-only">
+                    <span class="relative">
+                      <span class="block w-10 h-6 bg-gray-300 rounded-full shadow-inner"></span>
+                      <span class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ease-in-out"></span>
+                    </span>
+                    <span class="ml-2 text-sm font-medium text-gray-700">Installment Payment</span>
+                  </label>
+                </div>
+                <div>
+                  <span>Monthly Fee: Rp<span id="monthly_fee_display" class="font-medium">0</span></span> | 
+                  <span>Remaining: Rp<span id="remaining_display" class="font-medium">0</span></span>
                 </div>
               </div>
             </div>
           </div>
+          
+          <input type="hidden" id="payment_id">
+          <input type="hidden" id="is_installment" value="false">
+          <input type="hidden" id="current_installment" value="0">
+          <input type="hidden" id="total_paid" value="0">
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button type="button" id="save-payment-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#ff4f25] text-base font-medium text-white hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25] sm:ml-3 sm:w-auto sm:text-sm">Save</button>
