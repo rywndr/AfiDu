@@ -18,14 +18,14 @@
         {% if form.errors %}
             <div class="mb-4">
               <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
-                  {% if form.non_field_errors %}
-                      {% for error in form.non_field_errors %}
+                  {% for error in form.non_field_errors %}
+                      <p>{{ error }}</p>
+                  {% endfor %}
+                  
+                  {% if form.email.errors %}
+                      {% for error in form.email.errors %}
                           <p>{{ error }}</p>
                       {% endfor %}
-                  {% else %}
-                      {% if form.email.errors %}
-                          <p>{{ form.email.errors.0 }}</p>
-                      {% endif %}
                   {% endif %}
               </div>
             </div>

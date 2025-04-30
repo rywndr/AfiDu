@@ -1,4 +1,6 @@
 from django import forms
+from django.core.exceptions import ValidationError
+import re
 
 from login.models import CustomUser
 
@@ -25,7 +27,7 @@ class RegistrationForm(forms.ModelForm):
                       focus:outline-none focus:ring-1 focus:ring-[#ff4f25]"
             }
         ),
-        help_text="Enter a strong password.",
+        help_text="Password must be at least 8 characters and contain numbers, uppercase and lowercase letters.",
     )
     password2 = forms.CharField(
         label="Confirm Password",
@@ -55,10 +57,31 @@ class RegistrationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        p1 = cleaned_data.get("password1")
+        password = cleaned_data.get("password1")
         p2 = cleaned_data.get("password2")
-        if p1 and p2 and p1 != p2:
-            raise forms.ValidationError("The two passwords do not match.")
+        
+        # check if passwords match
+        if password and p2 and password != p2:
+            self.add_error(None, "The two passwords do not match.")
+        
+        # password validation only if password is provided
+        if password:
+            # check password length
+            if len(password) < 8:
+                self.add_error(None, "Password must be at least 8 characters long.")
+                
+            # check for at least one digit
+            if not re.search(r'\d', password):
+                self.add_error(None, "Password must contain at least one number.")
+                
+            # check for at least one uppercase letter
+            if not re.search(r'[A-Z]', password):
+                self.add_error(None, "Password must contain at least one uppercase letter.")
+                
+            # check for at least one lowercase letter
+            if not re.search(r'[a-z]', password):
+                self.add_error(None, "Password must contain at least one lowercase letter.")
+        
         return cleaned_data
 
     def save(self, commit=True):
