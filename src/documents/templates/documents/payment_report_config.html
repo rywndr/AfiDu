@@ -1,0 +1,212 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  AfiDu - Payment Report
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- header and breadcrumbs -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+    <h1 class="text-3xl font-bold text-[#5a5656]">{{ title }}</h1>
+    <p class="text-gray-600">Configure parameters for payment report</p>
+    
+    <nav aria-label="breadcrumb" class="mt-4">
+      <ol class="flex text-sm">
+        <li class="hover:text-[#ff4f25]"><a href="{% url 'documents:document_list' %}">Documents</a></li>
+        <li class="mx-2">/</li>
+        <li class="text-[#ff4f25]">{{ title }}</li>
+      </ol>
+    </nav>
+  </div>
+
+  <!-- err msg display -->
+  {% if error %}
+  <div class="mb-6 p-4 rounded-md bg-red-50 border border-red-300">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-exclamation-circle text-red-400"></i>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- main -->
+  <div class="bg-white rounded-lg shadow-md">
+    <div class="p-6">
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+          <!-- student selection -->
+          <label for="student_search" class="block text-sm font-medium text-gray-700 mb-1">Select Students <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                  id="student_search" 
+                  placeholder="Search for students..." 
+                  autocomplete="off">
+            
+            <!-- hidden inputs to store selected student IDs -->
+            <input type="hidden" name="student_ids" id="student_ids" value="">
+            
+            <!-- dropdown for search results -->
+            <div id="student_search_results" class="absolute z-10 w-full bg-white mt-1 rounded-md shadow-lg hidden max-h-60 overflow-y-auto">
+              <!-- search results will be here via js -->
+            </div>
+            
+            <!-- selected students display -->
+            <div id="selected_students_display" class="mt-2 flex flex-wrap gap-2">
+              <!-- selected students will be added here -->
+            </div>
+            
+            <p class="mt-1 text-xs text-gray-500">Required. Search and select one or more students for the payment report.</p>
+          </div>
+          
+          <!-- filters (class and level) -->
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="class_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Class (Optional)</label>
+              <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                     id="class_filter" name="class_filter">
+                <option value="">All Classes</option>
+                {% for cls in available_classes %}
+                  <option value="{{ cls.pk }}">{{ cls.name }}</option>
+                {% endfor %}
+              </select>
+              <p class="mt-1 text-xs text-gray-500">Apply class filter to select students</p>
+            </div>
+            
+            <div>
+              <label for="level_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Level (Optional)</label>
+              <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                     id="level_filter" name="level_filter">
+                <option value="">All Levels</option>
+                {% for value, label in level_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+              <p class="mt-1 text-xs text-gray-500">Apply level filter to select students</p>
+            </div>
+          </div>
+          
+          <!-- option for selecting all students -->
+          <div class="mt-2">
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="select_all_students" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded" checked>
+              <span class="ml-2 text-sm text-gray-700">Include all students</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- date range preset -->
+            <div>
+              <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Date Range <span class="text-red-500">*</span></label>
+              <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                     id="date_range" name="date_range">
+                <option value="last_30_days">Last 30 Days</option>
+                <option value="current_month">Current Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="current_year">Current Year</option>
+                <option value="last_year">Last Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            
+            <!-- start date -->
+            <div>
+              <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date <span class="text-red-500">*</span></label>
+              <input type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                    id="start_date" name="start_date" required>
+            </div>
+            
+            <!-- end date -->
+            <div>
+              <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date <span class="text-red-500">*</span></label>
+              <input type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" 
+                    id="end_date" name="end_date" required>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-md font-semibold text-gray-700 mb-2">Report Options</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Content Options</h4>
+              
+              <div class="space-y-2">
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded" id="include_summary" name="include_summary" checked>
+                  <label class="ml-2 text-sm text-gray-700" for="include_summary">Include Payment Summary</label>
+                </div>
+                
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded" id="include_details" name="include_details" checked>
+                  <label class="ml-2 text-sm text-gray-700" for="include_details">Include Payment Details</label>
+                </div>
+                
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded" id="show_installments" name="show_installments" checked>
+                  <label class="ml-2 text-sm text-gray-700" for="show_installments">Show Installment Details</label>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Payment Status Filter (Optional)</h4>
+              
+              <div class="space-y-2">
+                <div class="flex items-center">
+                  <input type="radio" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300" id="status_all" name="payment_status" value="all" checked>
+                  <label class="ml-2 text-sm text-gray-700" for="status_all">All Payments</label>
+                </div>
+                
+                <div class="flex items-center">
+                  <input type="radio" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300" id="status_paid" name="payment_status" value="paid">
+                  <label class="ml-2 text-sm text-gray-700" for="status_paid">Paid Only</label>
+                </div>
+                
+                <div class="flex items-center">
+                  <input type="radio" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300" id="status_unpaid" name="payment_status" value="unpaid">
+                  <label class="ml-2 text-sm text-gray-700" for="status_unpaid">Unpaid/Partial Only</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        <div class="flex items-center justify-between mt-8">
+          <a href="{% url 'documents:document_list' %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+            Cancel
+          </a>
+          <button type="submit" class="px-4 py-2 bg-[#ff4f25] border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-[#e83a10] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+            <i class="fas fa-file-download mr-2"></i> Generate Payment Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- initialize student data for js -->
+<script>
+  window.studentData = [
+    {% for student in students %}
+      { 
+        id: {{ student.id }}, 
+        name: "{{ student.name }}", 
+        level: "{{ student.level }}",
+        class: "{{ student.assigned_class.name|default:'Unassigned' }}"
+      },
+    {% endfor %}
+  ];
+</script>
+
+{% load static %}
+<script src="{% static 'js/documents/payment_report_config.js' %}"></script>
+{% endblock %}

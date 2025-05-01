@@ -1,0 +1,141 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  AfiDu - Students List
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- header and breadcrumbs -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+    <h1 class="text-3xl font-bold text-[#5a5656]">Student List Configuration</h1>
+    <p class="text-gray-600">Configure parameters for your student list</p>
+    
+    <nav aria-label="breadcrumb" class="mt-4">
+      <ol class="flex text-sm">
+        <li class="hover:text-[#ff4f25]"><a href="{% url 'documents:document_list' %}">Documents</a></li>
+        <li class="mx-2">/</li>
+        <li class="text-[#ff4f25]">Student List Configuration</li>
+      </ol>
+    </nav>
+  </div>
+  
+  <!-- err msg display -->
+  {% if error %}
+  <div class="mb-6 p-4 rounded-md bg-red-50 border border-red-300">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-exclamation-circle text-red-400"></i>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- main-->
+  <div class="bg-white rounded-lg shadow-md">
+    <div class="p-6">
+      <form method="post" action="{% url 'documents:student_list' %}" id="student-list-form">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Filter Students <span class="text-red-500">*</span></label>
+          <p class="text-xs text-gray-500 mb-2">Select at least one filter option below</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="class_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Class</label>
+              <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" id="class_filter" name="class_filter">
+                <option value="">All Classes</option>
+                {% for cls in available_classes %}
+                  <option value="{{ cls.pk }}">{{ cls.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div>
+              <label for="level_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Level</label>
+              <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" id="level_filter" name="level_filter">
+                <option value="">All Levels</option>
+                {% for level_code, level_name in level_choices %}
+                  <option value="{{ level_code }}">{{ level_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Include Columns <span class="text-red-500">*</span></label>
+          <p class="text-xs text-gray-500 mb-2">Select at least one column to include in the report</p>
+          
+          <div id="columns-container" class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_name" name="include_name" value="1" checked>
+              <label class="ml-2 text-sm text-gray-700" for="include_name">Name</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_id" name="include_id" value="1" checked>
+              <label class="ml-2 text-sm text-gray-700" for="include_id">Student ID</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_age" name="include_age" value="1" checked>
+              <label class="ml-2 text-sm text-gray-700" for="include_age">Age</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_gender" name="include_gender" value="1" checked>
+              <label class="ml-2 text-sm text-gray-700" for="include_gender">Gender</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_contact" name="include_contact" value="1" checked>
+              <label class="ml-2 text-sm text-gray-700" for="include_contact">Contact Number</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" class="h-4 w-4 text-[#ff4f25] focus:ring-[#ff4f25] border-gray-300 rounded column-checkbox" id="include_address" name="include_address" value="1">
+              <label class="ml-2 text-sm text-gray-700" for="include_address">Address</label>
+            </div>
+          </div>
+          <div id="column-error" class="mt-2 text-red-500 text-sm hidden">
+            Please select at least one column to include in the report.
+          </div>
+        </div>
+        
+        <!-- sort by and document format -->
+        <div class="mb-6 flex flex-col md:flex-row gap-6">
+          <div>
+            <label for="sort_by" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+            <select class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" id="sort_by" name="sort_by">
+              <option value="name">Name</option>
+              <option value="age">Age</option>
+              <option value="class">Class</option>
+              <option value="level">Level</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="format" class="block text-sm font-medium text-gray-700 mb-1">Document Format</label>
+            <select class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff4f25] focus:border-transparent" id="format" name="format">
+              <option value="pdf">PDF</option>
+              <option value="excel">Excel</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between mt-8">
+          <a href="{% url 'documents:document_list' %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+            Cancel
+          </a>
+          <button type="submit" class="px-4 py-2 bg-[#ff4f25] border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-[#e83a10] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">
+            <i class="fas fa-file-download mr-2"></i> Generate Student List
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% load static %}
+<script src="{% static 'js/documents/student_list_config.js' %}"></script>
+{% endblock %}

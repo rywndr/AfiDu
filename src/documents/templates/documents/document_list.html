@@ -1,0 +1,122 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  AfiDu - Documents
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- header -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6 border-t-4" style="border-top-color: #ff4f25;">
+    <h1 class="text-3xl font-bold text-[#5a5656]">Documents</h1>
+    <p class="text-gray-600">Manage and download document resources</p>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- student registration form card -->
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center">
+          <div class="rounded-full bg-blue-100 p-3 mr-3 flex items-center justify-center w-12 h-12">
+            <i class="fas fa-file-alt text-blue-500 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-[#5a5656]">Student Registration Form</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600 mb-4 h-12">Download the student registration form used for new enrollments.</p>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Ready for download</span>
+          <a href="{% url 'documents:registration_form' %}" target="_blank" class="flex items-center justify-center px-4 py-2 bg-[#ff4f25] text-white font-medium rounded hover:bg-[#e83a10] transition-colors">
+            <i class="fas fa-download mr-2"></i> Download
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- payment card -->
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center">
+          <div class="rounded-full bg-green-100 p-3 mr-3 flex items-center justify-center w-12 h-12">
+            <i class="fas fa-credit-card text-green-500 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-[#5a5656]">Payment Card</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600 mb-4 h-12">Download student payment card for tracking fee payments.</p>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Ready for download</span>
+          <a href="{% url 'documents:payment_card' %}" target="_blank" class="flex items-center justify-center px-4 py-2 bg-[#ff4f25] text-white font-medium rounded hover:bg-[#e83a10] transition-colors">
+            <i class="fas fa-download mr-2"></i> Download
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- student List card -->
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center">
+          <div class="rounded-full bg-purple-100 p-3 mr-3 flex items-center justify-center w-12 h-12">
+            <i class="fas fa-users text-purple-500 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-[#5a5656]">Student List</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600 mb-4 h-12">Generate and download a customized student list with filters.</p>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Configure options</span>
+          <a href="{% url 'documents:student_list' %}" class="flex items-center justify-center px-4 py-2 bg-[#ff4f25] text-white font-medium rounded hover:bg-[#e83a10] transition-colors">
+            <i class="fas fa-cog mr-2"></i> Configure
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- payment report card -->
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center">
+          <div class="rounded-full bg-yellow-100 p-3 mr-3 flex items-center justify-center w-12 h-12">
+            <i class="fas fa-file-invoice-dollar text-yellow-500 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-[#5a5656]">Payment Report</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600 mb-4 h-12">Generate a detailed payment report with custom parameters.</p>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Configure options</span>
+          <a href="{% url 'documents:payment_report_config' %}" class="flex items-center justify-center px-4 py-2 bg-[#ff4f25] text-white font-medium rounded hover:bg-[#e83a10] transition-colors">
+            <i class="fas fa-cog mr-2"></i> Configure
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- student summary card -->
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center">
+          <div class="rounded-full bg-red-100 p-3 mr-3 flex items-center justify-center w-12 h-12">
+            <i class="fas fa-user-graduate text-red-500 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-[#5a5656]">Student Summary</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600 mb-4 h-12">Generate a comprehensive student summary report.</p>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Configure options</span>
+          <a href="{% url 'documents:student_summary_config' %}" class="flex items-center justify-center px-4 py-2 bg-[#ff4f25] text-white font-medium rounded hover:bg-[#e83a10] transition-colors">
+            <i class="fas fa-cog mr-2"></i> Configure
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
