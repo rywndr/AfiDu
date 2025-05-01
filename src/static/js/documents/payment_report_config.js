@@ -245,6 +245,17 @@ document.addEventListener('DOMContentLoaded', function() {
     setDateRange(dateRangeSelect.value);
   }
   
+  // date inputs automatically change to custom range when manually edited
+  startDateInput.addEventListener('change', function() {
+    // change date range dropdown to "custom" when start date is manually changed
+    dateRangeSelect.value = 'custom';
+  });
+  
+  endDateInput.addEventListener('change', function() {
+    // change date range dropdown to "custom" when end date is manually changed
+    dateRangeSelect.value = 'custom';
+  });
+  
   // close results when clicking outside
   document.addEventListener('click', function(e) {
     if (!studentSearchInput.contains(e.target) && !searchResults.contains(e.target)) {
