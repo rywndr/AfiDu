@@ -46,4 +46,5 @@ tzdata==2025.1
 vine==5.1.0
 wcwidth==0.2.13
 webencodings==0.5.1
+xlsxwriter==3.2.0
 zopfli==0.2.3.post1
