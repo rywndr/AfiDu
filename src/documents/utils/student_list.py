@@ -14,26 +14,26 @@ from reportlab.platypus import (
 
 def generate_student_list_pdf(students, config):
     """
-    generate a PDF with a list of students based on the provided config.
+    generate PDF with list of students based on provided config.
     
     args:
-        students: QuerySet of student objects
-        config: Dict with config options (columns, etc.)
+        students: queryset of student objects
+        config: dict with config options
         
     returns:
         PDF content as bytes
     """
-    # set in-memory buffer for PDF
+    # set in-memory buffer for pdf
     pdf_buffer = io.BytesIO()
     
-    # set document with A4 page size and margins
+    # set document with a4 page size and margins
     doc = SimpleDocTemplate(
         pdf_buffer,
         pagesize=A4,
-        rightMargin=72,  # 1 inch margins (72 points)
-        leftMargin=72,   # 1 inch margins (72 points)
-        topMargin=72,    # 1 inch margins (72 points)
-        bottomMargin=72  # 1 inch margins (72 points)
+        rightMargin=72, 
+        leftMargin=72,   
+        topMargin=72,    
+        bottomMargin=72  
     )
     
     # list to hold document elements
@@ -51,7 +51,7 @@ def generate_student_list_pdf(students, config):
     elements.append(Paragraph("STUDENT LIST", title_style))
     elements.append(Spacer(1, 10))
     
-    # Add filters info if any
+    # add filters info if any
     if config.get("class_filter") or config.get("level_filter"):
         filters = []
         
@@ -69,13 +69,13 @@ def generate_student_list_pdf(students, config):
             textColor=colors.gray,
         )
         
-        # Add each filter as a separate line
+        # add each filter as separate line
         for filter_text in filters:
             elements.append(Paragraph(filter_text, filter_style))
         
         elements.append(Spacer(1, 5))
     
-    # Add total students count below filters
+    # add total students count below filters
     total_style = ParagraphStyle(
         "TotalInfo",
         fontName="Helvetica-Bold",
@@ -168,30 +168,30 @@ def generate_student_list_pdf(students, config):
     student_table.setStyle(TableStyle(style))
     elements.append(student_table)
     
-    # Define function to add the printed date at bottom right
+    # func to add the printed date at bottom right
     def add_page_number(canvas, doc):
-        # Current date for footer
+        # curr date for footer
         current_date = date.today().strftime('%d %B %Y')
         footer_text = f"Printed on: {current_date}"
         
         canvas.saveState()
         
-        # Draw the footer text in bottom right
+        # draw footer text in bottom right
         canvas.setFont('Helvetica', 8)
         canvas.setFillColor(colors.gray)
-        # Position at bottom right with proper 1 inch margin
+        # position at bottom right with proper 1 inch margin
         canvas.drawRightString(
-            doc.pagesize[0] - 72,  # Right margin (1 inch from right)
-            30,  # Bottom position (slightly above bottom margin)
+            doc.pagesize[0] - 72,  # right margin (1 inch from right)
+            30,  # bottom position (slightly above bottom margin)
             footer_text
         )
         
         canvas.restoreState()
     
-    # build document with the footer function
+    # build document with the footer func
     doc.build(elements, onFirstPage=add_page_number, onLaterPages=add_page_number)
     
-    # get PDF content
+    # get pdf content
     pdf = pdf_buffer.getvalue()
     pdf_buffer.close()
     
@@ -200,12 +200,11 @@ def generate_student_list_pdf(students, config):
 
 def generate_student_list_excel(students, config):
     """
-    generate xlsx file with a list of students based on provided configu.
+    generate xlsx file with list of students based on provided config.
     
     args:
-        students: QuerySet of student objects
-        config: dict with config options (columns, etc.)
-        
+        students: queryset of student objects
+        config: dict with config options
     returns:
         xlsx file content as bytes
     """
@@ -230,7 +229,7 @@ def generate_student_list_excel(students, config):
         'border': 1
     })
     
-    # Bold format for labels
+    # bold format for labels
     bold_format = workbook.add_format({
         'bold': True
     })
@@ -280,14 +279,14 @@ def generate_student_list_excel(students, config):
         
         row_num += 1
     
-    # auto- adj column widths
+    # auto-adj column widths
     for i, col in enumerate(columns):
         worksheet.set_column(i, i, max(len(col) + 2, 15))
     
-    # Start adding footer information with a row gap
-    row_num += 2  # Skip a row
+    # start adding footer info with row gap
+    row_num += 2  # skip a row
     
-    # Add filters info if any (with titles and values in separate columns)
+    # add filters info if any (with titles and values in separate columns)
     if config.get("class_filter") or config.get("level_filter"):
         if config.get("level_filter_name"):
             worksheet.write(row_num, 0, "Level:", bold_format)
@@ -299,12 +298,12 @@ def generate_student_list_excel(students, config):
             worksheet.write(row_num, 1, config['class_filter_name'])
             row_num += 1
     
-    # Add total students count
+    # add total students count
     worksheet.write(row_num, 0, "Total Students:", bold_format)
     worksheet.write(row_num, 1, len(students))
     row_num += 1
     
-    # Change "Generated on" to "Printed on"
+    # change "generated on" to "printed on"
     worksheet.write(row_num, 0, "Printed on:", bold_format)
     worksheet.write(row_num, 1, date.today().strftime('%d %B %Y'))
     

@@ -4,6 +4,7 @@ import zipfile
 from datetime import datetime
 from decimal import Decimal
 
+from payments.models import PaymentInstallment
 from django.utils.text import slugify
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -20,39 +21,39 @@ from reportlab.platypus import (
 
 def generate_payment_report_pdf(student, payments, config):
     """
-    Generate a PDF payment report for a student.
+    generate PDF payment report for student.
     
-    Args:
+    args:
         student: Student object
-        payments: QuerySet of Payment objects for the student
-        config: Dictionary with configuration options
+        payments: queryeet of Payment objects for student
+        config: dict with config options
         
-    Returns:
+    returns:
         PDF content as bytes
     """
-    # Set up in-memory buffer for PDF
+    # set in-memory buffer for PDF
     pdf_buffer = io.BytesIO()
     
-    # Set up the document with A4 page size and margins
+    # set document with A4 page size and margins
     doc = SimpleDocTemplate(
         pdf_buffer,
         pagesize=A4,
-        rightMargin=72,  # 1 inch margins (72 points)
-        leftMargin=72,   # 1 inch margins (72 points)
-        topMargin=72,    # 1 inch margins (72 points)
-        bottomMargin=72  # 1 inch margins (72 points)
+        rightMargin=72,  
+        leftMargin=72,  
+        topMargin=72,   
+        bottomMargin=72 
     )
     
-    # List to hold document elements
+    # list to hold document elements
     elements = []
     
-    # Define styles
+    # define styles
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         'Title',
         parent=styles['Heading1'],
         fontSize=16,
-        alignment=1,  # Center
+        alignment=1,
         spaceAfter=6
     )
     subtitle_style = ParagraphStyle(
@@ -64,38 +65,38 @@ def generate_payment_report_pdf(student, payments, config):
     )
     normal_style = styles['Normal']
     
-    # Add header
+    # header
     elements.append(Paragraph("PAYMENT REPORT", title_style))
     elements.append(Spacer(1, 0.25*inch))
     
-    # Student information - similar to student_summary format
+    # student info
     elements.append(Paragraph("Student Information", subtitle_style))
     
-    # Format personal data in two columns - without using a table with borders
+    # personal data
     personal_data = [
         ["Name:", student.name, "Gender:", student.gender],
         ["Class:", student.assigned_class.name if student.assigned_class else "Not assigned", "Level:", student.level]
     ]
     
-    # Create a table with 4 columns but no borders
+    # table with 4 columns
     personal_table = Table(personal_data, colWidths=[65, 150, 65, 150])
     
-    # Style the personal information table - without borders
+    # style personal information
     personal_table.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
         ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (0, -1), 10),  # Add padding between label and value
-        ('RIGHTPADDING', (1, 0), (1, -1), 15),  # Add padding between columns
-        ('RIGHTPADDING', (2, 0), (2, -1), 10),  # Add padding between label and value
+        ('RIGHTPADDING', (0, 0), (0, -1), 10), 
+        ('RIGHTPADDING', (1, 0), (1, -1), 15), 
+        ('RIGHTPADDING', (2, 0), (2, -1), 10),  
     ]))
     
     elements.append(personal_table)
     elements.append(Spacer(1, 0.25*inch))
     
-    # Payment summary section if requested
+    # payment summary if requested
     if config.get('include_summary', True):
         elements.append(Paragraph("Payment Summary", subtitle_style))
         
@@ -106,7 +107,7 @@ def generate_payment_report_pdf(student, payments, config):
         )
         total_remaining = sum(payment.remaining_amount for payment in payments)
         
-        # Create 2-column summary table (label, value) without the unused 3rd column
+        # 2-column summary table
         summary_data = [
             ["Period", f"{config.get('start_date')} - {config.get('end_date')}"],
             ["Total Payments", str(len(payments))],
@@ -130,23 +131,21 @@ def generate_payment_report_pdf(student, payments, config):
         elements.append(summary_table)
         elements.append(Spacer(1, 0.25*inch))
     
-    # Payment details section if requested
+    # payment details
     if config.get('include_details', False) and payments:
         elements.append(Paragraph("Payment Details", subtitle_style))
         
-        # Load installment data if available
+        # load installment data if available
         show_installments = config.get('show_installments', True)
         
-        # Import PaymentInstallment model if needed
         if show_installments:
             try:
-                from payments.models import PaymentInstallment
-                # Group installments by payment
+                # group installments by payment
                 installments_map = {}
                 for payment in payments:
-                    # Check if payment is an installment or partial payment
+                    # check if payment is an installment or partial payment
                     if payment.is_installment or (not payment.paid and payment.amount_paid > 0):
-                        # Get installments for this payment
+                        # get installments for this payment
                         installments = list(PaymentInstallment.objects.filter(payment=payment).order_by('payment_date'))
                         installments_map[payment.id] = installments
             except ImportError:
@@ -155,7 +154,7 @@ def generate_payment_report_pdf(student, payments, config):
         else:
             installments_map = {}
         
-        # Create the details table
+        # details table
         details_data = [
             ["Month/Year", "Amount Due", "Amount Paid", "Remaining", "Status", "Payment Date"]
         ]
@@ -179,7 +178,7 @@ def generate_payment_report_pdf(student, payments, config):
                 payment_date
             ])
             
-            # Add installment details if available and requested
+            # add installment details if available and requested
             if show_installments and payment.id in installments_map and installments_map[payment.id]:
                 installments = installments_map[payment.id]
                 for i, installment in enumerate(installments):
@@ -194,7 +193,7 @@ def generate_payment_report_pdf(student, payments, config):
                         installment_date
                     ])
         
-        # Add total row like in student summary
+        # add total row
         total_due = sum(payment.amount_paid + payment.remaining_amount for payment in payments)
         total_paid = sum(payment.amount_paid for payment in payments)
         total_remaining = sum(payment.remaining_amount for payment in payments)
@@ -208,82 +207,77 @@ def generate_payment_report_pdf(student, payments, config):
             ""
         ])
         
-        # Create table with column widths like student summary report
         col_widths = [80, 80, 80, 80, 80, 80]
         details_table = Table(details_data, colWidths=col_widths)
-        
-        # Define table styles similar to student summary report
+
         table_style = [
-            # Header row styling
+            # header row
             ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
             ("ALIGN", (0, 0), (-1, 0), "CENTER"),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, 0), 8),  # Smaller font size for headers
+            ("FONTSIZE", (0, 0), (-1, 0), 8), 
             ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
             
-            # Total row styling
+            # total row
             ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
             ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
             
-            # All rows
-            ("ALIGN", (1, 0), (3, -1), "RIGHT"),  # Right-align monetary values
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),  # Grid for all cells
+            # all row
+            ("ALIGN", (1, 0), (3, -1), "RIGHT"), 
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
             
-            # Data rows
-            ("FONTSIZE", (0, 1), (-1, -2), 9),  # Slightly smaller font for data
-            ("BACKGROUND", (0, 1), (-1, -2), colors.beige),  # Light background for data rows
+            # data row
+            ("FONTSIZE", (0, 1), (-1, -2), 9), 
+            ("BACKGROUND", (0, 1), (-1, -2), colors.beige), 
         ]
         
-        # Track rows with installment details
+        # track rows with installment details
         installment_rows = []
         row_idx = 1
         
-        # Find all installment rows to style them differently
+        # find all installment rows to style differently
         for payment in payments:
-            row_idx += 1  # Skip the payment row
+            row_idx += 1 
             if payment.id in installments_map:
                 num_installments = len(installments_map[payment.id])
                 for i in range(num_installments):
                     installment_rows.append(row_idx + i)
                 row_idx += num_installments
         
-        # Add special styling for installment rows
+        # add special styling for installment rows
         for row in installment_rows:
             table_style.extend([
-                ("FONTNAME", (0, row), (0, row), "Helvetica-Oblique"),  # Italic for first column
-                ("TEXTCOLOR", (0, row), (-1, row), colors.blue),  # Blue text
-                ("FONTSIZE", (0, row), (-1, row), 8),  # Smaller text
-                ("BACKGROUND", (0, row), (-1, row), colors.Color(0.95, 0.95, 1.0)),  # Light blue background
+                ("FONTNAME", (0, row), (0, row), "Helvetica-Oblique"),  
+                ("TEXTCOLOR", (0, row), (-1, row), colors.blue), 
+                ("FONTSIZE", (0, row), (-1, row), 8), 
+                ("BACKGROUND", (0, row), (-1, row), colors.Color(0.95, 0.95, 1.0)), 
             ])
         
         details_table.setStyle(TableStyle(table_style))
         elements.append(details_table)
     
-    # Define a function to add the generated-on date at bottom right
     def add_page_number(canvas, doc):
-        # Current date for footer
+        # curr date for footer
         current_date = datetime.now().strftime('%d %B %Y')
         footer_text = f"Printed on: {current_date}"
         
         canvas.saveState()
         
-        # Draw the footer text in bottom right
         canvas.setFont('Helvetica', 8)
         canvas.setFillColor(colors.gray)
-        # Position at bottom right with 1 inch margin
         canvas.drawRightString(
-            doc.pagesize[0] - 72,  # Right margin (1 inch from right)
-            30,  # Bottom position (slightly above bottom margin)
+            doc.pagesize[0] - 72, 
+            30,
             footer_text
         )
         
         canvas.restoreState()
     
-    # Build document with the footer function
+    # build document with footer function
     doc.build(elements, onFirstPage=add_page_number, onLaterPages=add_page_number)
     
-    # Get PDF content
+    # get PDF content
     pdf = pdf_buffer.getvalue()
     pdf_buffer.close()
     
@@ -292,37 +286,37 @@ def generate_payment_report_pdf(student, payments, config):
 
 def generate_payment_reports_zip(students, payments_by_student, config):
     """
-    Generate ZIP file containing payment reports for multiple students.
+    generate ZIP file containing payment reports for multiple students.
     
-    Args:
-        students: List of Student objects
-        payments_by_student: Dictionary mapping student IDs to their payments
-        config: Dictionary with configuration options
+    args:
+        students: list of Student objects
+        payments_by_student: dict mapping student IDs to their payments
+        config: dict with config options
         
-    Returns:
+    returns:
         ZIP content as bytes
     """
-    # Create a BytesIO buffer for the ZIP file
+    # create BytesIO buffer for ZIP file
     zip_buffer = io.BytesIO()
     
-    # Create a ZipFile object
+    # create ZipFile object
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for student in students:
-            # Get payments for this student
+            # get payments for this student
             student_payments = payments_by_student.get(student.id, [])
             
-            # Generate PDF for this student (even if no payments)
+            # generate PDF for this student (even if no payments)
             pdf_content = generate_payment_report_pdf(student, student_payments, config)
             
-            # Create filename based on student name
+            # create filename based on student name
             safe_name = slugify(student.name)
             today = datetime.now().strftime('%Y%m%d')
             filename = f"payment_report_{safe_name}_{today}.pdf"
             
-            # Add PDF to ZIP file
+            # add PDF to ZIP file
             zip_file.writestr(filename, pdf_content)
     
-    # Get the ZIP content
+    # get ZIP content
     zip_content = zip_buffer.getvalue()
     zip_buffer.close()
     
