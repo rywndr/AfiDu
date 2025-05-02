@@ -172,11 +172,7 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         # Store current URL with all filters in session
         self.request.session["payment_list_url"] = self.request.get_full_path()
 
-        if "anchor_redirected" not in request.GET:
-            query_params = request.GET.copy()
-            query_params["anchor_redirected"] = "true"
-            redirect_url = f"{request.path}?{query_params.urlencode()}#payment-table"
-            return redirect(redirect_url)
+        # Remove the automatic redirect to #payment-table anchor
         return super().get(request, *args, **kwargs)
 
 

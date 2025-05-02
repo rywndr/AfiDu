@@ -184,12 +184,6 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             # update session in get_context_data
             pass
 
-        if "anchor_redirected" not in request.GET:
-            query_params = request.GET.copy()
-            query_params["anchor_redirected"] = "true"
-            redirect_url = f"{request.path}?{query_params.urlencode()}#report-table"
-            return redirect(redirect_url)
-
         context = self.get_context_data()
         return render(request, self.template_name, context)
 

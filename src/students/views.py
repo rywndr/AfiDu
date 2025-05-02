@@ -142,16 +142,6 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
 
         return context
 
-    # redirect to table
-    def get(self, request, *args, **kwargs):
-        if "anchor_redirected" not in request.GET:
-            query_params = request.GET.copy()
-            query_params["anchor_redirected"] = "true"
-            redirect_url = f"{request.path}?{query_params.urlencode()}#student-table"
-            return redirect(redirect_url)
-        return super().get(request, *args, **kwargs)
-
-
 class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
     model = Student
     template_name = "students/student_detail.html"
