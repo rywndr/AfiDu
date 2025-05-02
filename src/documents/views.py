@@ -83,7 +83,6 @@ class StudentListDocumentView(LoginRequiredMixin, DocumentContextMixin, Template
             "include_age": "include_age" in request.POST,
             "include_gender": "include_gender" in request.POST,
             "include_contact": "include_contact" in request.POST,
-            "include_address": "include_address" in request.POST,
             "sort_by": sort_by,
         }
         
@@ -138,7 +137,6 @@ class StudentListDocumentView(LoginRequiredMixin, DocumentContextMixin, Template
             config.get("include_age", False),
             config.get("include_gender", False),
             config.get("include_contact", False),
-            config.get("include_address", False),
         ]):
             messages.error(request, "Please select at least one column to display.")
             context = self.get_context_data()
