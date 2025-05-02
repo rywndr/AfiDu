@@ -78,9 +78,16 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         class_filter = self.request.GET.get("class_filter")
         if class_filter:
             qs = qs.filter(assigned_class=class_filter)
+        # filter by level
         level_filter = self.request.GET.get("level_filter")
         if level_filter:
             qs = qs.filter(level=level_filter)
+        # sort by name
+        sort_by = self.request.GET.get("sort_by")
+        if sort_by == "name_asc":
+            qs = qs.order_by("name")
+        elif sort_by == "name_desc":
+            qs = qs.order_by("-name")
         return qs
 
     def get_year(self):

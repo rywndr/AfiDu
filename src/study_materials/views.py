@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.shortcuts import redirect
 
 from .forms import StudyMaterialForm
 from .models import StudyMaterial
@@ -26,21 +27,56 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        q = self.request.GET.get("q", "")
-        category_filter = self.request.GET.get("category_filter", "")
+        
+        # Get filters from request or session
+        q = self.request.GET.get("q")
+        category_filter = self.request.GET.get("category_filter")
+        sort_by = self.request.GET.get("sort_by")
+        
+        # Store filters in session if provided in request
+        if q is not None:
+            self.request.session["materials_search_query"] = q
+        elif "materials_search_query" in self.request.session:
+            q = self.request.session["materials_search_query"]
+            
+        if category_filter is not None:
+            self.request.session["materials_category_filter"] = category_filter
+        elif "materials_category_filter" in self.request.session:
+            category_filter = self.request.session["materials_category_filter"]
+            
+        if sort_by is not None:
+            self.request.session["materials_sort_by"] = sort_by
+        elif "materials_sort_by" in self.request.session:
+            sort_by = self.request.session["materials_sort_by"]
+        
+        # Apply filters
         if q:
             queryset = queryset.filter(title__icontains=q)
         if category_filter:
             queryset = queryset.filter(category=category_filter)
+            
+        # Apply sorting
+        if sort_by == "title_asc":
+            queryset = queryset.order_by("title")
+        elif sort_by == "title_desc":
+            queryset = queryset.order_by("-title")
+            
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Get search/filter values from request or session
+        q = self.request.GET.get("q", self.request.session.get("materials_search_query", ""))
+        category_filter = self.request.GET.get("category_filter", self.request.session.get("materials_category_filter", ""))
+        sort_by = self.request.GET.get("sort_by", self.request.session.get("materials_sort_by", ""))
+        
         # ambil kategori yang ada di database
         categories = StudyMaterial.objects.values_list("category", flat=True).distinct()
         context["categories"] = categories
-        context["q"] = self.request.GET.get("q", "")
-        context["category_filter"] = self.request.GET.get("category_filter", "")
+        context["q"] = q
+        context["category_filter"] = category_filter
+        context["current_sort_by"] = sort_by
         return context
 
 class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, CreateView):

@@ -63,6 +63,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 "q",
                 "class_filter",
                 "level_filter",
+                "sort_by",
                 "per_page",
             ]
             if param != "anchor_redirected"
@@ -76,6 +77,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             search_query = filters.get("q", "")
             class_filter = filters.get("class_filter", "")
             level_filter = filters.get("level_filter", "")
+            sort_by = filters.get("sort_by", "")
             per_page = filters.get("per_page", 5)
         else:
             # get filter params from URL
@@ -87,6 +89,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             search_query = self.request.GET.get("q", "")
             class_filter = self.request.GET.get("class_filter", "")
             level_filter = self.request.GET.get("level_filter", "")
+            sort_by = self.request.GET.get("sort_by", "")
             per_page_str = self.request.GET.get("per_page", "5")
             try:
                 per_page = int(per_page_str)
@@ -101,6 +104,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 "class_filter": class_filter,
                 "level_filter": level_filter,
                 "per_page": per_page,
+                "sort_by": sort_by,
             }
 
         # queryset students
@@ -111,6 +115,12 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             students = students.filter(assigned_class=class_filter)
         if level_filter:
             students = students.filter(level=level_filter)
+
+        # sort students
+        if sort_by == "name_asc":
+            students = students.order_by("name")
+        elif sort_by == "name_desc":
+            students = students.order_by("-name")
 
         # prepare list dict for each student
         students_data = []
@@ -148,6 +158,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 "q": search_query,
                 "class_filter": class_filter,
                 "level_filter": level_filter,
+                "sort_by": sort_by,
                 "level_choices": Student._meta.get_field("level").choices,
             }
         )
@@ -163,6 +174,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 "q",
                 "class_filter",
                 "level_filter",
+                "sort_by",
                 "per_page",
             ]
         )

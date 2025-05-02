@@ -68,30 +68,75 @@
           <span class="px-4 text-gray-500">
             <i class="fa-solid fa-magnifying-glass"></i>
           </span>
-          <input type="text" name="q" placeholder="Search students..." value="{{ request.GET.q }}"
+          <input type="text" name="q" placeholder="Search students..." value="{{ search_query }}"
                 class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
         </div>
-        <div class="flex items-center">
-          <select name="class_filter" onchange="this.form.submit()"
-                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
-            <option value="">All Classes</option>
-            {% for cls in available_classes %}
-              <option value="{{ cls.pk }}" {% if request.GET.class_filter == cls.pk|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
-            {% endfor %}
-          </select>
+        
+        <!-- filters dropdown button -->
+        <div class="relative inline-block text-left">
+          <button type="button" id="filter-button" class="inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+            <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
+            <span>Filters</span>
+            {% if class_filter or current_level_filter %}
+              <span class="ml-1 flex h-1.5 w-1.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
+              </span>
+            {% endif %}
+            <i class="fa-solid fa-chevron-down ml-1 text-xs text-gray-500"></i>
+          </button>
+
+          <div id="filter-dropdown" class="origin-top-right absolute right-0 mt-2 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" style="display: none; width: 350px;">
+            <div class="p-3 space-y-2">
+              <div class="flex items-center justify-between pb-1 mb-1 border-b border-gray-100">
+                <h3 class="text-sm font-medium text-gray-800">Filter Options</h3>
+                <button type="button" id="clear-filters" class="text-xs text-gray-500 hover:text-[#ff4f25] transition-colors">
+                  Clear all
+                </button>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Class</label>
+                <select name="class_filter" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                  <option value="">All Classes</option>
+                  {% for cls in available_classes %}
+                    <option value="{{ cls.pk }}" {% if class_filter == cls.pk|stringformat:"s" %}selected{% endif %}>
+                      {{ cls.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Level</label>
+                <select name="level_filter" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                  <option value="">All Levels</option>
+                  {% for value, label in level_choices %}
+                    <option value="{{ value }}" {% if current_level_filter == value %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
+                <select name="sort_by" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                  <option value="">No sorting</option>
+                  <option value="name_asc" {% if current_sort_by == "name_asc" %}selected{% endif %}>Name A-Z</option>
+                  <option value="name_desc" {% if current_sort_by == "name_desc" %}selected{% endif %}>Name Z-A</option>
+                </select>
+              </div>
+
+              <div class="pt-2 flex justify-end">
+                <button type="submit" id="apply-filters" class="px-3 py-1.5 bg-[#ff4f25] text-white text-xs rounded-lg hover:bg-[#cc3f1e] focus:outline-none font-medium transition-colors">
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-         <div class="flex items-center">
-          <select name="level_filter" onchange="this.form.submit()"
-                  class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none">
-            <option value="">All Levels</option>
-            {% for value, label in level_choices %}
-              <option value="{{ value }}" {% if current_level_filter == value %}selected{% endif %}>
-                {{ label }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
       <!-- persist filter params -->
         <input type="hidden" name="year" value="{{ year }}">
         <input type="hidden" name="semester" value="{{ semester }}">
@@ -274,4 +319,6 @@
   <script src="{% static 'js/scores/only_digits.js' %}"></script>
   <!-- score calc -->
   <script src="{% static 'js/scores/calc_score.js' %}"></script>
+  <!-- toggle dropdown -->
+  <script src="{% static 'js/toggle_dropdown.js' %}"></script>
 {% endblock %}

@@ -24,9 +24,15 @@ document.addEventListener("DOMContentLoaded", function() {
   if (filterButton && filterDropdown) {
     // keep dropdown open if just submitted the form
     const form = document.getElementById("search-filter-form");
-    const classFilter = form.querySelector('select[name="class_filter"]').value;
-    const levelFilter = form.querySelector('select[name="level_filter"]').value;
-    const sortBy = form.querySelector('select[name="sort_by"]').value;
+    
+    // access form elements with null checks
+    const classFilterElement = form?.querySelector('select[name="class_filter"]');
+    const levelFilterElement = form?.querySelector('select[name="level_filter"]');
+    const sortByElement = form?.querySelector('select[name="sort_by"]');
+    
+    const classFilter = classFilterElement?.value || "";
+    const levelFilter = levelFilterElement?.value || "";
+    const sortBy = sortByElement?.value || "";
     
     // check if the user have just applied filters
     const urlParams = new URLSearchParams(window.location.search);
@@ -41,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
     filterButton.addEventListener("click", function(event) {
       event.stopPropagation();
       // toggle display instead of toggling hidden class
-      if (filterDropdown.style.display === "none") {
+      if (filterDropdown.style.display === "none" || filterDropdown.style.display === "") {
         filterDropdown.style.display = "block";
       } else {
         filterDropdown.style.display = "none";
@@ -54,6 +60,7 @@ document.addEventListener("DOMContentLoaded", function() {
         event.preventDefault();
         
         const form = document.getElementById("search-filter-form");
+        if (!form) return;
         
         let keepOpenInput = form.querySelector('input[name="keep_filter_open"]');
         if (!keepOpenInput) {
@@ -76,10 +83,25 @@ document.addEventListener("DOMContentLoaded", function() {
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener("click", function() {
         const form = document.getElementById("search-filter-form");
-        // reset filters to empty values
-        form.querySelector('select[name="class_filter"]').value = "";
-        form.querySelector('select[name="level_filter"]').value = "";
-        form.querySelector('select[name="sort_by"]').value = "";
+        if (!form) return;
+        
+        // reset filters to empty values with null checks
+        if (form.querySelector('select[name="class_filter"]')) {
+          form.querySelector('select[name="class_filter"]').value = "";
+        }
+        
+        if (form.querySelector('select[name="level_filter"]')) {
+          form.querySelector('select[name="level_filter"]').value = "";
+        }
+        
+        if (form.querySelector('select[name="sort_by"]')) {
+          form.querySelector('select[name="sort_by"]').value = "";
+        }
+        
+        // handle category filter for study materials
+        if (form.querySelector('select[name="category_filter"]')) {
+          form.querySelector('select[name="category_filter"]').value = "";
+        }
         
         // keep dropdown open after clearing
         let keepOpenInput = form.querySelector('input[name="keep_filter_open"]');

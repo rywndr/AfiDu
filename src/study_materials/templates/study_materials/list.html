@@ -12,7 +12,7 @@
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex flex-col sm:flex-row items-center gap-4">
           <!-- search filter form -->
-          <form method="get" class="flex gap-2">
+          <form method="get" id="search-filter-form" class="flex gap-2">
             <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
               <span class="px-4 text-gray-500">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -20,13 +20,57 @@
               <input type="text" name="q" placeholder="Search materials..." value="{{ request.GET.q }}"
                 class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
             </div>
-            <select name="category_filter" onchange="this.form.submit()"
-                    class="border border-gray-300 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-red-500">
-              <option value="">All Categories</option>
-              {% for cat in categories %}
-                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
-              {% endfor %}
-            </select>
+            
+            <!-- filters dropdown button -->
+            <div class="relative inline-block text-left">
+              <button type="button" id="filter-button" class="inline-flex justify-center mt-2 items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+                <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
+                <span>Filters</span>
+                {% if category_filter %}
+                  <span class="ml-1 flex h-1.5 w-1.5 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
+                  </span>
+                {% endif %}
+                <i class="fa-solid fa-chevron-down ml-1 text-xs text-gray-500"></i>
+              </button>
+
+              <div id="filter-dropdown" class="origin-top-right absolute right-0 mt-2 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" style="display: none; width: 350px;">
+                <div class="p-3 space-y-2">
+                  <div class="flex items-center justify-between pb-1 mb-1 border-b border-gray-100">
+                    <h3 class="text-sm font-medium text-gray-800">Filter Options</h3>
+                    <button type="button" id="clear-filters" class="text-xs text-gray-500 hover:text-[#ff4f25] transition-colors">
+                      Clear all
+                    </button>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                    <select name="category_filter" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                      <option value="">All Categories</option>
+                      {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
+                    <select name="sort_by" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                      <option value="">No sorting</option>
+                      <option value="title_asc" {% if current_sort_by == "title_asc" %}selected{% endif %}>Title A-Z</option>
+                      <option value="title_desc" {% if current_sort_by == "title_desc" %}selected{% endif %}>Title Z-A</option>
+                    </select>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button type="submit" id="apply-filters" class="px-3 py-1.5 bg-[#ff4f25] text-white text-xs rounded-lg hover:bg-[#cc3f1e] focus:outline-none font-medium transition-colors">
+                      Apply Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </form>
 
         </div>

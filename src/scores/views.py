@@ -47,6 +47,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
         level_filter = self.request.GET.get("level_filter", "")
+        sort_by = self.request.GET.get("sort_by", "")
         current_year = str(datetime.now().year)
 
         # if params exist in GET, update session
@@ -71,6 +72,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             self.request.session["scores_class_filter"] = class_filter
             self.request.session["scores_level_filter"] = level_filter
             self.request.session["scores_per_page"] = per_page_str
+            self.request.session["scores_sort_by"] = sort_by
         else:
             # get values from session/use defaults
             year = self.request.session.get("scores_year", current_year)
@@ -80,6 +82,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             class_filter = self.request.session.get("scores_class_filter", "")
             level_filter = self.request.session.get("scores_level_filter", "")
             per_page_str = self.request.session.get("scores_per_page", "5")
+            sort_by = self.request.session.get("scores_sort_by", "")
 
         # get config
         config = None
@@ -117,6 +120,12 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             students = students.filter(assigned_class=class_filter)
         if level_filter:
             students = students.filter(level=level_filter)
+            
+        # apply sorting if specified
+        if sort_by == "name_asc":
+            students = students.order_by("name")
+        elif sort_by == "name_desc":
+            students = students.order_by("-name")
 
         forms = []
         for student in students:
@@ -165,6 +174,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                 "search_query": search_query,
                 "class_filter": class_filter,
                 "current_level_filter": level_filter,
+                "current_sort_by": sort_by,
                 "class_choices": Student.assigned_class,
                 "level_choices": LEVELS,
                 "exercise_range": range(config.num_exercises),
