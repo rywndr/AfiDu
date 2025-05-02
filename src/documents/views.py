@@ -376,7 +376,6 @@ class StudentSummaryConfigView(LoginRequiredMixin, DocumentContextMixin, Templat
             'include_payment': 'include_payment' in request.POST,
             'academic_year': request.POST.get('academic_year'),
             'semester_filter': request.POST.get('semester_filter', ''),
-            'include_photo': request.POST.get('include_photo') == 'yes',
             'select_all_students': not request.POST.get('student_ids'),
             'class_filter': request.POST.get('class_filter', ''),  
             'level_filter': request.POST.get('level_filter', ''), 

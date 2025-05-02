@@ -94,22 +94,11 @@ def generate_student_summary_pdf(student, config):
         elements.append(Paragraph(f"STUDENT SUMMARY REPORT", title_style))
     elements.append(Spacer(1, 0.25*inch))
     
-    # personal info section with photo
+    # personal info section
     if config.get('include_personal'):
         elements.append(Paragraph("Personal Information", subtitle_style))
         
         # personal info
-        has_photo = False
-        photo_path = None
-        
-        if config.get('include_photo') and student.profile_photo:
-            try:
-                photo_path = os.path.join(settings.MEDIA_ROOT, student.profile_photo.name)
-                if os.path.exists(photo_path):
-                    has_photo = True
-            except Exception:
-                pass
-        
         address_display = student.address
         if len(address_display) > 40:
             address_display = address_display[:27] + " ..."
@@ -121,22 +110,8 @@ def generate_student_summary_pdf(student, config):
             ["Class:", student.assigned_class.name if student.assigned_class else "Unassigned", "Level:", student.level]
         ]
         
-        if has_photo:
-            personal_table = Table(personal_data, colWidths=[65, 120, 45, 150])
-            
-            img = Image(photo_path, width=1.5*inch, height=1.5*inch)
-            
-            data = [[personal_table, img]]
-            main_table = Table(data, colWidths=[380, 100])
-            main_table.setStyle(TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('RIGHTPADDING', (0, 0), (0, 0), 20),
-            ]))
-            
-            elements.append(main_table)
-        else:
-            personal_table = Table(personal_data, colWidths=[65, 150, 45, 180])
-            elements.append(personal_table)
+        personal_table = Table(personal_data, colWidths=[65, 150, 45, 180])
+        elements.append(personal_table)
         
         # style personal info table
         personal_table.setStyle(TableStyle([
