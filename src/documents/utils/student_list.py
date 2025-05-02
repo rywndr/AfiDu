@@ -93,7 +93,6 @@ def generate_student_list_pdf(students, config):
         "include_age": "Age",
         "include_gender": "Gender",
         "include_contact": "Contact Number",
-        "include_address": "Address",
     }
     
     # add columns based on config
@@ -117,29 +116,13 @@ def generate_student_list_pdf(students, config):
             row.append(student.gender)
         if config.get("include_contact", False):
             row.append(student.contact_number)
-        if config.get("include_address", False):
-            row.append(student.address)
         
         data.append(row)
     
     # calc column widths based on num of columns
     page_width = A4[0] - doc.leftMargin - doc.rightMargin
     col_width = page_width / len(columns)
-    
-    # address column is wider if included
-    if config.get("include_address", False):
-        address_idx = columns.index("Address")
-        col_widths = [col_width] * len(columns)
-        col_widths[address_idx] = col_width * 2
-        
-        # adjust columns to maintain page width
-        remaining_cols = len(columns) - 1
-        remaining_width = page_width - (col_width * 2)
-        for i in range(len(col_widths)):
-            if i != address_idx:
-                col_widths[i] = remaining_width / remaining_cols
-    else:
-        col_widths = [col_width] * len(columns)
+    col_widths = [col_width] * len(columns)
     
     # create table
     student_table = Table(data, colWidths=col_widths)
@@ -242,7 +225,6 @@ def generate_student_list_excel(students, config):
         "include_age": "Age",
         "include_gender": "Gender",
         "include_contact": "Contact Number",
-        "include_address": "Address",
     }
     
     # add columns based on config
@@ -272,9 +254,6 @@ def generate_student_list_excel(students, config):
             col_num += 1
         if config.get("include_contact", False):
             worksheet.write(row_num, col_num, student.contact_number, cell_format)
-            col_num += 1
-        if config.get("include_address", False):
-            worksheet.write(row_num, col_num, student.address, cell_format)
             col_num += 1
         
         row_num += 1
