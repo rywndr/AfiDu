@@ -57,6 +57,7 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         class_filter = self.request.GET.get("class_filter")
         level_filter = self.request.GET.get("level_filter")
         per_page = self.request.GET.get("per_page")
+        sort_by = self.request.GET.get("sort_by")
 
         # store filters in session if provided in request
         if query is not None:
@@ -78,6 +79,11 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
             self.request.session["student_per_page"] = per_page
         elif "student_per_page" in self.request.session:
             per_page = self.request.session["student_per_page"]
+            
+        if sort_by is not None:
+            self.request.session["student_sort_by"] = sort_by
+        elif "student_sort_by" in self.request.session:
+            sort_by = self.request.session["student_sort_by"]
 
         # apply filters to queryset
         if query:
@@ -86,6 +92,13 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
             queryset = queryset.filter(assigned_class=class_filter)
         if level_filter:
             queryset = queryset.filter(level=level_filter)
+            
+        # apply sorting only if specified
+        if sort_by == "name_asc":
+            queryset = queryset.order_by("name")
+        elif sort_by == "name_desc":
+            queryset = queryset.order_by("-name")
+        # no default sorting applied
 
         return queryset
 
@@ -113,6 +126,9 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         per_page = self.request.GET.get(
             "per_page", self.request.session.get("student_per_page", "5")
         )
+        sort_by = self.request.GET.get(
+            "sort_by", self.request.session.get("student_sort_by", "name_asc")
+        )
 
         # pass student count context to list view
         context["student_count"] = self.get_queryset().count()
@@ -122,6 +138,7 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
         context["current_class_filter"] = class_filter
         context["current_level_filter"] = level_filter
         context["current_per_page"] = per_page
+        context["current_sort_by"] = sort_by
 
         return context
 
