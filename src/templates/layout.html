@@ -133,49 +133,100 @@
           </h1>
 
           <!-- user menu -->
-          <div class="relative">
+          <div class="relative" id="user-dropdown-container">
+            <!-- profile button with avatar and name -->
             <button
               id="user-menu"
-              class="flex items-center space-x-2 focus:outline-none"
+              class="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 transition-all hover:bg-gray-50"
+              aria-label="user menu"
             >
-              <img
-                src="{% static 'images/blank_profile.svg' %}"
-                alt="Profile Picture"
-                class="w-8 h-8 rounded-full"
-              />
-              <span class="text-gray-700">{% if request.user.first_name %} {{ request.user.first_name }} {% else %} user {% endif %}</span>
-              <i class="fas fa-chevron-down text-gray-500"></i>
+              <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                {% if request.user.myprofile.photo %}
+                  <img
+                    src="{{ request.user.myprofile.photo.url }}"
+                    alt="Profile Picture"
+                    class="w-8 h-8 rounded-full object-cover"
+                  />
+                {% else %}
+                  <i class="fas fa-user text-gray-500"></i>
+                {% endif %}
+              </div>
+              
+              <!-- show username on larger screens -->
+              <span class="hidden sm:block text-sm font-medium truncate max-w-[100px] text-gray-700">
+                {% if request.user.first_name %} 
+                  {{ request.user.first_name }} 
+                {% else %} 
+                  {{ request.user.username|default:"user" }} 
+                {% endif %}
+              </span>
+              
+              <i id="chevron-icon" class="fas fa-chevron-down text-gray-500 transition-transform"></i>
             </button>
+            
+            <!-- dropdown menu -->
             <div
               id="dropdown-menu"
-              class="hidden absolute z-2 right-0 mt-2 bg-white shadow-md rounded-md overflow-hidden {% if user.is_superuser %} w-48 {% else %} w-32 {% endif %}"
+              class="hidden absolute right-0 mt-2 w-64 py-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
             >
-              <a
-                href="{% url 'myprofile:profile' %}"
-                class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
-                >My Profile</a
-              >
+              <!-- user profile section -->
+              <div class="px-4 py-3 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    {% if request.user.myprofile.photo %}
+                      <img
+                        src="{{ request.user.myprofile.photo.url }}"
+                        alt="Profile Picture"
+                        class="w-10 h-10 rounded-full object-cover"
+                      />
+                    {% else %}
+                      <i class="fas fa-user text-gray-500"></i>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-700">
+                      {{ request.user.email|default:"" }}
+                    </p>
+                    <a
+                      href="{% url 'myprofile:profile' %}"
+                      class="text-xs hover:underline text-gray-500"
+                    >
+                      Account settings
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- admin section if superuser -->
               {% if user.is_superuser %}
-                  <a
-                    href="{% url 'register:register' %}"
-                    class="block px-4 py-2 hover:bg-gray-100 text-gray-700"
-                    >Create Account</a
-                  >
-              {% endif %}
-              <form
-                action="{% url 'logout' %}"
-                method="post"
-                class="block"
-              >
-                {% csrf_token %}
-                <button
-                  type="submit"
-                  class="w-full text-left px-4 py-2 hover:bg-gray-100 text-[#fb2c36]"
+              <div class="px-4 py-2">
+                <a
+                  href="{% url 'register:register' %}"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <i class="fas fa-sign-out-alt mr-1"></i>
-                  Logout
-                </button>
-              </form>
+                  <i class="fas fa-user-plus text-gray-500"></i>
+                  <span>Create Account</span>
+                </a>
+              </div>
+              {% endif %}
+              
+              <!-- sign out -->
+              <div class="px-4 py-1">
+                <form
+                  action="{% url 'logout' %}"
+                  method="post"
+                  class="block"
+                >
+                  {% csrf_token %}
+                  <button
+                    type="submit"
+                    class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-red-50 hover:text-red-500"
+                  >
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign out</span>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </header>
@@ -190,24 +241,6 @@
     <!-- notifs -->
     {% include 'snippets/message_notifs.html' %}
     <script src="{% static 'js/dismiss_notifs.js' %}"></script>
-
-    <script>
-      // tempo solutionnn
-      const userMenu = document.getElementById('user-menu');
-      const dropdownMenu = document.getElementById('dropdown-menu');
-
-      // Toggle dropdown on user menu click
-      userMenu.addEventListener('click', function (e) {
-        e.stopPropagation(); // Prevent click from bubbling to document
-        dropdownMenu.classList.toggle('hidden');
-      });
-
-      // Hide dropdown when clicking outside
-      document.addEventListener('click', function (e) {
-        if (!dropdownMenu.classList.contains('hidden')) {
-          dropdownMenu.classList.add('hidden');
-        }
-      });
-    </script>
+    <script src="{% static 'js/toggle_dropdown.js' %}"></script>
   </body>
 </html>

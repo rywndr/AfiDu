@@ -1,5 +1,6 @@
 // func to handle dropdowns
 document.addEventListener("DOMContentLoaded", function() {
+  // standard dropdowns
   const dropdownButtons = document.querySelectorAll(".dropdown-button");
   
   dropdownButtons.forEach(button => {
@@ -18,6 +19,57 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
+  // profile dropdown functionality
+  const userMenu = document.getElementById('user-menu');
+  const dropdownMenu = document.getElementById('dropdown-menu');
+  const chevronIcon = document.getElementById('chevron-icon');
+  const dropdownContainer = document.getElementById('user-dropdown-container');
+  
+  if (userMenu && dropdownMenu) {
+    function toggleProfileDropdown() {
+      const isOpen = !dropdownMenu.classList.contains('hidden');
+      
+      // toggle dropdown visibility with tailwind classes
+      if (isOpen) {
+        // close dropdown with tailwind animation
+        dropdownMenu.classList.add('opacity-0', 'translate-y-[-10px]', 'duration-200');
+        dropdownMenu.classList.remove('opacity-100', 'translate-y-0');
+        
+        setTimeout(() => {
+          dropdownMenu.classList.add('hidden');
+          if (chevronIcon) chevronIcon.classList.remove('rotate-180');
+        }, 100);
+      } else {
+        // open dropdown with tailwind animation
+        dropdownMenu.classList.remove('hidden');
+        
+        // trigger a reflow before adding the opacity/transform classes
+        void dropdownMenu.offsetWidth;
+        
+        dropdownMenu.classList.add('opacity-100', 'translate-y-0', 'transition-all', 'duration-200');
+        dropdownMenu.classList.remove('opacity-0', 'translate-y-[-10px]');
+        
+        if (chevronIcon) chevronIcon.classList.add('rotate-180');
+      }
+    }
+
+    // toggle dropdown on user menu click
+    userMenu.addEventListener('click', function(e) {
+      e.stopPropagation(); // prevent click from bubbling to document
+      e.preventDefault(); // prevent any default behavior
+      toggleProfileDropdown();
+    });
+
+    // hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (dropdownContainer && !dropdownMenu.classList.contains('hidden') && 
+          !dropdownContainer.contains(e.target)) {
+        toggleProfileDropdown();
+      }
+    });
+  }
+  
+  // filter dropdown functionality
   const filterButton = document.getElementById("filter-button");
   const filterDropdown = document.getElementById("filter-dropdown");
   
