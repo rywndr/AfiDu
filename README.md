@@ -78,7 +78,7 @@ AfiDu is a student data management system designed for an English tutorial cente
 
 ## 🖼️ ui
 
-<sub><sup>ui screenshot coming soon<sub><sup>
+![AfiDu Dashboard](./docs/images/dashboard.png)
 
 ## 🎬 demo
 

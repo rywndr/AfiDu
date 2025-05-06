@@ -50,6 +50,18 @@ AfiDu adalah sistem pengelolaan data murid yang didesain untuk bimbel bahasa ing
 - konfigurasi pengaturan pembayaran berdasarkan tahun
 - cicil pembayaran dalam beberapa transaksi
 
+### 📝 laporan
+
+- buat laporan nilai individual murid
+- ekspor semua laporan sebagai zip berdasarkan filter yang diterapkan
+- pelaporan nilai komprehensif dari sistem pelacakan nilai
+- unduh berbagai jenis dokumen:
+  - formulir pendaftaran murid
+  - kartu pembayaran murid
+  - daftar murid yang dapat dikonfigurasi (PDF/Excel)
+  - laporan pembayaran detail dengan opsi filter
+  - ringkasan komprehensif murid dengan informasi akademik dan pembayaran
+
 ### 👥 user roles
 
 - **teacher**: akses ke aplikasi
@@ -66,7 +78,7 @@ AfiDu adalah sistem pengelolaan data murid yang didesain untuk bimbel bahasa ing
 
 ## 🖼️ ui
 
-<sub><sup>screenshot otw<sub><sup>
+![AfiDu Dashboard](./docs/images/dashboard.png)
 
 ## 🎬 demo
 
