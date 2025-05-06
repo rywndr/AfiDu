@@ -32,6 +32,7 @@ pydyf==0.11.0
 pyphen==0.17.2
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
+pytz==2025.2
 rcssmin==1.1.2
 reportlab==4.3.1
 rjsmin==1.2.2
@@ -46,5 +47,5 @@ tzdata==2025.1
 vine==5.1.0
 wcwidth==0.2.13
 webencodings==0.5.1
-xlsxwriter==3.2.0
+XlsxWriter==3.2.3
 zopfli==0.2.3.post1
