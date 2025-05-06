@@ -50,6 +50,18 @@ AfiDu is a student data management system designed for an English tutorial cente
 - configure payment settings by year
 - install payments in multiple transactions
 
+### 📝 reports
+
+- generate individual student reports
+- export all reports as zip based on applied filters
+- comprehensive score reporting from the score tracking system
+- download various document types:
+  - student registration forms
+  - payment cards
+  - configurable student lists (PDF/Excel)
+  - detailed payment reports with filtering options
+  - comprehensive student summaries with academic and payment information
+
 ### 👥 user roles
 
 - **teacher**: access to the app
