@@ -19,6 +19,7 @@ django-compressor==4.5.1
 django-widget-tweaks==1.5.0
 docxcompose==1.4.0
 docxtpl==0.19.1
+dotenv==0.9.9
 fonttools==4.56.0
 Jinja2==3.1.6
 kombu==5.5.1
@@ -32,6 +33,7 @@ pydyf==0.11.0
 pyphen==0.17.2
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
+python-dotenv==1.1.0
 pytz==2025.2
 rcssmin==1.1.2
 reportlab==4.3.1
