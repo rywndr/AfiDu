@@ -56,7 +56,7 @@
           <button type="button" id="filter-button" class="inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
             <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
             <span>Filters</span>
-            {% if class_filter or level_filter %}
+            {% if class_filter or level_filter or sort_by %}
               <span class="ml-1 flex h-1.5 w-1.5 relative">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
@@ -279,7 +279,4 @@
       </div>
     </div>
   </div>
-
-  <!-- toggle dropdown script -->
-  <script src="{% static 'js/toggle_dropdown.js' %}"></script>
 {% endblock %}

@@ -77,7 +77,7 @@
           <button type="button" id="filter-button" class="inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
             <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
             <span>Filters</span>
-            {% if class_filter or current_level_filter %}
+            {% if class_filter or current_level_filter or current_sort_by %}
               <span class="ml-1 flex h-1.5 w-1.5 relative">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
@@ -319,6 +319,4 @@
   <script src="{% static 'js/scores/only_digits.js' %}"></script>
   <!-- score calc -->
   <script src="{% static 'js/scores/calc_score.js' %}"></script>
-  <!-- toggle dropdown -->
-  <script src="{% static 'js/toggle_dropdown.js' %}"></script>
 {% endblock %}
