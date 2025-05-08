@@ -25,7 +25,7 @@ class PaymentConfig(models.Model):
     
     # installment configuration
     max_installments = models.IntegerField(
-        default=2,
+        default=3,
         validators=[MinValueValidator(1)],
         help_text="Maximum number of installments allowed per payment"
     )
