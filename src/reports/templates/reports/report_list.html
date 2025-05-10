@@ -121,16 +121,6 @@
         <input type="hidden" name="semester" value="{{ semester }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
         <input type="hidden" name="anchor_redirected" value="true">
-        
-        <div class="ml-auto">
-            {% if q or class_filter or level_filter %}
-              <a href="?year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
-                 class="bg-gray-500 hover:bg-gray-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition"
-                 title="Clear filters">
-                <i class="fa-solid fa-filter-circle-xmark"></i>
-              </a>
-          {% endif %}
-        </div>
       </form>
     </div>
 
