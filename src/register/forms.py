@@ -60,43 +60,59 @@ class RegistrationForm(forms.ModelForm):
         password = cleaned_data.get("password1")
         p2 = cleaned_data.get("password2")
         
-        # check if passwords match
+        # match check
         if password and p2 and password != p2:
             self.add_error(None, "The two passwords do not match.")
         
-        # password validation only if password is provided
+        # validate password
         if password:
             error_messages = []
             
-            # check password length
+            # length check
             if len(password) < 8:
                 error_messages.append("Password must be at least 8 characters long")
                 
-            # check for at least one digit
+            # digit check
             if not re.search(r'\d', password):
-                error_messages.append("contain at least one number")
+                error_messages.append("Password must contain at least one number")
                 
-            # check for at least one uppercase letter
+            # uppercase check
             if not re.search(r'[A-Z]', password):
-                error_messages.append("contain at least one uppercase letter")
+                error_messages.append("Password must contain at least one uppercase letter")
                 
-            # check for at least one lowercase letter
+            # lowercase check
             if not re.search(r'[a-z]', password):
-                error_messages.append("contain at least one lowercase letter")
+                error_messages.append("Password must contain at least one lowercase letter")
             
-            # add combined err message if any validation failed
+            # format errors
             if error_messages:
-                # format err message properly
+                # single error
                 if len(error_messages) == 1:
                     self.add_error(None, error_messages[0])
                 else:
-                    # First err keeps its original format
-                    formatted_message = error_messages[0]
-                    # add remaining errs with proper conjunction
-                    for msg in error_messages[1:-1]:
+                    # remove duplicates
+                    unique_errors = []
+                    for msg in error_messages:
+                        if msg not in unique_errors:
+                            unique_errors.append(msg)
+                    
+                    # keep first error as is
+                    formatted_message = unique_errors[0]
+                    
+                    # process middle errors
+                    for i in range(1, len(unique_errors) - 1):
+                        msg = unique_errors[i]
+                        if msg.startswith("Password must "):
+                            msg = msg[14:]  # trim prefix
                         formatted_message += f", {msg}"
-                    if len(error_messages) > 1:
-                        formatted_message += f" and {error_messages[-1]}"
+                        
+                    # process last error
+                    if len(unique_errors) > 1:
+                        last_msg = unique_errors[-1]
+                        if last_msg.startswith("Password must "):
+                            last_msg = last_msg[14:]  # trim prefix
+                        formatted_message += f" and {last_msg}"
+                        
                     self.add_error(None, formatted_message + ".")
         
         return cleaned_data

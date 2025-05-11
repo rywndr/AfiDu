@@ -18,43 +18,59 @@ class CustomSetPasswordForm(SetPasswordForm):
         password1 = self.cleaned_data.get('new_password1')
         password2 = self.cleaned_data.get('new_password2')
         
-        # basic validation
+        # match check
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("The two passwords do not match.")
             
-        # custom validation
+        # validate password
         if password1:
             error_messages = []
             
-            # check length
+            # length check
             if len(password1) < 8:
                 error_messages.append("Password must be at least 8 characters long")
                 
-            # check digit
+            # digit check
             if not re.search(r'\d', password1):
-                error_messages.append("contain at least one number")
+                error_messages.append("Password must contain at least one number")
                 
-            # check uppercase
+            # uppercase check
             if not re.search(r'[A-Z]', password1):
-                error_messages.append("contain at least one uppercase letter")
+                error_messages.append("Password must contain at least one uppercase letter")
                 
-            # check lowercase
+            # lowercase check
             if not re.search(r'[a-z]', password1):
-                error_messages.append("contain at least one lowercase letter")
+                error_messages.append("Password must contain at least one lowercase letter")
             
-            # show errors
+            # format errors
             if error_messages:
-                # format err
+                # single error
                 if len(error_messages) == 1:
                     raise forms.ValidationError(error_messages[0])
                 else:
-                    # first err
-                    formatted_message = error_messages[0]
-                    # add other errs
-                    for msg in error_messages[1:-1]:
+                    # remove duplicates
+                    unique_errors = []
+                    for msg in error_messages:
+                        if msg not in unique_errors:
+                            unique_errors.append(msg)
+                    
+                    # keep first error as is
+                    formatted_message = unique_errors[0]
+                    
+                    # process middle errors
+                    for i in range(1, len(unique_errors) - 1):
+                        msg = unique_errors[i]
+                        if msg.startswith("Password must "):
+                            msg = msg[14:]  # trim prefix
                         formatted_message += f", {msg}"
-                    if len(error_messages) > 1:
-                        formatted_message += f" and {error_messages[-1]}"
+                        
+                    # process last error
+                    if len(unique_errors) > 1:
+                        last_msg = unique_errors[-1]
+                        if last_msg.startswith("Password must "):
+                            last_msg = last_msg[14:]  # trim prefix
+                        formatted_message += f" and {last_msg}"
+                        
                     raise forms.ValidationError(formatted_message + ".")
         
         return password2
