@@ -102,20 +102,18 @@ WSGI_APPLICATION = "afidu.wsgi.application"
 # }
 
 # comment the below DATABASES setting to use sqlite
-
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'NAME': DATABASE_URL.path.replace('/', ''),
+        'USER': DATABASE_URL.username,
+        'PASSWORD': DATABASE_URL.password,
+        'HOST': DATABASE_URL.hostname,
+        'PORT': DATABASE_URL.port,
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
