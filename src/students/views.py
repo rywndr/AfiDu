@@ -98,7 +98,6 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
             queryset = queryset.order_by("name")
         elif sort_by == "name_desc":
             queryset = queryset.order_by("-name")
-        # no default sorting applied
 
         return queryset
 
@@ -127,7 +126,7 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
             "per_page", self.request.session.get("student_per_page", "5")
         )
         sort_by = self.request.GET.get(
-            "sort_by", self.request.session.get("student_sort_by", "name_asc")
+            "sort_by", self.request.session.get("student_sort_by", "")
         )
 
         # pass student count context to list view
