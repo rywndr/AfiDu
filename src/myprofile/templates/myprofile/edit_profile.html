@@ -49,48 +49,6 @@
           {% endif %}
         {% endfor %}
         
-        {% if user.is_superuser %}
-          <div class="mt-6">
-            <h3 class="font-semibold text-[#5a5656] mb-2">Permissions</h3>
-            
-            <div class="flex flex-wrap gap-6">
-              {% with perms="is_active,is_staff,is_superuser" %}
-                {% for perm in perms|split:"," %}
-                  {% with field=form|dictkey:perm %}
-                    <label class="flex items-center space-x-3">
-                      <span class="text-sm font-medium text-[#5a5656]">{{ field.label }}</span>
-                      <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                        <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" 
-                               {% if field.value %}checked{% endif %}
-                               class="absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer focus:outline-none transition-transform duration-200 ease-in translate-x-0 checked:translate-x-4 checked:bg-white border-gray-300 checked:border-[#ff4f25] peer" />
-                        <label for="{{ field.id_for_label }}" 
-                               class="block h-6 overflow-hidden bg-gray-300 rounded-full cursor-pointer peer-checked:bg-[#ff4f25]">
-                        </label>
-                      </div>
-                    </label>
-                  {% endwith %}
-                {% endfor %}
-              {% endwith %}
-            </div>
-            <div class="bg-gradient-to-r from-amber-50 to-amber-100 shadow-sm rounded-lg p-3 mt-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-amber-400 rounded-full p-1">
-                        <svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-amber-800">
-                        Keep superuser status enabled for your profile to maintain administrative access.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-          </div>
-        {% endif %}
-        
         <div class="mt-6 flex space-x-4">
           <a 
             href="{% url 'myprofile:profile' %}" 

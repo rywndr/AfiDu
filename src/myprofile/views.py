@@ -41,31 +41,10 @@ class EditProfileView(LoginRequiredMixin, ProfileContextMixin, UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         # only superusers get these extra toggles:
-        if self.request.user.is_superuser:
-            # boolean fields to toggle is_active, is_staff, and is_superuser
-            form.fields["is_active"] = forms.BooleanField(
-                required=False,
-                initial=form.instance.is_active,
-                label="Active",
-            )
-            form.fields["is_staff"] = forms.BooleanField(
-                required=False,
-                initial=form.instance.is_staff,
-                label="Staff status",
-            )
-            form.fields["is_superuser"] = forms.BooleanField(
-                required=False,
-                initial=form.instance.is_superuser,
-                label="Superuser status",
-            )
         return form
 
     def form_valid(self, form):
         # if valid form is submitted and user is superuser then update the fields
-        if self.request.user.is_superuser:
-            self.object.is_active = form.cleaned_data["is_active"]
-            self.object.is_staff = form.cleaned_data["is_staff"]
-            self.object.is_superuser = form.cleaned_data["is_superuser"]
         messages.success(self.request, "Profile updated successfully.")
         return super().form_valid(form)
 
