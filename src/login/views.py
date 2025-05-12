@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 
 from .email_backend import clear_reset_link, get_reset_email, get_reset_link
-from .forms import EmailAuthenticationForm, CustomSetPasswordForm
+from .forms import LoginWithEmailForm, StrongPasswordSetForm, EmailExistencePasswordResetForm
 
 class AuthContextMixin:
     def get_auth_context(self, extra_context=None):
@@ -22,7 +22,7 @@ class AuthContextMixin:
         return context
 
 class CustomLoginView(LoginView, AuthContextMixin):
-    authentication_form = EmailAuthenticationForm
+    authentication_form = LoginWithEmailForm
     template_name = "auth/login.html"
 
     def get_context_data(self, **kwargs):
@@ -53,6 +53,7 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name = "auth/password_reset_email.html"
     subject_template_name = "auth/password_reset_subject.txt"
     success_url = reverse_lazy("login:password_reset_done")
+    form_class = EmailExistencePasswordResetForm
 
     def form_valid(self, form):
         # save original email backend
@@ -98,7 +99,7 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "auth/password_reset_confirm.html"
     success_url = reverse_lazy("login:password_reset_complete")
-    form_class = CustomSetPasswordForm
+    form_class = StrongPasswordSetForm
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = "auth/password_reset_complete.html"

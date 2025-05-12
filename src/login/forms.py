@@ -1,18 +1,37 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
+from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm, PasswordResetForm
+from django.contrib.auth import get_user_model
 import re
 
 
-class EmailAuthenticationForm(AuthenticationForm):
+class LoginWithEmailForm(AuthenticationForm):
+    """
+    login form using email instead of username
+    """
     username = forms.EmailField(label="Email")
     remember_me = forms.BooleanField(
         required=False, initial=False, widget=forms.CheckboxInput()
     )
 
 
-class CustomSetPasswordForm(SetPasswordForm):
+class EmailExistencePasswordResetForm(PasswordResetForm):
     """
-    custom password reset form
+    password reset request form that verifies email exists
+    """
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        User = get_user_model()
+        
+        # check email exists
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError("There is no user with this email address.")
+            
+        return email
+
+
+class StrongPasswordSetForm(SetPasswordForm):
+    """
+    password reset form with strong password validation
     """
     def clean_new_password2(self):
         password1 = self.cleaned_data.get('new_password1')
