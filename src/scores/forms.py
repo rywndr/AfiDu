@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .models import SCORE_CATEGORIES, SEMESTER_CHOICES, Score, ScoreConfig
 
@@ -125,3 +126,17 @@ class ScoreConfigForm(forms.ModelForm):
         self.fields["year"].required = False
         self.fields["semester"].required = False
         self.fields["category"].required = False
+        self.fields["num_exercises"].validators = [
+            MinValueValidator(1, "Number of exercises must be at least 1"),
+            MaxValueValidator(10, "Number of exercises cannot exceed 10")
+        ]
+        
+    def clean_num_exercises(self):
+        num_exercises = self.cleaned_data.get('num_exercises')
+        if num_exercises is None:
+            raise forms.ValidationError("Number of exercises is required")
+        if num_exercises < 1:
+            raise forms.ValidationError("Number of exercises must be at least 1")
+        if num_exercises > 10:
+            raise forms.ValidationError("Number of exercises cannot exceed 10")
+        return num_exercises

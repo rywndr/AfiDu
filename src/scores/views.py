@@ -475,9 +475,14 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             )
 
         if not existing_messages:
-            messages.error(
-                self.request, "Failed to save configuration. Please try again."
-            )
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(self.request, f"{error}")
+            
+            if not form.errors:
+                messages.error(
+                    self.request, "Failed to save configuration. Please try again."
+                )
 
         return super().form_invalid(form)
 
