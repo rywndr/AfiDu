@@ -48,6 +48,30 @@ class StudentForm(forms.ModelForm):
         # prepend opsi kosong ke opsi level
         self.fields["level"].choices = [("", "Select level")] + current_level
 
+    def clean_contact_number(self):
+        contact_number = self.cleaned_data.get("contact_number")
+
+        # exit if no number
+        if not contact_number:
+            return contact_number
+
+        num = str(contact_number).strip()
+
+        # reduce to local number part
+        if num.startswith("+62"):
+            num = num[3:]
+        elif num.startswith("62"):
+            num = num[2:]
+        elif num.startswith("0"):
+            num = num[1:]
+        # if no prefix, num is already local part
+
+        # check local part starts with 8
+        if not num.startswith("8"):
+            raise forms.ValidationError("input a valid id phone number")
+
+        # return number in +62 format
+        return f"+62{num}"
 
 class StudentClassForm(forms.ModelForm):
     class Meta:
