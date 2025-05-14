@@ -437,6 +437,17 @@
           alert(`Maximum of ${maxInstallments} installments allowed.`);
           return;
         }
+
+        // Check if monthly fee already achieved
+        let currentTotalPaid = 0;
+        document.querySelectorAll('.installment-input').forEach(input => {
+          currentTotalPaid += parseCurrency(input.value);
+        });
+        const monthlyFee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
+        if (currentTotalPaid >= monthlyFee) {
+          alert('Monthly fee already achieved, cannot add more installments.');
+          return;
+        }
         
         // Create and append a new installment input
         const newInput = createInstallmentInput(currentCount + 1);
