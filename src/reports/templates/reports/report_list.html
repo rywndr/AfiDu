@@ -43,12 +43,20 @@
     <!-- card search dan filter -->
     <div class="w-full bg-white shadow rounded-lg p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <form method="get" id="search-filter-form" class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-4 sm:mb-0 w-full">
-        <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto">
+        <div class="flex items-center bg-gray-100 border border-gray-300 rounded-full overflow-hidden w-full sm:w-auto relative">
           <span class="px-4 text-gray-500">
             <i class="fa-solid fa-magnifying-glass"></i>
           </span>
           <input type="text" name="q" placeholder="Search students..." value="{{ q }}"
-            class="py-2 bg-gray-100 focus:outline-none w-full rounded-full" />
+            class="py-2 bg-gray-100 focus:outline-none w-full rounded-full pr-10" />
+          {% if q %}
+          <button type="button"
+                  title="Clear search"
+                  onclick="document.getElementById('search-filter-form').querySelector('input[name=q]').value=''; document.getElementById('search-filter-form').submit();"
+                  class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none">
+              <i class="fa-solid fa-times"></i>
+          </button>
+          {% endif %}
         </div>
         
         <!-- filters dropdown button -->
@@ -161,7 +169,7 @@
                 </td>
               {% endfor %}
               <td class="px-4 py-2 whitespace-nowrap text-center">
-                <button title="Download student report"  type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}'" 
+                <button title="Download student report"  type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}'"
                         class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full p-2 shadow" id="export-report-btn">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13 7h-2V3H9v4H7l3 3 3-3zM5 13v2h10v-2H5z" />
