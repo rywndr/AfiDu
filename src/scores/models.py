@@ -25,7 +25,7 @@ class ScoreConfig(models.Model):
     num_exercises = models.PositiveIntegerField(default=5)
     # formula to calc final score
     formula = models.TextField(
-        default="(ex_sum + mid_term + finals) / (num_exercises + 2)"
+        default="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals"
     )
 
     def __str__(self):
@@ -97,7 +97,7 @@ class Score(models.Model):
             category=None,
             defaults={
                 "num_exercises": 5,
-                "formula": "(ex_sum + mid_term + finals) / (num_exercises + 2)",
+                "formula": "0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
             },
         )
         return config

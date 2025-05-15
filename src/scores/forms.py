@@ -45,7 +45,7 @@ class ScoreForm(forms.ModelForm):
                 year=None, semester=None, category=None
             ).first() or ScoreConfig.objects.create(
                 num_exercises=5,
-                formula="(ex_sum + mid_term + finals) / (num_exercises + 2)",
+                formula="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
             )
 
         self.config = config
