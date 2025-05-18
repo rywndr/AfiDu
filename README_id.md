@@ -181,7 +181,7 @@ menjalankan server django dan compiler tailwind css di terminal window terpisah
 ### terminal 1 - jalankan compiler tailwind css
 
 ```bash
-npx tailwindcss -i ./static/src/input.css -o ./static/src/output.css --watch
+npx tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
 ```
 
 ### terminal 2 - jalankan server django

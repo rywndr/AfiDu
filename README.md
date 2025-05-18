@@ -183,7 +183,7 @@ you need to run both the django development server and the tailwind css compiler
 **terminal 1 - run tailwind css compiler:**
 
 ```bash
-npx tailwindcss -i ./static/src/input.css -o ./static/src/output.css --watch
+npx tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
 ```
 
 **terminal 2 - run django server:**
