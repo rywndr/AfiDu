@@ -73,8 +73,8 @@ AfiDu adalah sistem pengelolaan data murid yang didesain untuk bimbel bahasa ing
 - **frontend**:
   - tailwind - utility first css framework
   - fontawesome - library icon
-- **database**: postgresql (menggunakan neondb)/sqlite (opsional)
-- **email**: backend email custom untuk link reset password (dioptimalkan penggunaan secara local)
+- **database**: postgresql (berbasis cloud/lokal)/sqlite (opsional)
+- **email**: backend email custom untuk link reset password (dioptimalkan penggunaan secara lokal)
 
 ## 🖼️ ui
 

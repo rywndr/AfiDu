@@ -73,7 +73,7 @@ AfiDu is a student data management system designed for an English tutorial cente
 - **frontend**:
   - tailwind - utility first css framework
   - fontAwesome - icon library
-- **database**: postgresql (using neondb)/sqlite (optional)
+- **database**: postgresql (cloud based/local)/sqlite (optional)
 - **email**: custom email backend for password reset link (optimized for use locally)
 
 ## 🖼️ ui
