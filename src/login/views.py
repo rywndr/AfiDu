@@ -1,3 +1,4 @@
+import os
 import random
 
 from django.conf import settings
@@ -10,9 +11,12 @@ from django.contrib.auth.views import (
 )
 from django.shortcuts import render
 from django.urls import reverse_lazy
+from dotenv import load_dotenv
 
 from .email_backend import clear_reset_link, get_reset_email, get_reset_link
 from .forms import LoginWithEmailForm, StrongPasswordSetForm, EmailExistencePasswordResetForm
+
+load_dotenv()
 
 class AuthContextMixin:
     def get_auth_context(self, extra_context=None):
@@ -46,7 +50,8 @@ class CustomLoginView(LoginView, AuthContextMixin):
         return super().form_valid(form)
 
 def register(request):
-    return render(request, "register.html")
+    email = os.getenv("ADMIN_EMAIL")
+    return render(request, "register.html", {"email": email})
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = "auth/password_reset_form.html"
