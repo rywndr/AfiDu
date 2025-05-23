@@ -39,7 +39,14 @@
     } else {
       // Standard single payment input
       const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
-      document.getElementById('remaining_display').textContent = formatCurrency(fee - rawValue);
+      const remaining = fee - rawValue;
+      const remainingDisplay = document.getElementById('remaining_display');
+      
+      if (remaining < 0) {
+        remainingDisplay.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-exclamation-triangle mr-1"></i>Exceeds monthly fee</span>';
+      } else {
+        remainingDisplay.innerHTML = `Rp<span class="font-medium">${formatCurrency(remaining)}</span>`;
+      }
     }
   }
   
@@ -56,7 +63,14 @@
     
     // Update the remaining amount display
     const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
-    document.getElementById('remaining_display').textContent = formatCurrency(fee - total);
+    const remaining = fee - total;
+    const remainingDisplay = document.getElementById('remaining_display');
+    
+    if (remaining < 0) {
+      remainingDisplay.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-exclamation-triangle mr-1"></i>Exceeds monthly fee</span>';
+    } else {
+      remainingDisplay.innerHTML = `Rp<span class="font-medium">${formatCurrency(remaining)}</span>`;
+    }
   }
   
   // Create a new installment input field
@@ -334,6 +348,7 @@
     const fd = new FormData();
     
     let amountPaid = 0;
+    const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
     
     if (isInstallment) {
       // Sum all installment inputs
@@ -345,11 +360,23 @@
         fd.append(`installment_${index + 1}`, value);
       });
       
+      // Check if total installment amount exceeds monthly fee
+      if (amountPaid > fee) {
+        alert('Total installment amount cannot exceed the monthly fee.');
+        return;
+      }
+      
       // Get the current number of installments
       fd.append('installment_count', inputs.length);
     } else {
       // Just use the single payment amount
       amountPaid = parseCurrency(document.getElementById('amount_paid').value);
+      
+      // Check if single payment amount exceeds monthly fee
+      if (amountPaid > fee) {
+        alert('Payment amount cannot exceed the monthly fee.');
+        return;
+      }
     }
     
     // Add the total amount to the form data
