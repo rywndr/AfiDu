@@ -215,29 +215,60 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         request.session["scores_class_filter"] = class_filter
         request.session["scores_level_filter"] = level_filter
 
-        for student in Student.objects.all():
+        # apply the same filtering logic as in get_context_data
+        students = Student.objects.all()
+        if search_query:
+            students = students.filter(name__icontains=search_query)
+        if class_filter:
+            students = students.filter(assigned_class=class_filter)
+        if level_filter:
+            students = students.filter(level=level_filter)
+            
+        # apply sorting if specified
+        sort_by = request.session.get("scores_sort_by", "")
+        if sort_by == "name_asc":
+            students = students.order_by("name")
+        elif sort_by == "name_desc":
+            students = students.order_by("-name")
+
+        # Apply pagination to get only current page students
+        try:
+            per_page_int = int(per_page)
+        except ValueError:
+            per_page_int = 5
+        paginator = Paginator(students, per_page_int)
+        page_obj = paginator.get_page(page)
+        current_page_students = page_obj.object_list
+
+        # Only process forms for students on the current page that have data in POST
+        for student in current_page_students:
             prefix = f"student_{student.id}"
-            try:
-                score_instance = Score.objects.get(
-                    student=student, year=year, semester=semester, category=category
+            # Check if this student's form has any data in the POST request
+            has_form_data = any(key.startswith(prefix) for key in request.POST.keys())
+            
+            if has_form_data:
+                try:
+                    score_instance = Score.objects.get(
+                        student=student, year=year, semester=semester, category=category
+                    )
+                except Score.DoesNotExist:
+                    score_instance = None
+                form = ScoreForm(
+                    request.POST,
+                    instance=score_instance,
+                    prefix=prefix,
+                    year=year,
+                    semester=semester,
+                    category=category,
                 )
-            except Score.DoesNotExist:
-                score_instance = None
-            form = ScoreForm(
-                request.POST,
-                instance=score_instance,
-                prefix=prefix,
-                year=year,
-                semester=semester,
-                category=category,
-            )
-            if form.is_valid():
-                score = form.save(commit=False)
-                score.student = student
-                score.year = year
-                score.semester = semester
-                score.category = category
-                score.save()
+                if form.is_valid():
+                    score = form.save(commit=False)
+                    score.student = student
+                    score.year = year
+                    score.semester = semester
+                    score.category = category
+                    score.save()
+
         # redirect url to the same page with the same filters
         redirect_url = (
             f"{request.path}?year={year}"
