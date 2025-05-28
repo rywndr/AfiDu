@@ -30,13 +30,12 @@ class ClassContextMixin:
 
 class StudentContextMixin:
     def get_student_context(self):
-        extra = {
+        return {
             "active_tab_title": "Students",
             "active_tab_icon": "fa-user-graduate",
             "available_classes": StudentClass.objects.all(),
             "level_choices": Student._meta.get_field("level").choices,
         }
-        return extra
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -251,7 +250,7 @@ class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
 
 class StudentClassCreateView(LoginRequiredMixin, ClassContextMixin, CreateView):
     model = StudentClass
-    fields = ["name", "description"]
+    fields = ["name", "description", "start_time", "end_time", "max_students"]
     template_name = "students/class_form.html"
     success_url = reverse_lazy("students:class-list")
 
@@ -266,7 +265,7 @@ class StudentClassCreateView(LoginRequiredMixin, ClassContextMixin, CreateView):
 
 class StudentClassUpdateView(LoginRequiredMixin, ClassContextMixin, UpdateView):
     model = StudentClass
-    fields = ["name", "description"]
+    fields = ["name", "description", "start_time", "end_time", "max_students"]
     template_name = "students/class_form.html"
     success_url = reverse_lazy("students:class-list")
 

@@ -14,9 +14,25 @@ class StudyMaterial(models.Model):
         ("writing", "Writing"),
         ("listening", "Listening"),
     ]
+    
+    LEVEL_CHOICES = [
+        ("Mix Class", "Mix Class"),
+        ("Beginner 1", "Beginner 1"),
+        ("Beginner 2", "Beginner 2"),
+        ("Elementary 1", "Elementary 1"),
+        ("Elementary 2", "Elementary 2"),
+        ("Elementary 3", "Elementary 3"),
+        ("Junior 1", "Junior 1"),
+        ("Junior 2", "Junior 2"),
+        ("Junior 3", "Junior 3"),
+        ("Senior 1", "Senior 1"),
+        ("Senior 2", "Senior 2"),
+        ("Senior 3", "Senior 3"),
+    ]
 
     title = models.CharField(max_length=255)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
     file = models.FileField(
         upload_to="study_materials/",
         validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
@@ -33,6 +49,7 @@ class StudyMaterial(models.Model):
     class Meta:
         verbose_name = "Study Material"
         verbose_name_plural = "Study Materials"
+        ordering = ["-uploaded_at"]
 
     def __str__(self):
         return self.title

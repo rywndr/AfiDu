@@ -34,7 +34,7 @@
               <button type="button" id="filter-button" class="inline-flex justify-center mt-2 items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
                 <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
                 <span>Filters</span>
-                {% if category_filter or current_sort_by %}
+                {% if category_filter or level_filter or current_sort_by %}
                   <span class="ml-1 flex h-1.5 w-1.5 relative">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
@@ -58,6 +58,16 @@
                       <option value="">All Categories</option>
                       {% for cat in categories %}
                         <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capfirst }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Level</label>
+                    <select name="level_filter" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                      <option value="">All Levels</option>
+                      {% for level_value, level_label in level_choices %}
+                        <option value="{{ level_value }}" {% if level_filter == level_value %}selected{% endif %}>{{ level_label }}</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -115,18 +125,23 @@
               </div>
             </a>
             <div class="px-4 pb-4 border-t border-gray-200">
-              <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                <i class="fa-solid fa-user"></i>
-                <span>
-                  {% if material.uploaded_by %}
-                    {% if material.uploaded_by.first_name %}
-                      {{ material.uploaded_by.first_name }}
+              <div class="text-xs pt-3 text-gray-500 mb-1 flex items-center justify-between">
+                <div class="flex items-center gap-1">
+                  <i class="fa-solid fa-user"></i>
+                  <span>
+                    {% if material.uploaded_by %}
+                      {% if material.uploaded_by.first_name %}
+                        {{ material.uploaded_by.first_name }}
+                      {% else %}
+                        {{ material.uploaded_by.email }}
+                      {% endif %}
                     {% else %}
-                      {{ material.uploaded_by.email }}
+                      Unknown
                     {% endif %}
-                  {% else %}
-                    Unknown
-                  {% endif %}
+                  </span>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+                  {{ material.level }}
                 </span>
               </div>
               <div class="text-xs text-gray-500 mb-1 flex items-center gap-1">

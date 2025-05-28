@@ -12,9 +12,11 @@ class StudyMaterialContextMixin:
     def get_study_material_context(self):
         return {
             "active_tab_title": "Study Materials",
-            "active_tab_icon": "fa-book-open",
+            "active_tab_icon": "fa-book",
+            "level_choices": StudyMaterial._meta.get_field("level").choices,
+            "category_choices": StudyMaterial._meta.get_field("category").choices,
         }
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_study_material_context())
@@ -31,6 +33,7 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
         # Get filters from request or session
         q = self.request.GET.get("q")
         category_filter = self.request.GET.get("category_filter")
+        level_filter = self.request.GET.get("level_filter")
         sort_by = self.request.GET.get("sort_by")
         
         # Store filters in session if provided in request
@@ -44,6 +47,11 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
         elif "materials_category_filter" in self.request.session:
             category_filter = self.request.session["materials_category_filter"]
             
+        if level_filter is not None:
+            self.request.session["materials_level_filter"] = level_filter
+        elif "materials_level_filter" in self.request.session:
+            level_filter = self.request.session["materials_level_filter"]
+            
         if sort_by is not None:
             self.request.session["materials_sort_by"] = sort_by
         elif "materials_sort_by" in self.request.session:
@@ -54,6 +62,8 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
             queryset = queryset.filter(title__icontains=q)
         if category_filter:
             queryset = queryset.filter(category=category_filter)
+        if level_filter:
+            queryset = queryset.filter(level=level_filter)
             
         # Apply sorting
         if sort_by == "title_asc":
@@ -69,13 +79,18 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
         # Get search/filter values from request or session
         q = self.request.GET.get("q", self.request.session.get("materials_search_query", ""))
         category_filter = self.request.GET.get("category_filter", self.request.session.get("materials_category_filter", ""))
+        level_filter = self.request.GET.get("level_filter", self.request.session.get("materials_level_filter", ""))
         sort_by = self.request.GET.get("sort_by", self.request.session.get("materials_sort_by", ""))
         
-        # ambil kategori yang ada di database
+        # Get categories and levels that exist in database
         categories = StudyMaterial.objects.values_list("category", flat=True).distinct()
+        levels = StudyMaterial.objects.values_list("level", flat=True).distinct()
+        
         context["categories"] = categories
+        context["levels"] = levels
         context["q"] = q
         context["category_filter"] = category_filter
+        context["level_filter"] = level_filter
         context["current_sort_by"] = sort_by
         return context
 
@@ -86,13 +101,12 @@ class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, Cre
     success_url = reverse_lazy("study_materials:list")
 
     def form_valid(self, form):
-        # set user yang ter log in sebagai uploader
         form.instance.uploaded_by = self.request.user
         messages.success(self.request, "Study material uploaded successfully.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
-        messages.error(self.request, "Failed to upload study material.")
+        messages.error(self.request, "Failed to upload study material. Please check the form and try again.")
         return super().form_invalid(form)
 
 class StudyMaterialUpdateView(LoginRequiredMixin, StudyMaterialContextMixin, UpdateView):

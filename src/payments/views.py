@@ -76,8 +76,9 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         class_filter = self.request.GET.get("class_filter")
         level_filter = self.request.GET.get("level_filter")
         sort_by = self.request.GET.get("sort_by")
+        current_month_filter = self.request.GET.get("current_month_filter")
         
-        # Store filters in session if provided in request
+        # store filters in session if provided in request
         if q is not None:
             self.request.session["payments_q"] = q
         elif "payments_q" in self.request.session:
@@ -97,6 +98,11 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
             self.request.session["payments_sort_by"] = sort_by
         elif "payments_sort_by" in self.request.session:
             sort_by = self.request.session["payments_sort_by"]
+            
+        if current_month_filter is not None:
+            self.request.session["payments_current_month_filter"] = current_month_filter
+        elif "payments_current_month_filter" in self.request.session:
+            current_month_filter = self.request.session["payments_current_month_filter"]
         
         # filter by search q
         if q:
@@ -112,6 +118,30 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
             qs = qs.order_by("name")
         elif sort_by == "name_desc":
             qs = qs.order_by("-name")
+            
+        # filter by current month payment status
+        if current_month_filter:
+            year = self.get_year()
+            current_month = datetime.date.today().month
+            current_year = datetime.date.today().year
+            
+            if year == current_year:
+                if current_month_filter == "paid":
+                    # students who paid for current month
+                    qs = qs.filter(
+                        payments__year=year,
+                        payments__month=current_month,
+                        payments__paid=True
+                    ).distinct()
+                elif current_month_filter == "unpaid":
+                    # students who haven't paid for current month
+                    paid_student_ids = Payment.objects.filter(
+                        year=year,
+                        month=current_month,
+                        paid=True
+                    ).values_list('student_id', flat=True)
+                    qs = qs.exclude(id__in=paid_student_ids)
+        
         return qs
 
     def get_year(self):
@@ -130,19 +160,69 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         year = self.get_year()
         context["year"] = year
 
-        # payment dicts untuk tiap murid - check for full or partial payments
-        student_payment_status = {}
+        # get payment config for the year
+        payment_config = PaymentConfig.get_active(year)
+        context["payment_config"] = payment_config
+
+        # calculate detailed payment status for each student
+        student_payment_details = {}
+        
+        # calculate total months for the year
+        mid_sem_months = list(range(payment_config.mid_semester_start, payment_config.mid_semester_end + 1))
+        final_sem_months = list(range(payment_config.final_semester_start, payment_config.final_semester_end + 1))
+        total_months = len(mid_sem_months) + len(final_sem_months)
+        
+        # get current month and check if it's in semester
+        current_month = datetime.date.today().month
+        current_year = datetime.date.today().year
+        is_current_semester_month = current_month in mid_sem_months or current_month in final_sem_months
+        
+        context["current_month"] = current_month
+        context["current_year"] = current_year
+        context["is_current_semester_month"] = is_current_semester_month
+
         for student in context["students"]:
+            # get all payments for this student in the selected year
             payments = Payment.objects.filter(student=student, year=year)
-            # consider a payment as made when amount_paid is greater than 0
-            has_payments = payments.filter(amount_paid__gt=0).exists()
-            student_payment_status[student.id] = has_payments
+            
+            # calculate payment status
+            months_paid = payments.filter(paid=True).count()
+            months_partial = payments.filter(amount_paid__gt=0, paid=False).count()
+            
+            # check current month payment status
+            current_month_paid = False
+            if is_current_semester_month and year == current_year:
+                current_month_payment = payments.filter(month=current_month).first()
+                current_month_paid = current_month_payment and current_month_payment.paid
+            
+            # determine status based on completion
+            if months_paid == total_months:
+                status_label = "Fully Paid"
+                status_color = "green"
+            elif months_paid + months_partial >= total_months * 0.75:
+                status_label = "Nearly Complete"
+                status_color = "blue"
+            elif months_paid + months_partial >= total_months * 0.25:
+                status_label = "Partially Paid"
+                status_color = "yellow"
+            elif months_paid + months_partial > 0:
+                status_label = "Minimal Payment"
+                status_color = "orange"
+            else:
+                status_label = "No Payment"
+                status_color = "red"
+            
+            student_payment_details[student.id] = {
+                "months_paid": months_paid,
+                "months_partial": months_partial,
+                "total_months": total_months,
+                "status_label": status_label,
+                "status_color": status_color,
+                "current_month_paid": current_month_paid,
+            }
 
-        context["student_payment_status"] = student_payment_status
-
-        # persist filter params
-        per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
-        context["current_per_page"] = per_page
+        context["student_payment_details"] = student_payment_details
+        context["current_per_page"] = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
         return context
 
     def get(self, request, *args, **kwargs):
@@ -153,7 +233,7 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         # Check if URL parameters are present, if not, use session values if available
         if not any(
             key in request.GET
-            for key in ["q", "class_filter", "level_filter", "year", "per_page", "sort_by"]
+            for key in ["q", "class_filter", "level_filter", "year", "per_page", "sort_by", "current_month_filter"]
         ) and any(
             key in request.session
             for key in [
@@ -163,9 +243,10 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
                 "payments_year",
                 "payments_per_page",
                 "payments_sort_by",
+                "payments_current_month_filter",
             ]
         ):
-            # Build URL from session values
+            # build URL from session values
             from urllib.parse import urlencode
             params = {
                 "q": request.session.get("payments_q", ""),
@@ -174,17 +255,18 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
                 "year": request.session.get("payments_year", str(datetime.date.today().year)),
                 "per_page": request.session.get("payments_per_page", str(self.paginate_by)),
                 "sort_by": request.session.get("payments_sort_by", ""),
+                "current_month_filter": request.session.get("payments_current_month_filter", ""),
             }
-            # Remove empty params
+            # remove empty params
             params = {k: v for k, v in params.items() if v}
-            # Redirect to the filtered URL
+            # redirect to the filtered URL
             if params:
                 return redirect(f"{request.path}?{urlencode(params)}")
 
-        # Store current URL with all filters in session
+        # store current URL with all filters in session
         self.request.session["payment_list_url"] = self.request.get_full_path()
 
-        # Remove the automatic redirect to #payment-table anchor
+        # remove the automatic redirect to #payment-table anchor
         return super().get(request, *args, **kwargs)
 
 
@@ -252,87 +334,46 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         year = self.get_year()
-        context["year"] = year
         student = self.get_object()
 
         # get payment config
         payment_config = PaymentConfig.get_active(year)
-        context["payment_config"] = payment_config
+        context.update({
+            "year": year,
+            "payment_config": payment_config,
+        })
 
-        # default payment list URL if session URL is not available
-        context["payment_list_url"] = reverse("payments:payment_list")
-        if year:
-            context["payment_list_url"] += f"?year={year}"
+        # semester months
+        mid_sem_months = list(range(payment_config.mid_semester_start, payment_config.mid_semester_end + 1))
+        final_sem_months = list(range(payment_config.final_semester_start, payment_config.final_semester_end + 1))
 
-        # sem data
-        mid_sem_months = list(
-            range(
-                payment_config.mid_semester_start, payment_config.mid_semester_end + 1
-            )
-        )
-        final_sem_months = list(
-            range(
-                payment_config.final_semester_start,
-                payment_config.final_semester_end + 1,
-            )
-        )
-
-        # sem data structure
+        # semester data structure
         semesters = {
             "mid": {"name": "Mid Semester", "months": mid_sem_months, "payments": []},
-            "final": {
-                "name": "Final Semester",
-                "months": final_sem_months,
-                "payments": [],
-            },
+            "final": {"name": "Final Semester", "months": final_sem_months, "payments": []},
         }
 
-        # get / create payments for each sem
-        for semester_key, semester_data in semesters.items():
+        # get/create payments for each semester
+        for semester_data in semesters.values():
             for month in semester_data["months"]:
                 payment, created = Payment.objects.get_or_create(
-                    student=student,
-                    year=year,
-                    month=month,
-                    defaults={
-                        "amount_paid": 0,
-                    },
+                    student=student, year=year, month=month,
+                    defaults={"amount_paid": 0}
                 )
-                if not created:
-                    payment.save(
-                        update_fields=["remaining_amount", "is_installment", "paid"]
-                    )
                 semester_data["payments"].append(payment)
 
         context["semesters"] = semesters
 
-        # calc totals
-        context["total_due"] = payment_config.monthly_fee * (
-            len(mid_sem_months) + len(final_sem_months)
-        )
-        context["total_paid"] = sum(
-            p.amount_paid
-            for p in semesters["mid"]["payments"] + semesters["final"]["payments"]
-        )
+        # calculate totals
+        all_payments = sum([sem["payments"] for sem in semesters.values()], [])
+        context.update({
+            "total_due": payment_config.monthly_fee * len(all_payments),
+            "total_paid": sum(p.amount_paid for p in all_payments),
+        })
         context["total_remaining"] = context["total_due"] - context["total_paid"]
 
-        payment_list_url = self.request.session.get("payment_list_url")
-        if not payment_list_url:
-            # Reconstruct URL from session parameters
-            params = {
-                "q": self.request.session.get("payments_q", ""),
-                "class_filter": self.request.session.get("payments_class_filter", ""),
-                "level_filter": self.request.session.get("payments_level_filter", ""),
-                "year": self.request.session.get("payments_year", str(year)),
-                "per_page": self.request.session.get("payments_per_page", "5"),
-            }
-            # Remove empty params
-            params = {k: v for k, v in params.items() if v}
-            # Build query string
-            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-            payment_list_url = f"{reverse('payments:payment_list')}?{query_string}"
-
-        context["payment_list_url"] = payment_list_url
+        # payment list URL
+        context["payment_list_url"] = self.request.session.get("payment_list_url") or reverse("payments:payment_list")
 
         return context
 

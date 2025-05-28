@@ -1,5 +1,6 @@
 from django.core.validators import RegexValidator
 from django.db import models
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -30,15 +31,39 @@ phone_validator = RegexValidator(
 
 
 class StudentClass(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    description = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    start_time = models.TimeField(help_text="Class start time")
+    end_time = models.TimeField(help_text="Class end time")
+    max_students = models.PositiveIntegerField(default=20, help_text="Maximum number of students allowed in this class")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.start_time and self.end_time:
+            if self.start_time >= self.end_time:
+                raise ValidationError({
+                    'end_time': 'End time must be after start time.'
+                })
+
+    @property
+    def current_student_count(self):
+        return self.student_set.count()
+
+    @property
+    def is_full(self):
+        return self.current_student_count >= self.max_students
+
+    @property
+    def available_spots(self):
+        return max(0, self.max_students - self.current_student_count)
 
     class Meta:
-        verbose_name = "Class"
-        verbose_name_plural = "Classes"
+        ordering = ["name"]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')})"
 
 
 class Student(models.Model):
@@ -55,6 +80,24 @@ class Student(models.Model):
         StudentClass, on_delete=models.SET_NULL, null=True, blank=True
     )
     level = models.CharField(max_length=20, choices=LEVELS)
+
+    def clean(self):
+        super().clean()
+        if self.assigned_class and self.assigned_class.is_full:
+            # chk if new student or changing classes
+            if self.pk:
+                try:
+                    original = Student.objects.get(pk=self.pk)
+                    # Allow if staying in the same class
+                    if original.assigned_class == self.assigned_class:
+                        return
+                except Student.DoesNotExist:
+                    pass
+            
+            # prevent assignment to full class
+            raise ValidationError({
+                'assigned_class': f"Cannot assign to '{self.assigned_class.name}'. Class is at maximum capacity."
+            })
 
     def __str__(self):
         return self.name

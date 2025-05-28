@@ -66,6 +66,13 @@
                   <div class="mt-1">
                     {% render_field field class="block w-3/4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-[#ff4f25] hover:file:bg-orange-100" %}
                   </div>
+                {% elif field.name == 'assigned_class' %}
+                  <div>
+                    {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}
+                    <div class="mt-2 text-sm text-gray-600">
+                      <p><i class="fa-solid fa-info-circle mr-1"></i>Class capacity information is shown in the dropdown</p>
+                    </div>
+                  </div>
                 {% elif field.field.widget.input_type == 'select' %}
                   <div>
                     {% render_field field class="mt-1 block w-3/4 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md" %}

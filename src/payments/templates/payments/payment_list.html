@@ -24,6 +24,7 @@
         <input type="hidden" name="q" value="{{ request.GET.q }}">
         <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
         <input type="hidden" name="level_filter" value="{{ request.GET.level_filter }}">
+        <input type="hidden" name="current_month_filter" value="{{ request.GET.current_month_filter }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
       </form>
     </div>
@@ -55,7 +56,7 @@
           <button type="button" id="filter-button" class="inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
             <i class="fa-solid fa-filter mr-1 text-gray-500"></i>
             <span>Filters</span>
-            {% if request.GET.class_filter or request.GET.level_filter or request.GET.sort_by %}
+            {% if request.GET.class_filter or request.GET.level_filter or request.GET.sort_by or request.GET.current_month_filter %}
               <span class="ml-1 flex h-1.5 w-1.5 relative">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4f25] opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff4f25]"></span>
@@ -105,6 +106,17 @@
                   <option value="name_desc" {% if request.GET.sort_by == "name_desc" %}selected{% endif %}>Name Z-A</option>
                 </select>
               </div>
+              
+              {% if is_current_semester_month and year == current_year %}
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Current Month Payment</label>
+                <select name="current_month_filter" class="block w-full border border-gray-200 rounded-lg text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-[#ff4f25] focus:border-[#ff4f25]">
+                  <option value="">All Students</option>
+                  <option value="paid" {% if request.GET.current_month_filter == "paid" %}selected{% endif %}>Paid This Month</option>
+                  <option value="unpaid" {% if request.GET.current_month_filter == "unpaid" %}selected{% endif %}>Not Paid This Month</option>
+                </select>
+              </div>
+              {% endif %}
 
               <div class="pt-2 flex justify-end">
                 <button type="submit" id="apply-filters" class="px-3 py-1.5 bg-[#ff4f25] text-white text-xs rounded-lg hover:bg-[#cc3f1e] focus:outline-none font-medium transition-colors">
@@ -137,6 +149,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for student in students %}
+            {% with details=student_payment_details|get_item:student.id %}
             <tr class="hover:bg-gray-100">
               <td class="px-4 py-4 whitespace-nowrap">
                 <a href="{% url 'students:student-detail' student.id %}?next={% url 'payments:payment_list' %}" class="text-[#ff4f25] hover:underline">
@@ -145,16 +158,56 @@
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
-              <td class="px-4 py-4 whitespace-nowrap text-center">
-                {% if student_payment_status|get_item:student.id %}
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <i class="fa-solid fa-check-circle mr-1"></i> Has Payments
+              <td class="px-4 py-4 whitespace-nowrap">
+                <div class="flex flex-col items-center space-y-1">
+                  <!-- status Badge -->
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                    {% if details.status_color == 'green' %}bg-green-100 text-green-800
+                    {% elif details.status_color == 'blue' %}bg-blue-100 text-blue-800
+                    {% elif details.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
+                    {% elif details.status_color == 'orange' %}bg-orange-100 text-orange-800
+                    {% else %}bg-red-100 text-red-800{% endif %}">
+                    {% if details.status_color == 'green' %}<i class="fa-solid fa-check-circle mr-1"></i>
+                    {% elif details.status_color == 'blue' %}<i class="fa-solid fa-clock mr-1"></i>
+                    {% elif details.status_color == 'yellow' %}<i class="fa-solid fa-clock mr-1"></i>
+                    {% elif details.status_color == 'orange' %}<i class="fa-solid fa-exclamation-triangle mr-1"></i>
+                    {% else %}<i class="fa-solid fa-times-circle mr-1"></i>{% endif %}
+                    {{ details.status_label }}
                   </span>
-                {% else %}
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <i class="fa-solid fa-circle-exclamation mr-1"></i> No Payments
-                  </span>
-                {% endif %}
+                  
+                  <!-- months info -->
+                  <div class="text-xs text-gray-600 text-center">
+                    <div class="flex items-center space-x-1 mb-1">
+                      <span class="text-green-600">{{ details.months_paid }}</span>
+                      {% if details.months_partial > 0 %}
+                        <span>+</span>
+                        <span class="text-yellow-600">{{ details.months_partial }}</span>
+                      {% endif %}
+                      <span>/{{ details.total_months }} months</span>
+                    </div>
+                    
+                    <!-- currnt month status -->
+                    {% if is_current_semester_month and year == current_year %}
+                      <div class="text-xs">
+                        {% if details.current_month_paid %}
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                            <i class="fa-solid fa-check mr-1"></i>{{ current_month|date:"M" }} Paid
+                          </span>
+                        {% else %}
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                            <i class="fa-solid fa-times mr-1"></i>{{ current_month|date:"M" }} Not Paid
+                          </span>
+                        {% endif %}
+                      </div>
+                    {% else %}
+                      <div class="text-xs text-gray-500">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          <i class="fa-solid fa-info-circle mr-1"></i>{{ current_month|date:"M" }} Not Semester
+                        </span>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-center">
                 <a href="{% url 'payments:payment_detail' student.id %}?year={{ year }}" 
@@ -163,6 +216,7 @@
                 </a>
               </td>
             </tr>
+            {% endwith %}
           {% empty %}
             <tr>
               <td colspan="5" class="text-center py-4 text-gray-500">No students found.</td>
@@ -179,6 +233,7 @@
           <input type="hidden" name="q" value="{{ request.GET.q }}">
           <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
           <input type="hidden" name="level_filter" value="{{ request.GET.level_filter }}">
+          <input type="hidden" name="current_month_filter" value="{{ request.GET.current_month_filter }}">
           <input type="hidden" name="year" value="{{ year }}">
           <label for="per_page_select" class="text-gray-700">Items per page:</label>
           <select name="per_page" id="per_page_select" onchange="this.form.submit()" class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
@@ -195,14 +250,14 @@
             <ul class="flex items-center space-x-2">
               {% if page_obj.has_previous %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&current_month_filter={{ request.GET.current_month_filter }}&per_page={{ current_per_page }}&page={{ page_obj.previous_page_number }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-left"></i>
                   </a>
                 </li>
               {% endif %}
               {% if page_obj.number > 3 %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-[#b3371a] text-white{% endif %}">
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&current_month_filter={{ request.GET.current_month_filter }}&per_page={{ current_per_page }}&page=1&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-[#b3371a] text-white{% endif %}">
                     1
                   </a>
                 </li>
@@ -213,7 +268,7 @@
               {% for i in page_obj.paginator.page_range %}
                 {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                   <li>
-                    <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
+                    <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&current_month_filter={{ request.GET.current_month_filter }}&per_page={{ current_per_page }}&page={{ i }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                       {{ i }}
                     </a>
                   </li>
@@ -224,14 +279,14 @@
                   <li><span class="py-1 px-3 text-gray-600">...</span></li>
                 {% endif %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&current_month_filter={{ request.GET.current_month_filter }}&per_page={{ current_per_page }}&page={{ page_obj.paginator.num_pages }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
                     {{ page_obj.paginator.num_pages }}
                   </a>
                 </li>
               {% endif %}
               {% if page_obj.has_next %}
                 <li>
-                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
+                  <a href="?q={{ request.GET.q }}&class_filter={{ request.GET.class_filter }}&level_filter={{ request.GET.level_filter }}&current_month_filter={{ request.GET.current_month_filter }}&per_page={{ current_per_page }}&page={{ page_obj.next_page_number }}&year={{ year }}&sort_by={{ request.GET.sort_by }}" class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-right"></i>
                   </a>
                 </li>

@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms.widgets import DateInput, Select, TextInput
 
 from .models import Student, StudentClass
@@ -7,7 +8,17 @@ from .models import Student, StudentClass
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = "__all__"
+        fields = [
+            "profile_photo",
+            "name",
+            "gender",
+            "age",
+            "date_of_birth",
+            "contact_number",
+            "address",
+            "assigned_class",
+            "level",
+        ]
         widgets = {
             "date_of_birth": DateInput(
                 attrs={"type": "date", "placeholder": "Select date"}
@@ -28,25 +39,31 @@ class StudentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(StudentForm, self).__init__(*args, **kwargs)
-        # override default class isi kosong
-        self.fields["assigned_class"].widget = Select(
-            attrs={"placeholder": "Select class"}
-        )
-        # prepend opsi kosong ke opsi class
-        current_class = list(self.fields["assigned_class"].choices)
-        self.fields["assigned_class"].choices = [("", "Select class")] + current_class
 
-        # override default gender isi kosong
-        self.fields["gender"].widget = Select(attrs={"placeholder": "Select gender"})
-        current_gender = list(self.fields["gender"].choices)
-        # prepend opsi kosong ke opsi gender
-        self.fields["gender"].choices = [("", "Select gender")] + current_gender
+        # update class dropdown to show capacity info
+        choices = [("", "---------")]
+        for class_obj in StudentClass.objects.all():
+            if class_obj.available_spots > 0:
+                label = f"{class_obj.name} ({class_obj.current_student_count}/{class_obj.max_students} students)"
+            else:
+                label = f"{class_obj.name} (FULL)"
+            choices.append((class_obj.id, label))
 
-        # override default level to empty
-        self.fields["level"].widget = Select(attrs={"placeholder": "Select level"})
-        current_level = list(self.fields["level"].choices)
-        # prepend opsi kosong ke opsi level
-        self.fields["level"].choices = [("", "Select level")] + current_level
+        self.fields["assigned_class"].choices = choices
+
+    def clean_assigned_class(self):
+        assigned_class = self.cleaned_data.get("assigned_class")
+
+        if assigned_class and assigned_class.is_full:
+            # allow if editing existing student in same class
+            if self.instance.pk and self.instance.assigned_class == assigned_class:
+                return assigned_class
+
+            raise ValidationError(
+                f"Cannot assign to '{assigned_class.name}'. Class is at maximum capacity."
+            )
+
+        return assigned_class
 
     def clean_contact_number(self):
         contact_number = self.cleaned_data.get("contact_number")
@@ -72,6 +89,7 @@ class StudentForm(forms.ModelForm):
 
         # return number in +62 format
         return f"+62{num}"
+
 
 class StudentClassForm(forms.ModelForm):
     class Meta:
