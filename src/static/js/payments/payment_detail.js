@@ -351,8 +351,19 @@
     const fee = parseCurrency(document.getElementById('monthly_fee_display').textContent);
     
     if (isInstallment) {
-      // Sum all installment inputs
+      // Sum all installment inputs and validate for zero values
       const inputs = document.querySelectorAll('.installment-input');
+      
+      // chck for zero values before processing any data
+      for (let i = 0; i < inputs.length; i++) {
+        const value = parseCurrency(inputs[i].value);
+        if (value === 0) {
+          alert(`Installment ${i + 1} payment cannot be 0. Please enter a valid amount for all installments.`);
+          return;
+        }
+      }
+      
+      // Now process all installments since we know none are zero
       inputs.forEach((input, index) => {
         const value = parseCurrency(input.value);
         amountPaid += value;
@@ -371,6 +382,12 @@
     } else {
       // Just use the single payment amount
       amountPaid = parseCurrency(document.getElementById('amount_paid').value);
+      
+      // chck if single payment amount is zero
+      if (amountPaid === 0) {
+        alert('Payment amount cannot be 0. Please enter a valid amount.');
+        return;
+      }
       
       // Check if single payment amount exceeds monthly fee
       if (amountPaid > fee) {
@@ -462,6 +479,20 @@
         // Check if we're at the maximum allowed installments
         if (currentCount >= maxInstallments) {
           alert(`Maximum of ${maxInstallments} installments allowed.`);
+          return;
+        }
+
+        // chck if any existing installment has zero value
+        const existingInputs = document.querySelectorAll('.installment-input');
+        let hasZeroValue = false;
+        existingInputs.forEach(input => {
+          if (parseCurrency(input.value) === 0) {
+            hasZeroValue = true;
+          }
+        });
+        
+        if (hasZeroValue) {
+          alert('Please enter a valid amount for all existing installments before adding a new one.');
           return;
         }
 
