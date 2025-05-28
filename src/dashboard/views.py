@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum, Avg, Q, Max, F
 from django.utils import timezone
 from django.views.generic import TemplateView
 
@@ -16,7 +16,6 @@ from study_materials.models import StudyMaterial
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/dashboard.html"
     
-    # greetings untuk dashboard
     greetings = [
         "Welcome back!",
         "Good to see you again!",
@@ -38,7 +37,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         session = self.request.session
 
-        # set greeting once per session
         if "dashboard_greeting" not in session:
             session["dashboard_greeting"] = random.choice(self.greetings)
         if "dashboard_user_greeting" not in session:
@@ -46,159 +44,130 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         context["greeting"] = session["dashboard_greeting"]
         context["user_greeting"] = session["dashboard_user_greeting"]
-        context["student_count"] = Student.objects.count()
         context["active_tab_title"] = "Dashboard"
         context["active_tab_icon"] = "fa-tachometer-alt"
         context["current_year"] = datetime.now().year
         
-        # data calcs
-        context.update(self.get_recent_students_data())
-        context.update(self.get_payment_data())
-        context.update(self.get_score_data())
-        context.update(self.get_material_data())
-        context.update(self.get_pending_payments_data())
+        # Get all data in single queries
+        context.update(self.get_all_dashboard_data())
         
         return context
     
-    def get_recent_students_data(self):
-        """get student statistics data"""
-        total_students = Student.objects.count()
-        
-        # students with classes vs without classes
-        students_with_class = Student.objects.exclude(assigned_class__isnull=True).count()
-        students_without_class = total_students - students_with_class
-        
-        # latest student by highest ID
-        latest_student = Student.objects.order_by('-id').first()
-        
-        return {
-            'total_active_students': total_students,
-            'students_with_class': students_with_class,
-            'students_without_class': students_without_class,
-            'latest_student': latest_student,
-        }
-    
-    def get_payment_data(self):
-        """get payment summary data"""
+    def get_all_dashboard_data(self):
         current_year = datetime.now().year
         current_month = datetime.now().month
         
-        # get all students
-        total_students = Student.objects.count()
-        
-        # get existing payment records for current month
-        current_month_payments = Payment.objects.filter(
-            year=current_year, 
-            month=current_month
+        # Single query for student statistics
+        student_stats = Student.objects.aggregate(
+            total_students=Count('id'),
+            students_with_class=Count('id', filter=Q(assigned_class__isnull=False)),
         )
         
-        # payments that are fully paid
-        monthly_paid_count = current_month_payments.filter(paid=True).count()
+        # Get latest student with single query
+        latest_student = Student.objects.select_related('assigned_class').order_by('-id').values(
+            'id', 'name', 'assigned_class__name'
+        ).first()
         
-        # partial/installment
-        monthly_partial_count = current_month_payments.filter(
-            paid=False, 
-            amount_paid__gt=0
-        ).count()
+        # Single query for payment statistics
+        payment_stats = Payment.objects.filter(
+            year=current_year, 
+            month=current_month
+        ).aggregate(
+            paid_count=Count('id', filter=Q(paid=True)),
+            partial_count=Count('id', filter=Q(paid=False, amount_paid__gt=0)),
+            unpaid_records_count=Count('id', filter=Q(paid=False, amount_paid=0)),
+            unique_students_with_payments=Count('student_id', distinct=True)
+        )
         
-        # students who have payment records with no payment at all
-        monthly_with_unpaid_records = current_month_payments.filter(
-            paid=False, 
-            amount_paid=0
-        ).count()
+        # Calculate students without payment records
+        students_without_records = student_stats['total_students'] - payment_stats['unique_students_with_payments']
+        monthly_unpaid_count = payment_stats['unpaid_records_count'] + students_without_records
         
-        # students who don't have any payment record for this month at all
-        students_with_payments = current_month_payments.values_list('student_id', flat=True).distinct()
-        students_without_records = total_students - len(students_with_payments)
-        
-        # total students who haven't paid (those with unpaid records + those without records)
-        monthly_unpaid_count = monthly_with_unpaid_records + students_without_records
-        
-        # get current month name for display
-        current_month_name = calendar.month_name[current_month]
-        
-        return {
-            'monthly_paid_count': monthly_paid_count,
-            'monthly_partial_count': monthly_partial_count,
-            'monthly_unpaid_count': monthly_unpaid_count,
-            'current_month_name': current_month_name,
-        }
-    
-    def get_score_data(self):
-        """get highest scoring students by category"""
-        current_year = datetime.now().year
-        
+        # Get highest scores using Score model properties
         highest_scorers = {}
         for category_key, category_label in SCORE_CATEGORIES:
-            # get highest scoring student in each category for current year
-            best_scores = []
+            # Get all scores for this category and year, then find the highest using Python
+            scores = Score.objects.filter(
+                year=current_year,
+                category=category_key
+            ).select_related('student')
             
-            for semester in ['mid', 'final']:
-                scores = Score.objects.filter(
-                    year=current_year,
-                    semester=semester,
-                    category=category_key
-                )
-                
-                if scores.exists():
-                    # find highest scoring student for this semester
-                    highest_score = None
-                    highest_student = None
-                    highest_semester = None
-                    
-                    for score in scores:
-                        final_score = score.final_score
-                        if final_score is not None and final_score > 0:
-                            if highest_score is None or final_score > highest_score:
-                                highest_score = final_score
-                                highest_student = score.student.name
-                                highest_semester = semester.upper()
-                    
-                    if highest_score is not None:
-                        best_scores.append({
-                            'student': highest_student,
-                            'score': highest_score,
-                            'semester': highest_semester
-                        })
+            best_score = None
+            best_student = None
+            best_semester = None
             
-            # get the overall highest for this category
-            if best_scores:
-                overall_best = max(best_scores, key=lambda x: x['score'])
-                highest_scorers[category_label] = overall_best
+            for score in scores:
+                score_value = score.final_score  # This uses the @property method
+                if score_value is not None and score_value > 0:
+                    if best_score is None or score_value > best_score:
+                        best_score = score_value
+                        best_student = score.student.name
+                        best_semester = score.semester.upper()
+            
+            if best_score is not None:
+                highest_scorers[category_label] = {
+                    'student': best_student,
+                    'score': best_score,
+                    'semester': best_semester
+                }
         
-        return {
-            'highest_scorers': highest_scorers,
-        }
-    
-    def get_material_data(self):
-        """get study materials data"""
-        # count materials by category
-        material_categories = {}
-        categories = StudyMaterial.objects.values('category').annotate(
+        # Single query for material categories
+        material_stats = StudyMaterial.objects.values('category').annotate(
             count=Count('id')
-        ).order_by('category')
+        ).aggregate(
+            total_materials=Sum('count'),
+            categories_data=Count('category', filter=Q(category__isnull=False))
+        )
         
-        for cat in categories:
-            if cat['category']:
-                material_categories[cat['category']] = cat['count']
+        # Get material categories in one query
+        material_categories = dict(
+            StudyMaterial.objects.exclude(category__isnull=True)
+            .exclude(category='')
+            .values_list('category')
+            .annotate(count=Count('id'))
+            .values_list('category', 'count')
+        )
         
-        # total materials count
-        total_materials = StudyMaterial.objects.count()
+        # Optimized pending payments data
+        pending_data = self.get_optimized_pending_payments_data(current_year, current_month, student_stats['total_students'])
         
         return {
+            'total_active_students': student_stats['total_students'],
+            'students_with_class': student_stats['students_with_class'],
+            'students_without_class': student_stats['total_students'] - student_stats['students_with_class'],
+            'latest_student': {
+                'name': latest_student['name'] if latest_student else None,
+                'assigned_class': {'name': latest_student['assigned_class__name']} if latest_student and latest_student['assigned_class__name'] else None
+            } if latest_student else None,
+            'monthly_paid_count': payment_stats['paid_count'],
+            'monthly_partial_count': payment_stats['partial_count'],
+            'monthly_unpaid_count': monthly_unpaid_count,
+            'current_month_name': calendar.month_name[current_month],
+            'highest_scorers': highest_scorers,
             'material_categories': material_categories,
-            'total_materials': total_materials,
+            'total_materials': material_stats['total_materials'] or 0,
+            'student_count': student_stats['total_students'],
+            **pending_data
         }
     
-    def get_pending_payments_data(self):
-        """get students with unpaid payments for current month only"""
-        current_year = datetime.now().year
-        current_month = datetime.now().month
+    def get_optimized_pending_payments_data(self, current_year, current_month, total_students):
+        try:
+            payment_config = PaymentConfig.objects.filter(year=current_year).first()
+            if not payment_config:
+                payment_config = PaymentConfig.objects.filter(year__isnull=True).first()
+                if not payment_config:
+                    return {
+                        'students_with_pending_payments': [],
+                        'current_month_name': calendar.month_name[current_month],
+                        'is_active_month': False,
+                    }
+        except Exception:
+            return {
+                'students_with_pending_payments': [],
+                'current_month_name': calendar.month_name[current_month],
+                'is_active_month': False,
+            }
         
-        # get payment config for current year to check if current month is in active semester
-        payment_config = PaymentConfig.get_active(current_year)
-        
-        # check if current month is in either semester
         mid_semester_months = list(range(
             payment_config.mid_semester_start, 
             payment_config.mid_semester_end + 1
@@ -208,7 +177,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             payment_config.final_semester_end + 1
         ))
         
-        # if current month is not in any active semester, return empty
         if current_month not in mid_semester_months and current_month not in final_semester_months:
             return {
                 'students_with_pending_payments': [],
@@ -216,41 +184,24 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'is_active_month': False,
             }
         
-        students_with_pending = []
-        
-        # get students who haven't paid for current month only
-        current_month_payments = Payment.objects.filter(
-            year=current_year,
-            month=current_month
+        # Get students who have made payments this month in single query
+        students_with_payments = set(
+            Payment.objects.filter(
+                year=current_year,
+                month=current_month,
+                amount_paid__gt=0
+            ).values_list('student_id', flat=True)
         )
         
-        # get students who have made some payment (partial or full)
-        students_with_payments = set(current_month_payments.filter(
-            amount_paid__gt=0
-        ).values_list('student_id', flat=True))
+        # Get all students without payments in single query - limit to 10 for performance
+        students_pending = Student.objects.exclude(
+            id__in=students_with_payments
+        ).values('id', 'name').order_by('name')[:10]
         
-        # get students who have unpaid records (amount_paid = 0)
-        students_with_unpaid_records = set(current_month_payments.filter(
-            amount_paid=0
-        ).values_list('student_id', flat=True))
-        
-        # get all students
-        all_students = Student.objects.all()
-        
-        for student in all_students:
-            # if student has made any payment this month, skip them
-            if student.id in students_with_payments:
-                continue
-                
-            # if student has unpaid record or no record at all, they are pending
-            if student.id in students_with_unpaid_records or student.id not in students_with_payments:
-                students_with_pending.append({
-                    'name': student.name,
-                    'student_id': student.id,
-                })
-        
-        # sort by name
-        students_with_pending.sort(key=lambda x: x['name'])
+        students_with_pending = [
+            {'name': student['name'], 'student_id': student['id']}
+            for student in students_pending
+        ]
         
         return {
             'students_with_pending_payments': students_with_pending,

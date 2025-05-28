@@ -13,11 +13,10 @@ from .forms import ScoreConfigForm, ScoreForm
 from .models import Score, ScoreConfig
 
 
-# Create your views here.
 class ScoreContextMixin:
     def get_score_context(self):
         return {
-            "available_classes": StudentClass.objects.all(),
+            "available_classes": StudentClass.objects.only('id', 'name'),
             "level": Student.level,
             "active_tab_title": "Scores",
             "active_tab_icon": "fa-chart-bar",
@@ -43,14 +42,12 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # get filter params from URL or session
         search_query = self.request.GET.get("q", "")
         class_filter = self.request.GET.get("class_filter", "")
         level_filter = self.request.GET.get("level_filter", "")
         sort_by = self.request.GET.get("sort_by", "")
         current_year = str(datetime.now().year)
 
-        # if params exist in GET, update session
         if self.request.GET:
             year = self.request.GET.get("year", current_year)
             semester = self.request.GET.get("semester", "mid")
@@ -64,7 +61,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             if category in ("", "None"):
                 category = "reading"
 
-            # store filter values in session
             self.request.session["scores_year"] = year
             self.request.session["scores_semester"] = semester
             self.request.session["scores_category"] = category
@@ -74,7 +70,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             self.request.session["scores_per_page"] = per_page_str
             self.request.session["scores_sort_by"] = sort_by
         else:
-            # get values from session/use defaults
             year = self.request.session.get("scores_year", current_year)
             semester = self.request.session.get("scores_semester", "mid")
             category = self.request.session.get("scores_category", "reading")
@@ -84,27 +79,22 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             per_page_str = self.request.session.get("scores_per_page", "5")
             sort_by = self.request.session.get("scores_sort_by", "")
 
-        # get config
         config = None
         try:
-            # most specific: year + semester + category
             config = ScoreConfig.objects.get(
                 year=year, semester=semester, category=category
             )
         except ScoreConfig.DoesNotExist:
             try:
-                # next: year + semester
                 config = ScoreConfig.objects.get(
                     year=year, semester=semester, category=None
                 )
             except ScoreConfig.DoesNotExist:
                 try:
-                    # next: year only
                     config = ScoreConfig.objects.get(
                         year=year, semester=None, category=None
                     )
                 except ScoreConfig.DoesNotExist:
-                    # fallback to global default
                     config = ScoreConfig.objects.filter(
                         year=None, semester=None, category=None
                     ).first() or ScoreConfig.objects.create(
@@ -112,8 +102,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                         formula="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
                     )
 
-        # filter murid based on search query and class
-        students = Student.objects.all()
+        students = Student.objects.select_related('assigned_class')
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
@@ -121,21 +110,38 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         if level_filter:
             students = students.filter(level=level_filter)
             
-        # apply sorting if specified
         if sort_by == "name_asc":
             students = students.order_by("name")
         elif sort_by == "name_desc":
             students = students.order_by("-name")
 
+        try:
+            per_page = int(per_page_str)
+        except ValueError:
+            per_page = 5
+        
+        paginator = Paginator(students, per_page)
+        page_number = self.request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        current_page_students = page_obj.object_list
+
+        existing_scores = {}
+        if current_page_students:
+            student_ids = [s.id for s in current_page_students]
+            scores_qs = Score.objects.filter(
+                student_id__in=student_ids,
+                year=year,
+                semester=semester,
+                category=category,
+            ).select_related('student')
+            
+            for score in scores_qs:
+                existing_scores[score.student_id] = score
+
         forms = []
-        for student in students:
-            try:
-                score = Score.objects.get(
-                    student=student,
-                    year=year,
-                    semester=semester,
-                    category=category,
-                )
+        for student in current_page_students:
+            score = existing_scores.get(student.id)
+            if score:
                 form = ScoreForm(
                     instance=score,
                     prefix=f"student_{student.id}",
@@ -143,28 +149,19 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                     semester=semester,
                     category=category,
                 )
-            except Score.DoesNotExist:
+            else:
                 form = ScoreForm(
                     prefix=f"student_{student.id}",
                     year=year,
                     semester=semester,
                     category=category,
                 )
-
+            form.student = student
             forms.append((student, form))
-
-        # pagination, get params default to 5
-        try:
-            per_page = int(per_page_str)
-        except ValueError:
-            per_page = 5
-        paginator = Paginator(forms, per_page)
-        page_number = self.request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
 
         context.update(
             {
-                "forms": page_obj.object_list,
+                "forms": forms,
                 "page_obj": page_obj,
                 "is_paginated": page_obj.has_other_pages(),
                 "current_per_page": str(per_page),
@@ -185,7 +182,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         current_year = str(datetime.now().year)
-        # get values from session first, then fall back to POST data
         year = request.POST.get(
             "year", request.session.get("scores_year", current_year)
         )
@@ -207,7 +203,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         per_page = request.session.get("scores_per_page", "5")
         page = self.request.GET.get("page", "")
 
-        # update session
         request.session["scores_year"] = year
         request.session["scores_semester"] = semester
         request.session["scores_category"] = category
@@ -215,8 +210,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         request.session["scores_class_filter"] = class_filter
         request.session["scores_level_filter"] = level_filter
 
-        # apply the same filtering logic as in get_context_data
-        students = Student.objects.all()
+        students = Student.objects.select_related('assigned_class')
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
@@ -224,14 +218,12 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         if level_filter:
             students = students.filter(level=level_filter)
             
-        # apply sorting if specified
         sort_by = request.session.get("scores_sort_by", "")
         if sort_by == "name_asc":
             students = students.order_by("name")
         elif sort_by == "name_desc":
             students = students.order_by("-name")
 
-        # Apply pagination to get only current page students
         try:
             per_page_int = int(per_page)
         except ValueError:
@@ -240,19 +232,24 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         page_obj = paginator.get_page(page)
         current_page_students = page_obj.object_list
 
-        # Only process forms for students on the current page that have data in POST
+        student_ids = [s.id for s in current_page_students]
+        existing_scores = {}
+        scores_qs = Score.objects.filter(
+            student_id__in=student_ids, 
+            year=year, 
+            semester=semester, 
+            category=category
+        ).select_related('student')
+        
+        for score in scores_qs:
+            existing_scores[score.student_id] = score
+
         for student in current_page_students:
             prefix = f"student_{student.id}"
-            # Check if this student's form has any data in the POST request
             has_form_data = any(key.startswith(prefix) for key in request.POST.keys())
             
             if has_form_data:
-                try:
-                    score_instance = Score.objects.get(
-                        student=student, year=year, semester=semester, category=category
-                    )
-                except Score.DoesNotExist:
-                    score_instance = None
+                score_instance = existing_scores.get(student.id)
                 form = ScoreForm(
                     request.POST,
                     instance=score_instance,
@@ -269,7 +266,6 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                     score.category = category
                     score.save()
 
-        # redirect url to the same page with the same filters
         redirect_url = (
             f"{request.path}?year={year}"
             f"&semester={semester}"
@@ -299,20 +295,16 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         return kwargs
 
     def get_object(self, queryset=None):
-        # check if in edit mode via POST
         if hasattr(self, "request"):
             if self.request.method == "POST":
-                # get params from POST data if exist
                 year = self.request.POST.get("edit_year") or None
                 semester = self.request.POST.get("edit_semester") or None
                 category = self.request.POST.get("edit_category") or None
             else:
-                # else from GET as before
                 year = self.request.GET.get("year") or None
                 semester = self.request.GET.get("semester") or None
                 category = self.request.GET.get("category") or None
         else:
-            # fallback if request is not available
             year = None
             semester = None
             category = None
@@ -324,7 +316,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         if category == "None" or category == "":
             category = None
 
-        # convert year to integer if it's not None
         if year is not None:
             try:
                 year = int(year)
@@ -352,10 +343,8 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         try:
             return ScoreConfig.objects.get(**filters)
         except ScoreConfig.DoesNotExist:
-            # return an unsaved instance to back the form
             return ScoreConfig(**filters)
         except ScoreConfig.MultipleObjectsReturned:
-            # if your data's bad, just pick the first
             return ScoreConfig.objects.filter(**filters).first()
 
     def get_context_data(self, **kwargs):
@@ -371,7 +360,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             semester = request.GET.get("semester") or None
             category = request.GET.get("category") or None
 
-            # jst dont allow deleting da global default
             if year is None and semester is None and category is None:
                 messages.error(request, "Cannot delete global default configuration.")
                 return redirect(self.request.path)
@@ -392,12 +380,10 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
     def form_valid(self, form):
         cd = form.cleaned_data
 
-        # check if editing an existing config
         edit_year = self.request.POST.get("edit_year") or None
         edit_semester = self.request.POST.get("edit_semester") or None
         edit_category = self.request.POST.get("edit_category") or None
 
-        # convert to appropriate types
         if edit_year == "":
             edit_year = None
         elif edit_year is not None:
@@ -411,7 +397,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         if edit_category == "":
             edit_category = None
 
-        # use edited config's identifiers if exist, otherwise use form data
         year = (
             edit_year
             if edit_year is not None or edit_year == ""
@@ -428,7 +413,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             else cd.get("category") or None
         )
 
-        # check if handling a DELETE action
         if self.request.GET.get("action") == "delete":
             try:
                 config = ScoreConfig.objects.get(
@@ -448,7 +432,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             )
             return self.form_invalid(form)
 
-        # check if trying to create another global default
         if year is None and semester is None and category is None:
             existing_global = (
                 ScoreConfig.objects.filter(year=None, semester=None, category=None)
@@ -462,7 +445,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
                 )
                 return self.form_invalid(form)
 
-        # create-or-update the exact scoped config
         config, created = ScoreConfig.objects.get_or_create(
             year=year,
             semester=semester,
@@ -477,13 +459,10 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             config.formula = cd["formula"]
             config.save()
 
-        # propagate any exercise‐count changes to existing Scores
         filters = {}
-        for score in Score.objects.filter(**filters):
-            # reset exercise_scores to match exactly the new num_exercises
-            # ensures old values are completely removed
+        scores_to_update = []
+        for score in Score.objects.filter(**filters).only('id', 'exercise_scores'):
             current_scores = score.exercise_scores or []
-            # only keep scores needed and add zeros for any new positions
             new_scores = []
             for i in range(config.num_exercises):
                 if i < len(current_scores):
@@ -493,7 +472,10 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
 
             if new_scores != score.exercise_scores:
                 score.exercise_scores = new_scores
-                score.save(update_fields=["exercise_scores"])
+                scores_to_update.append(score)
+        
+        if scores_to_update:
+            Score.objects.bulk_update(scores_to_update, ['exercise_scores'])
 
         messages.success(self.request, "Configuration saved successfully.")
         return redirect(self.request.path)
@@ -518,7 +500,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         return super().form_invalid(form)
 
     def get_success_url(self):
-        # build URL from session values to maintain filters when returning
         year = self.request.session.get("scores_year")
         semester = self.request.session.get("scores_semester")
         category = self.request.session.get("scores_category")
@@ -527,7 +508,6 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
         level_filter = self.request.session.get("scores_level_filter", "")
         per_page = self.request.session.get("scores_per_page", "5")
 
-        # if deleting configuration, return to score list with filters
         if self.request.GET.get("action") == "delete":
             return (
                 f"{reverse_lazy('scores:score-list')}"

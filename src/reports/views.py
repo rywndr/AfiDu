@@ -14,7 +14,6 @@ from students.models import LEVELS, Student, StudentClass
 from .utils import SCORE_CATEGORIES, generate_student_report_pdf
 
 
-# Create your views here.
 class ReportContextMixin:
     def get_report_context(self):
         current_year = datetime.now().year
@@ -25,7 +24,7 @@ class ReportContextMixin:
             "active_tab_title": "Reports",
             "active_tab_icon": "fa-chart-bar",
             "class_choices": Student._meta.get_field("assigned_class").choices,
-            "available_classes": StudentClass.objects.all(),
+            "available_classes": StudentClass.objects.only('id', 'name'),
             "level_choices": LEVELS,
         }
 
@@ -34,7 +33,6 @@ class ReportContextMixin:
         context.update(self.get_report_context())
         return context
 
-    # helper to get each student score dict
     def get_student_scores(self, student, year, semester):
         scores_dict = {}
         for key, _ in SCORE_CATEGORIES:
@@ -53,7 +51,6 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # get filter params dari url and or session
         current_year = datetime.now().year
         coming_back = self.request.GET.get("anchor_redirected") == "true" and not any(
             param in self.request.GET
@@ -69,7 +66,6 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             if param != "anchor_redirected"
         )
 
-        # get filter params from session if coming back, otherwise from URL
         if coming_back and "reports_filters" in self.request.session:
             filters = self.request.session.get("reports_filters", {})
             year = filters.get("year", current_year)
@@ -80,7 +76,6 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             sort_by = filters.get("sort_by", "")
             per_page = filters.get("per_page", 5)
         else:
-            # get filter params from URL
             try:
                 year = int(self.request.GET.get("year", current_year))
             except ValueError:
@@ -96,7 +91,6 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             except ValueError:
                 per_page = 5
 
-            # save current filters to session
             self.request.session["reports_filters"] = {
                 "year": year,
                 "semester": semester,
@@ -107,8 +101,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 "sort_by": sort_by,
             }
 
-        # queryset students
-        students = Student.objects.all()
+        students = Student.objects.select_related('assigned_class')
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
@@ -116,56 +109,65 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
         if level_filter:
             students = students.filter(level=level_filter)
 
-        # sort students
         if sort_by == "name_asc":
             students = students.order_by("name")
         elif sort_by == "name_desc":
             students = students.order_by("-name")
 
-        # prepare list dict for each student
-        students_data = []
-        for student in students:
-            scores = {}
-            for key, label in SCORE_CATEGORIES:
-                try:
-                    score_obj = Score.objects.get(
-                        student=student, year=year, semester=semester, category=key
-                    )
-                    final_score = score_obj.final_score
-                except Score.DoesNotExist:
-                    final_score = None
-                scores[key] = final_score
-            students_data.append(
-                {
-                    "student": student,
-                    "scores": scores,
-                }
-            )
-
-        # paginate result
-        paginator = Paginator(students_data, per_page)
+        paginator = Paginator(students, per_page)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
+        current_page_students = page_obj.object_list
 
-        context.update(
-            {
-                "students_data": page_obj.object_list,
-                "page_obj": page_obj,
-                "is_paginated": page_obj.has_other_pages(),
-                "current_per_page": str(per_page),
-                "year": year,
-                "semester": semester,
-                "q": search_query,
-                "class_filter": class_filter,
-                "level_filter": level_filter,
-                "sort_by": sort_by,
-                "level_choices": Student._meta.get_field("level").choices,
-            }
-        )
+        # Optimize score fetching with a single query
+        scores_by_student = {}
+        if current_page_students:
+            student_ids = [s.id for s in current_page_students]
+            
+            # Get all scores for current page students in one query
+            all_scores = Score.objects.filter(
+                student_id__in=student_ids,
+                year=year,
+                semester=semester
+            ).select_related('student')
+            
+            # Organize scores by student and category using the model's final_score property
+            for score in all_scores:
+                student_id = score.student_id
+                if student_id not in scores_by_student:
+                    scores_by_student[student_id] = {}
+                scores_by_student[student_id][score.category] = score.final_score
+
+        # Prepare students data efficiently
+        students_data = []
+        for student in current_page_students:
+            scores = {}
+            student_scores = scores_by_student.get(student.id, {})
+            
+            for key, label in SCORE_CATEGORIES:
+                scores[key] = student_scores.get(key)
+                
+            students_data.append({
+                "student": student,
+                "scores": scores,
+            })
+
+        context.update({
+            "students_data": students_data,
+            "page_obj": page_obj,
+            "is_paginated": page_obj.has_other_pages(),
+            "current_per_page": str(per_page),
+            "year": year,
+            "semester": semester,
+            "q": search_query,
+            "class_filter": class_filter,
+            "level_filter": level_filter,
+            "sort_by": sort_by,
+            "level_choices": Student._meta.get_field("level").choices,
+        })
         return context
 
     def get(self, request, *args, **kwargs):
-        # check if filter params are in the URL, if yes, then change da filters
         explicit_filter_change = any(
             param in request.GET
             for param in [
@@ -179,9 +181,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
             ]
         )
 
-        # if changing filters explicitly, update the session
         if explicit_filter_change:
-            # update session in get_context_data
             pass
 
         context = self.get_context_data()
@@ -195,10 +195,8 @@ class ExportReportPDFView(ReportContextMixin, TemplateView):
         semester = request.GET.get("semester", "mid")
         student = get_object_or_404(Student, id=student_id)
 
-        # pass data ke helper with query score dan tambahkan ke dict attribute untuk student
         student.scores_dict = self.get_student_scores(student, year, semester)
 
-        # generate pdf report dengan helper
         pdf = generate_student_report_pdf(student, year, semester)
 
         safe_name = student.name.replace(" ", "_")
@@ -216,7 +214,7 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
         search_query = request.GET.get("q", "")
         class_filter = request.GET.get("class_filter", "")
 
-        students = Student.objects.all()
+        students = Student.objects.select_related('assigned_class')
         if search_query:
             students = students.filter(name__icontains=search_query)
         if class_filter:
@@ -228,7 +226,6 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
         ) as zipf:
             for student in students:
                 student.scores_dict = self.get_student_scores(student, year, semester)
-                # generate pdf report dengan helper
                 pdf = generate_student_report_pdf(student, year, semester)
                 safe_name = student.name.replace(" ", "_")
                 filename = f"{safe_name}_report.pdf"
