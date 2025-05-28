@@ -255,7 +255,7 @@
             <ul class="flex items-center space-x-2">
               {% if page_obj.has_previous %}
                 <li>
-                  <a href="?page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}"
+                  <a href="?page={{ page_obj.previous_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}&sort_by={{ current_sort_by }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-left"></i>
                   </a>
@@ -264,7 +264,7 @@
 
               {% if page_obj.number > 3 %}
                 <li>
-                  <a href="?page=1&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}"
+                  <a href="?page=1&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}&sort_by={{ current_sort_by }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
                     1
                   </a>
@@ -277,7 +277,7 @@
               {% for i in page_obj.paginator.page_range %}
                 {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                   <li>
-                    <a href="?page={{ i }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}"
+                    <a href="?page={{ i }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}&sort_by={{ current_sort_by }}"
                       class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                       {{ i }}
                     </a>
@@ -290,7 +290,7 @@
                   <li><span class="py-1 px-3 text-gray-600">...</span></li>
                 {% endif %}
                 <li>
-                  <a href="?page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}"
+                  <a href="?page={{ page_obj.paginator.num_pages }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}&sort_by={{ current_sort_by }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
                     {{ page_obj.paginator.num_pages }}
                   </a>
@@ -299,7 +299,7 @@
 
               {% if page_obj.has_next %}
                 <li>
-                  <a href="?page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}"
+                  <a href="?page={{ page_obj.next_page_number }}&year={{ year }}&semester={{ semester }}&category={{ category }}&q={{ search_query }}&class_filter={{ class_filter }}&level_filter={{ current_level_filter }}&per_page={{ current_per_page }}&sort_by={{ current_sort_by }}"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 transition">
                     <i class="fa-solid fa-chevron-right"></i>
                   </a>

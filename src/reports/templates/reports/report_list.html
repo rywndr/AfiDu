@@ -212,7 +212,7 @@
           <ul class="flex items-center space-x-2">
             {% if page_obj.has_previous %}
               <li>
-                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&sort_by={{ sort_by }}&anchor_redirected=true#report-table"
                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3">
                   <i class="fa-solid fa-chevron-left"></i>
                 </a>
@@ -221,7 +221,7 @@
 
             {% if page_obj.number > 3 %}
               <li>
-                <a href="?page=1&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
+                <a href="?page=1&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&sort_by={{ sort_by }}&anchor_redirected=true#report-table"
                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == 1 %}bg-red-500 text-white{% endif %}">
                   1
                 </a>
@@ -234,7 +234,7 @@
             {% for i in page_obj.paginator.page_range %}
               {% if i >= page_obj.number|add:"-1" and i <= page_obj.number|add:"1" %}
                 <li>
-                  <a href="?page={{ i }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
+                  <a href="?page={{ i }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&sort_by={{ sort_by }}&anchor_redirected=true#report-table"
                     class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == i %}!bg-[#ff5d5d] text-white{% endif %}">
                     {{ i }}
                   </a>
@@ -247,7 +247,7 @@
                 <li><span class="py-1 px-3 text-[#5a5656]">...</span></li>
               {% endif %}
               <li>
-                <a href="?page={{ page_obj.paginator.num_pages }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
+                <a href="?page={{ page_obj.paginator.num_pages }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&sort_by={{ sort_by }}&anchor_redirected=true#report-table"
                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3 {% if page_obj.number == page_obj.paginator.num_pages %}bg-[#b3371a] text-white{% endif %}">
                   {{ page_obj.paginator.num_pages }}
                 </a>
@@ -256,7 +256,7 @@
 
             {% if page_obj.has_next %}
               <li>
-                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&anchor_redirected=true#report-table"
+                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&class_filter={{ class_filter }}&level_filter={{ level_filter }}&year={{ year }}&semester={{ semester }}&per_page={{ current_per_page }}&sort_by={{ sort_by }}&anchor_redirected=true#report-table"
                   class="bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-full py-1 px-3">
                   <i class="fa-solid fa-chevron-right"></i>
                 </a>
