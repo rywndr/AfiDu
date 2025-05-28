@@ -52,54 +52,39 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         current_year = datetime.now().year
-        coming_back = self.request.GET.get("anchor_redirected") == "true" and not any(
-            param in self.request.GET
-            for param in [
-                "year",
-                "semester",
-                "q",
-                "class_filter",
-                "level_filter",
-                "sort_by",
-                "per_page",
-            ]
-            if param != "anchor_redirected"
-        )
 
-        if coming_back and "reports_filters" in self.request.session:
-            filters = self.request.session.get("reports_filters", {})
-            year = filters.get("year", current_year)
-            semester = filters.get("semester", "mid")
-            search_query = filters.get("q", "")
-            class_filter = filters.get("class_filter", "")
-            level_filter = filters.get("level_filter", "")
-            sort_by = filters.get("sort_by", "")
-            per_page = filters.get("per_page", 5)
-        else:
-            try:
-                year = int(self.request.GET.get("year", current_year))
-            except ValueError:
-                year = current_year
-            semester = self.request.GET.get("semester", "mid")
-            search_query = self.request.GET.get("q", "")
-            class_filter = self.request.GET.get("class_filter", "")
-            level_filter = self.request.GET.get("level_filter", "")
-            sort_by = self.request.GET.get("sort_by", "")
-            per_page_str = self.request.GET.get("per_page", "5")
-            try:
-                per_page = int(per_page_str)
-            except ValueError:
-                per_page = 5
+        # Get filters from request or session
+        try:
+            year = int(self.request.GET.get("year", self.request.session.get("reports_year", current_year)))
+        except ValueError:
+            year = current_year
+        semester = self.request.GET.get("semester", self.request.session.get("reports_semester", "mid"))
+        search_query = self.request.GET.get("q", self.request.session.get("reports_search_query", ""))
+        class_filter = self.request.GET.get("class_filter", self.request.session.get("reports_class_filter", ""))
+        level_filter = self.request.GET.get("level_filter", self.request.session.get("reports_level_filter", ""))
+        sort_by = self.request.GET.get("sort_by", self.request.session.get("reports_sort_by", ""))
+        per_page_str = self.request.GET.get("per_page", self.request.session.get("reports_per_page", "5"))
+        
+        try:
+            per_page = int(per_page_str)
+        except ValueError:
+            per_page = 5
 
-            self.request.session["reports_filters"] = {
-                "year": year,
-                "semester": semester,
-                "q": search_query,
-                "class_filter": class_filter,
-                "level_filter": level_filter,
-                "per_page": per_page,
-                "sort_by": sort_by,
-            }
+        # Store filters in session if provided in request
+        if "year" in self.request.GET:
+            self.request.session["reports_year"] = year
+        if "semester" in self.request.GET:
+            self.request.session["reports_semester"] = semester
+        if "q" in self.request.GET:
+            self.request.session["reports_search_query"] = search_query
+        if "class_filter" in self.request.GET:
+            self.request.session["reports_class_filter"] = class_filter
+        if "level_filter" in self.request.GET:
+            self.request.session["reports_level_filter"] = level_filter
+        if "sort_by" in self.request.GET:
+            self.request.session["reports_sort_by"] = sort_by
+        if "per_page" in self.request.GET:
+            self.request.session["reports_per_page"] = per_page_str
 
         students = Student.objects.select_related('assigned_class')
         if search_query:
@@ -168,21 +153,38 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        explicit_filter_change = any(
-            param in request.GET
-            for param in [
-                "year",
-                "semester",
-                "q",
-                "class_filter",
-                "level_filter",
-                "sort_by",
-                "per_page",
+        # Check if URL parameters are present, if not, use session values if available
+        if not any(
+            key in request.GET
+            for key in ["year", "semester", "q", "class_filter", "level_filter", "sort_by", "per_page"]
+        ) and any(
+            key in request.session
+            for key in [
+                "reports_year",
+                "reports_semester",
+                "reports_search_query",
+                "reports_class_filter",
+                "reports_level_filter",
+                "reports_sort_by",
+                "reports_per_page",
             ]
-        )
-
-        if explicit_filter_change:
-            pass
+        ):
+            # Build URL from session values
+            from urllib.parse import urlencode
+            params = {
+                "year": request.session.get("reports_year", str(datetime.now().year)),
+                "semester": request.session.get("reports_semester", "mid"),
+                "q": request.session.get("reports_search_query", ""),
+                "class_filter": request.session.get("reports_class_filter", ""),
+                "level_filter": request.session.get("reports_level_filter", ""),
+                "sort_by": request.session.get("reports_sort_by", ""),
+                "per_page": request.session.get("reports_per_page", "5"),
+            }
+            # Remove empty params
+            params = {k: v for k, v in params.items() if v}
+            # Redirect to the filtered URL
+            if params:
+                return redirect(f"{request.path}?{urlencode(params)}")
 
         context = self.get_context_data()
         return render(request, self.template_name, context)

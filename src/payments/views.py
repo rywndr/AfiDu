@@ -63,27 +63,51 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
     paginate_by = 5
 
     def get_paginate_by(self, queryset):
-        per_page = self.request.GET.get("per_page")
+        per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
         if per_page and per_page.isdigit():
             return int(per_page)
         return self.paginate_by
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # filter by search q
+        
+        # Get filters from request or session
         q = self.request.GET.get("q")
+        class_filter = self.request.GET.get("class_filter")
+        level_filter = self.request.GET.get("level_filter")
+        sort_by = self.request.GET.get("sort_by")
+        
+        # Store filters in session if provided in request
+        if q is not None:
+            self.request.session["payments_q"] = q
+        elif "payments_q" in self.request.session:
+            q = self.request.session["payments_q"]
+            
+        if class_filter is not None:
+            self.request.session["payments_class_filter"] = class_filter
+        elif "payments_class_filter" in self.request.session:
+            class_filter = self.request.session["payments_class_filter"]
+            
+        if level_filter is not None:
+            self.request.session["payments_level_filter"] = level_filter
+        elif "payments_level_filter" in self.request.session:
+            level_filter = self.request.session["payments_level_filter"]
+            
+        if sort_by is not None:
+            self.request.session["payments_sort_by"] = sort_by
+        elif "payments_sort_by" in self.request.session:
+            sort_by = self.request.session["payments_sort_by"]
+        
+        # filter by search q
         if q:
             qs = qs.filter(name__icontains=q)
         # filter by class
-        class_filter = self.request.GET.get("class_filter")
         if class_filter:
             qs = qs.filter(assigned_class=class_filter)
         # filter by level
-        level_filter = self.request.GET.get("level_filter")
         if level_filter:
             qs = qs.filter(level=level_filter)
         # sort by name
-        sort_by = self.request.GET.get("sort_by")
         if sort_by == "name_asc":
             qs = qs.order_by("name")
         elif sort_by == "name_desc":
@@ -92,6 +116,11 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
 
     def get_year(self):
         year = self.request.GET.get("year")
+        if year is not None:
+            self.request.session["payments_year"] = year
+        elif "payments_year" in self.request.session:
+            year = self.request.session["payments_year"]
+        
         if not (year and year.isdigit()):
             return datetime.date.today().year
         return int(year)
@@ -112,16 +141,19 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         context["student_payment_status"] = student_payment_status
 
         # persist filter params
-        context["current_per_page"] = self.request.GET.get(
-            "per_page", str(self.paginate_by)
-        )
+        per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
+        context["current_per_page"] = per_page
         return context
 
     def get(self, request, *args, **kwargs):
+        # Store per_page in session if provided
+        if "per_page" in request.GET:
+            request.session["payments_per_page"] = request.GET.get("per_page", str(self.paginate_by))
+        
         # Check if URL parameters are present, if not, use session values if available
         if not any(
             key in request.GET
-            for key in ["q", "class_filter", "level_filter", "year", "per_page"]
+            for key in ["q", "class_filter", "level_filter", "year", "per_page", "sort_by"]
         ) and any(
             key in request.session
             for key in [
@@ -130,44 +162,24 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
                 "payments_level_filter",
                 "payments_year",
                 "payments_per_page",
+                "payments_sort_by",
             ]
         ):
             # Build URL from session values
+            from urllib.parse import urlencode
             params = {
                 "q": request.session.get("payments_q", ""),
                 "class_filter": request.session.get("payments_class_filter", ""),
                 "level_filter": request.session.get("payments_level_filter", ""),
-                "year": request.session.get(
-                    "payments_year", str(datetime.date.today().year)
-                ),
-                "per_page": request.session.get(
-                    "payments_per_page", str(self.paginate_by)
-                ),
+                "year": request.session.get("payments_year", str(datetime.date.today().year)),
+                "per_page": request.session.get("payments_per_page", str(self.paginate_by)),
+                "sort_by": request.session.get("payments_sort_by", ""),
             }
             # Remove empty params
             params = {k: v for k, v in params.items() if v}
             # Redirect to the filtered URL
-            return redirect(f"{request.path}?{urlencode(params)}")
-
-        # Store filter parameters in session
-        if "q" in request.GET:
-            request.session["payments_q"] = request.GET.get("q", "")
-        if "class_filter" in request.GET:
-            request.session["payments_class_filter"] = request.GET.get(
-                "class_filter", ""
-            )
-        if "level_filter" in request.GET:
-            request.session["payments_level_filter"] = request.GET.get(
-                "level_filter", ""
-            )
-        if "year" in request.GET:
-            request.session["payments_year"] = request.GET.get(
-                "year", str(datetime.date.today().year)
-            )
-        if "per_page" in request.GET:
-            request.session["payments_per_page"] = request.GET.get(
-                "per_page", str(self.paginate_by)
-            )
+            if params:
+                return redirect(f"{request.path}?{urlencode(params)}")
 
         # Store current URL with all filters in session
         self.request.session["payment_list_url"] = self.request.get_full_path()
