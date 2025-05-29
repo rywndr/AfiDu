@@ -34,7 +34,7 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700">Monthly Payment Amount (IDR)</label>
                 <div class="mt-1 relative rounded-md shadow-sm">
@@ -48,6 +48,21 @@
                 {% endif %}
                 <p class="mt-2 text-sm text-gray-500">
                   This is the monthly fee that will be applied to all students in {{ selected_year }}
+                </p>
+              </div>
+              <div>
+                <label for="{{ form.minimum_payment_amount.id_for_label }}" class="block text-sm font-medium text-gray-700">Minimum Payment Amount (IDR)</label>
+                <div class="mt-1 relative rounded-md shadow-sm">
+                  {{ form.minimum_payment_amount }}
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rp</span>
+                  </div>
+                </div>
+                {% if form.minimum_payment_amount.errors %}
+                  <div class="text-red-600 text-sm mt-1">{{ form.minimum_payment_amount.errors }}</div>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">
+                  Minimum amount required per installment payment (e.g., Rp<span class="currency monthly-fee-display" data-raw="{{ payment_config.minimum_payment_amount|floatformat:0 }}">{{ payment_config.minimum_payment_amount|floatformat:0 }}</span>)
                 </p>
               </div>
               <div>

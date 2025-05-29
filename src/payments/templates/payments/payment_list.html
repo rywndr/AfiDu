@@ -159,54 +159,34 @@
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
               <td class="px-4 py-4 whitespace-nowrap">
-                <div class="flex flex-col items-center space-y-1">
-                  <!-- status Badge -->
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                    {% if details.status_color == 'green' %}bg-green-100 text-green-800
-                    {% elif details.status_color == 'blue' %}bg-blue-100 text-blue-800
-                    {% elif details.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
-                    {% elif details.status_color == 'orange' %}bg-orange-100 text-orange-800
-                    {% else %}bg-red-100 text-red-800{% endif %}">
-                    {% if details.status_color == 'green' %}<i class="fa-solid fa-check-circle mr-1"></i>
-                    {% elif details.status_color == 'blue' %}<i class="fa-solid fa-clock mr-1"></i>
-                    {% elif details.status_color == 'yellow' %}<i class="fa-solid fa-clock mr-1"></i>
-                    {% elif details.status_color == 'orange' %}<i class="fa-solid fa-exclamation-triangle mr-1"></i>
-                    {% else %}<i class="fa-solid fa-times-circle mr-1"></i>{% endif %}
-                    {{ details.status_label }}
-                  </span>
+                <div class="flex items-center justify-center space-x-2">
+                  <!-- Overall Payment Status Badge -->
+                  {% if details.has_any_payments %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <i class="fa-solid fa-check mr-1"></i>Has Payments ({{ year }})
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      <i class="fa-solid fa-times mr-1"></i>No Payments ({{ year }})
+                    </span>
+                  {% endif %}
                   
-                  <!-- months info -->
-                  <div class="text-xs text-gray-600 text-center">
-                    <div class="flex items-center space-x-1 mb-1">
-                      <span class="text-green-600">{{ details.months_paid }}</span>
-                      {% if details.months_partial > 0 %}
-                        <span>+</span>
-                        <span class="text-yellow-600">{{ details.months_partial }}</span>
-                      {% endif %}
-                      <span>/{{ details.total_months }} months</span>
-                    </div>
-                    
-                    <!-- currnt month status -->
-                    {% if is_current_semester_month and year == current_year %}
-                      <div class="text-xs">
-                        {% if details.current_month_paid %}
-                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                            <i class="fa-solid fa-check mr-1"></i>{{ current_month|date:"M" }} Paid
-                          </span>
-                        {% else %}
-                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                            <i class="fa-solid fa-times mr-1"></i>{{ current_month|date:"M" }} Not Paid
-                          </span>
-                        {% endif %}
-                      </div>
+                  <!-- Current Month Status Badge -->
+                  {% if is_current_semester_month and year == current_year %}
+                    {% if details.current_month_paid %}
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        <i class="fa-solid fa-calendar-check mr-1"></i>{{ current_month_date|date:"M" }} Paid
+                      </span>
                     {% else %}
-                      <div class="text-xs text-gray-500">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                          <i class="fa-solid fa-info-circle mr-1"></i>{{ current_month|date:"M" }} Not Semester
-                        </span>
-                      </div>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                        <i class="fa-solid fa-calendar-times mr-1"></i>{{ current_month_date|date:"M" }} Due
+                      </span>
                     {% endif %}
-                  </div>
+                  {% else %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <i class="fa-solid fa-calendar mr-1"></i>{{ current_month_date|date:"M" }} Off-Semester
+                    </span>
+                  {% endif %}
                 </div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-center">

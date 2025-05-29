@@ -52,6 +52,8 @@ urlpatterns = [
     path("payments/", include(("payments.urls", "payments"), namespace="payments")),
     # path ke documents app
     path("documents/", include(("documents.urls", "documents"), namespace="documents")),
+    # path ke administrators app
+    path("staff/", include(("administrators.urls", "administrators"), namespace="administrators")),
 ]
 
 if settings.DEBUG:

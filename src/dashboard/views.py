@@ -2,6 +2,7 @@ import calendar
 import random
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum, Avg, Q, Max, F
 from django.utils import timezone
@@ -11,6 +12,8 @@ from payments.models import Payment, PaymentConfig
 from scores.models import Score, SCORE_CATEGORIES
 from students.models import Student
 from study_materials.models import StudyMaterial
+
+User = get_user_model()
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -131,6 +134,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Optimized pending payments data
         pending_data = self.get_optimized_pending_payments_data(current_year, current_month, student_stats['total_students'])
         
+        # staff statistics (only for superusers)
+        staff_stats = {}
+        if hasattr(self.request, 'user') and self.request.user.is_superuser:
+            staff_stats = User.objects.aggregate(
+                total_staff=Count('id', filter=Q(role__in=[User.ROLE_TEACHER, User.ROLE_SUPERUSER])),
+                total_administrators=Count('id', filter=Q(role=User.ROLE_SUPERUSER)),
+                total_teachers=Count('id', filter=Q(role=User.ROLE_TEACHER)),
+            )
+        
         return {
             'total_active_students': student_stats['total_students'],
             'students_with_class': student_stats['students_with_class'],
@@ -147,7 +159,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'material_categories': material_categories,
             'total_materials': material_stats['total_materials'] or 0,
             'student_count': student_stats['total_students'],
-            **pending_data
+            **pending_data,
+            **staff_stats
         }
     
     def get_optimized_pending_payments_data(self, current_year, current_month, total_students):

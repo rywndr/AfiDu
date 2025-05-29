@@ -11,6 +11,7 @@
       finStart: get(ds.finStart),
       finEnd:   get(ds.finEnd),
       fee:      get(ds.fee),
+      minPayment: get('id_minimum_payment_amount'),
       year:     get(ds.year)
     };
     const yearSelector = get('year-selector');
@@ -111,6 +112,12 @@
       fields.fee.value = digits ? Number(digits).toLocaleString('id-ID') : '';
     }
 
+    function formatMinPayment() {
+      let v = fields.minPayment.value.replace(/\.00$/, '');
+      const digits = v.replace(/\D/g, '');
+      fields.minPayment.value = digits ? Number(digits).toLocaleString('id-ID') : '';
+    }
+
     form.addEventListener('submit', (e) => {
       // check if there are any overlap errs
       const errors = document.querySelectorAll('.overlap-error');
@@ -125,6 +132,10 @@
       // format fee value for submission
       const raw = fields.fee.value.replace(/\./g, '');
       fields.fee.value = raw ? raw + '.00' : '';
+      
+      // format minimum payment value for submission
+      const rawMinPayment = fields.minPayment.value.replace(/\./g, '');
+      fields.minPayment.value = rawMinPayment ? rawMinPayment + '.00' : '';
     });
 
     yearSelector.addEventListener('change', () => {
@@ -139,9 +150,11 @@
     });
     
     fields.fee.addEventListener('input', formatFee);
+    fields.minPayment.addEventListener('input', formatMinPayment);
 
     fields.year.value = yearSelector.value;
     if (fields.fee.value) formatFee();
+    if (fields.minPayment.value) formatMinPayment();
     updateSchedulePreview();
   });
 })();

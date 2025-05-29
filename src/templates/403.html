@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}
+  AfiDu
+{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-12">
+    
+    <!-- access denied card -->
+    <div class="max-w-md mx-auto">
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+        
+        <div class="mb-4">
+          <i class="fas fa-lock text-3xl text-red-200 mb-3"></i>
+          <h1 class="text-lg font-medium text-gray-600 mb-1">Access Denied</h1>
+          <p class="text-sm text-gray-400">
+            Administrator privileges required
+          </p>
+        </div>
+
+        <div class="bg-white rounded border border-gray-100 p-3 mb-4">
+          <div class="flex items-center justify-center text-xs text-gray-500">
+            <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+              {% if request.user.myprofile.photo %}
+                <img
+                  src="{{ request.user.myprofile.photo.url }}"
+                  alt="Profile"
+                  class="w-6 h-6 rounded-full object-cover"
+                />
+              {% else %}
+                <i class="fas fa-user text-gray-400 text-xs"></i>
+              {% endif %}
+            </div>
+            <span class="text-gray-600">
+              {% if request.user.first_name %}
+                {{ request.user.first_name }}
+              {% else %}
+                {{ request.user.email|truncatechars:20 }}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <a
+            href="{% url 'dashboard:dashboard' %}"
+            class="block w-full px-3 py-2 text-sm bg-[#ff4f25] text-white rounded hover:bg-[#e63e1c] transition-colors duration-200"
+          >
+            <i class="fas fa-home mr-1"></i>
+            Dashboard
+          </a>
+          
+          <button
+            onclick="history.back()"
+            class="block w-full px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors duration-200"
+          >
+            <i class="fas fa-arrow-left mr-1"></i>
+            Go Back
+          </button>
+        </div>
+
+        <div class="mt-4 text-xs text-gray-400">
+          Contact your administrator for access
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

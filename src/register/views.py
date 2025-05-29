@@ -1,8 +1,14 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 
 from .forms import RegistrationForm
+
+
+def is_superuser(user):
+    return user.is_superuser
 
 
 # Create your views here.
@@ -19,7 +25,7 @@ class RegistrationContextMixin:
         return context
 
 
-class RegisterView(LoginRequiredMixin, RegistrationContextMixin, CreateView):
+class RegisterView(LoginRequiredMixin, UserPassesTestMixin, RegistrationContextMixin, CreateView):
     form_class = RegistrationForm
     template_name = "register/register.html"
     success_url = reverse_lazy("register:register_success")
@@ -27,6 +33,19 @@ class RegisterView(LoginRequiredMixin, RegistrationContextMixin, CreateView):
     def get_context_data(self, **kwargs):
         # untuk menampilkan form register
         return super().get_context_data(**kwargs)
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        """
+        custom handler for when user doesn't have permission.
+        renders our custom 403 template instead of default.
+        """
+        if self.request.user.is_authenticated:
+            return render(self.request, '403.html', status=403)
+        else:
+            return super().handle_no_permission()
 
 
 class RegisterSuccessView(LoginRequiredMixin, RegistrationContextMixin, TemplateView):

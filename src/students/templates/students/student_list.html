@@ -106,10 +106,12 @@
            class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-chalkboard"></i>
         </a>
+        {% if user.is_superuser %}
         <a href="{% url 'students:student-add' %}"  title="Add new student"
            class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full w-12 h-12 flex items-center justify-center shadow transition">
           <i class="fa-solid fa-plus"></i>
         </a>
+        {% endif %}
       </div>
     </div>
 
@@ -176,6 +178,7 @@
                 </button>
                 <div class="dropdown-content absolute right-2 top-0 transform -translate-y-full mt-2 w-32 rounded-lg shadow-lg z-10 hidden bg-white">
                   <ul class="py-1">
+                    {% if user.is_superuser %}
                     <li>
                       <a href="{% url 'students:student-edit' student.pk %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <!-- Edit Icon SVG -->
@@ -194,6 +197,13 @@
                         Delete
                       </a>
                     </li>
+                    {% else %}
+                    <li>
+                      <span class="flex items-center px-4 py-2 text-sm text-gray-400 italic">
+                        View only
+                      </span>
+                    </li>
+                    {% endif %}
                   </ul>
                 </div>
               </div>

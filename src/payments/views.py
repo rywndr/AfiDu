@@ -5,9 +5,10 @@ from urllib.parse import urlencode
 
 import pytz
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -18,6 +19,10 @@ from students.models import LEVELS, Student, StudentClass
 
 from .forms import PaymentConfigForm
 from .models import Payment, PaymentConfig, PaymentInstallment
+
+
+def is_superuser(user):
+    return user.is_superuser
 
 
 class PaymentContextMixin:
@@ -56,11 +61,14 @@ class PaymentContextMixin:
         return context
 
 
-class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
+class PaymentListView(LoginRequiredMixin, UserPassesTestMixin, PaymentContextMixin, ListView):
     model = Student
     template_name = "payments/payment_list.html"
     context_object_name = "students"
     paginate_by = 5
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
     def get_paginate_by(self, queryset):
         per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
@@ -177,7 +185,11 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
         current_year = datetime.date.today().year
         is_current_semester_month = current_month in mid_sem_months or current_month in final_sem_months
         
+        # Create a date object for the current month to use with date filter
+        current_month_date = datetime.date(current_year, current_month, 1)
+        
         context["current_month"] = current_month
+        context["current_month_date"] = current_month_date
         context["current_year"] = current_year
         context["is_current_semester_month"] = is_current_semester_month
 
@@ -189,6 +201,13 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
             months_paid = payments.filter(paid=True).count()
             months_partial = payments.filter(amount_paid__gt=0, paid=False).count()
             
+            # check if any payment has reached max installments but isn't fully paid
+            has_maxed_installments = payments.filter(
+                current_installment=payment_config.max_installments,
+                paid=False,
+                amount_paid__gt=0
+            ).exists()
+            
             # check current month payment status
             current_month_paid = False
             if is_current_semester_month and year == current_year:
@@ -199,6 +218,9 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
             if months_paid == total_months:
                 status_label = "Fully Paid"
                 status_color = "green"
+            elif has_maxed_installments:
+                status_label = "Installment Limit Reached"
+                status_color = "purple"
             elif months_paid + months_partial >= total_months * 0.75:
                 status_label = "Nearly Complete"
                 status_color = "blue"
@@ -219,6 +241,8 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
                 "status_label": status_label,
                 "status_color": status_color,
                 "current_month_paid": current_month_paid,
+                "has_maxed_installments": has_maxed_installments,
+                "has_any_payments": months_paid > 0 or months_partial > 0,
             }
 
         context["student_payment_details"] = student_payment_details
@@ -247,7 +271,6 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
             ]
         ):
             # build URL from session values
-            from urllib.parse import urlencode
             params = {
                 "q": request.session.get("payments_q", ""),
                 "class_filter": request.session.get("payments_class_filter", ""),
@@ -268,6 +291,10 @@ class PaymentListView(LoginRequiredMixin, PaymentContextMixin, ListView):
 
         # remove the automatic redirect to #payment-table anchor
         return super().get(request, *args, **kwargs)
+
+    def handle_no_permission(self):
+        # Custom handling for when user doesn't have permission
+        return render(self.request, '403.html', status=403)
 
 
 class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
@@ -353,13 +380,21 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
             "final": {"name": "Final Semester", "months": final_sem_months, "payments": []},
         }
 
-        # get/create payments for each semester
+        # get/create payments for each semester and check installment limits
         for semester_data in semesters.values():
             for month in semester_data["months"]:
                 payment, created = Payment.objects.get_or_create(
                     student=student, year=year, month=month,
                     defaults={"amount_paid": 0}
                 )
+                
+                # Add flag for installment limit reached
+                payment.installment_limit_reached = (
+                    payment.current_installment >= payment_config.max_installments 
+                    and not payment.paid 
+                    and payment.amount_paid > 0
+                )
+                
                 semester_data["payments"].append(payment)
 
         context["semesters"] = semesters
@@ -385,6 +420,7 @@ class UpdatePaymentView(LoginRequiredMixin, View):
         try:
             raw = request.POST.get("amount_paid", "0").strip()
             is_installment = request.POST.get("is_installment") == "true"
+            auto_convert_to_installment = request.POST.get("auto_convert_to_installment") == "true"
             
             try:
                 amount_paid = Decimal(raw)
@@ -396,6 +432,10 @@ class UpdatePaymentView(LoginRequiredMixin, View):
             old_amount = payment.amount_paid
             config = PaymentConfig.get_active(payment.year)
             
+            # Handle auto-conversion to installment if payment is less than monthly fee
+            if auto_convert_to_installment and amount_paid < config.monthly_fee and amount_paid > 0:
+                is_installment = True
+            
             # For installment payments, check if we're within the maximum allowed installments
             installment_count = int(request.POST.get("installment_count", "1"))
             if is_installment and installment_count > config.max_installments:
@@ -405,18 +445,62 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     status=400
                 )
 
+            # Validate individual installment amounts for installment payments
+            if is_installment and amount_paid > 0:
+                total_installment_amount = Decimal('0')
+                for i in range(1, installment_count + 1):
+                    key = f"installment_{i}"
+                    if key in request.POST:
+                        try:
+                            inst_amount = Decimal(request.POST.get(key, '0'))
+                            if inst_amount > 0 and inst_amount < config.minimum_payment_amount:
+                                return JsonResponse(
+                                    {"success": False, 
+                                     "message": f"Each installment must be at least Rp {config.minimum_payment_amount:,.0f}."},
+                                    status=400
+                                )
+                            total_installment_amount += inst_amount
+                        except InvalidOperation:
+                            continue
+                
+                # Validate that the total installment amount matches the total amount paid
+                if abs(total_installment_amount - amount_paid) > Decimal('0.01'):
+                    return JsonResponse(
+                        {"success": False, 
+                         "message": "Total installment amounts must equal the total amount paid."},
+                        status=400
+                    )
+            
+            # For non-installment payments, validate minimum amount
+            elif not is_installment and amount_paid > 0 and amount_paid < config.minimum_payment_amount and amount_paid < config.monthly_fee:
+                return JsonResponse(
+                    {"success": False, 
+                     "message": f"Payment amount must be at least Rp {config.minimum_payment_amount:,.0f} or the full monthly fee of Rp {config.monthly_fee:,.0f}."},
+                    status=400
+                )
+
             # Set the payment amount and date
             payment.amount_paid = amount_paid
             payment.payment_date = timezone.now() if amount_paid > 0 else None
             
+            # Explicitly manage installment fields
+            if is_installment:
+                payment.is_installment = True
+                payment.current_installment = installment_count
+            elif amount_paid == 0:
+                # Only reset installment status if the payment is being reset to zero
+                payment.is_installment = False
+                payment.current_installment = 0
+            # If not installment but amount > 0, it's a full/partial payment
+            elif amount_paid > 0:
+                payment.is_installment = False
+                payment.current_installment = 0
+            
             # Store individual installment records when handling installment payments
             installment_details = {}
             if is_installment and amount_paid > 0:
-                # Get the existing installments to determine what's new
-                existing_installments = {
-                    i.installment_number: i 
-                    for i in payment.installments.all()
-                }
+                # Clear existing installments first
+                payment.installments.all().delete()
                 
                 # Process each installment from the form
                 for i in range(1, installment_count + 1):
@@ -428,43 +512,22 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                         except InvalidOperation:
                             inst_amount = Decimal('0')
                         
-                        # If there's an amount, create or update the installment record
+                        # If there's an amount, create installment record
                         if inst_amount > 0:
-                            if i in existing_installments:
-                                # Update existing installment amount if it changed
-                                installment = existing_installments[i]
-                                if installment.amount != inst_amount:
-                                    installment.amount = inst_amount
-                                    installment.save()
-                            else:
-                                # Create new installment record
-                                installment = PaymentInstallment.objects.create(
-                                    payment=payment,
-                                    installment_number=i,
-                                    amount=inst_amount
-                                )
-                            
+                            PaymentInstallment.objects.create(
+                                payment=payment,
+                                installment_number=i,
+                                amount=inst_amount
+                            )
                             installment_details[key] = str(inst_amount)
-                
-                # Remove any installments that no longer exist
-                payment.installments.filter(installment_number__gt=installment_count).delete()
-            
-            # Important: Set installment flag based on user's choice, not just on amount
-            if is_installment:
-                payment.is_installment = True
-                payment.current_installment = installment_count
-            elif amount_paid == 0:
-                # Only reset installment status if the payment is being reset to zero
-                payment.is_installment = False
-                payment.current_installment = 0
-                # Clear installment data
+            elif not is_installment:
+                # Clear installment data for non-installment payments
                 payment.installments.all().delete()
                 if f"payment_{payment_id}_installment_data" in request.session:
                     del request.session[f"payment_{payment_id}_installment_data"]
             
-            # Paid status still depends on whether the full amount is paid
-            # But we no longer affect is_installment when amount_paid reaches the full fee
-            payment.save()
+            # Save with skip_auto_installment flag to prevent the model from overriding our installment management
+            payment.save(skip_auto_installment=True)
 
             # Add a message to the session
             if amount_paid > old_amount:
@@ -472,22 +535,28 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     if payment.paid:
                         messages.success(
                             request,
-                            f"Final installment for {payment.student.name} completed. Full payment of {amount_paid} received via {payment.current_installment} installments.",
+                            f"Final installment for {payment.student.name} completed. Full payment of Rp {amount_paid:,.0f} received via {payment.current_installment} installments.",
                         )
                     else:
-                        messages.success(
-                            request,
-                            f"Installment {payment.current_installment}/{config.max_installments} for {payment.student.name} recorded: {amount_paid}.",
-                        )
+                        if auto_convert_to_installment:
+                            messages.info(
+                                request,
+                                f"Payment for {payment.student.name} (Rp {amount_paid:,.0f}) was automatically converted to installment payment as it's less than the monthly fee.",
+                            )
+                        else:
+                            messages.success(
+                                request,
+                                f"Installment {payment.current_installment}/{config.max_installments} for {payment.student.name} recorded: Rp {amount_paid:,.0f}.",
+                            )
                 else:
                     messages.success(
                         request,
-                        f"Payment for {payment.student.name} updated to {amount_paid}.",
+                        f"Payment for {payment.student.name} updated to Rp {amount_paid:,.0f}.",
                     )
             elif amount_paid < old_amount:
                 messages.info(
                     request,
-                    f"Payment for {payment.student.name} reduced to {amount_paid}.",
+                    f"Payment for {payment.student.name} reduced to Rp {amount_paid:,.0f}.",
                 )
 
             # Get all installment records for this payment to return to the frontend
@@ -511,6 +580,7 @@ class UpdatePaymentView(LoginRequiredMixin, View):
                     "current_installment": payment.current_installment,
                     "installment_details": installment_details,
                     "installment_records": installment_records,
+                    "auto_converted_to_installment": auto_convert_to_installment,
                     "message": f"Payment updated for {payment.student.name}",
                 }
             )

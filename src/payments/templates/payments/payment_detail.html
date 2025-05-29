@@ -95,6 +95,19 @@
                         </form>
                       </td>
                     </tr>
+
+                    <!-- Installment limit reached badge for this specific month -->
+                    {% if payment.installment_limit_reached %}
+                      <tr>
+                        <td colspan="6" class="px-4 py-2">
+                          <div class="mt-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                              <i class="fa-solid fa-ban mr-1"></i>Installment Limit Reached
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    {% endif %}
                   {% endfor %}
                 </tbody>
               </table>

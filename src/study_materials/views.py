@@ -111,9 +111,16 @@ class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, Cre
 
 class StudyMaterialUpdateView(LoginRequiredMixin, StudyMaterialContextMixin, UpdateView):
     model = StudyMaterial
-    fields = ["title", "category"]
+    form_class = StudyMaterialForm
     template_name = "study_materials/edit.html"
     success_url = reverse_lazy("study_materials:list")
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # rm the file field requirement for editing
+        form.fields['file'].required = False
+        form.fields['file'].help_text = "Leave empty to keep current file. Upload a new file to replace it."
+        return form
 
     def form_valid(self, form):
         messages.success(self.request, "Study material updated successfully.")

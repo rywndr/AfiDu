@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "study_materials",
     "payments",
     "documents",
+    "administrators",
     "compressor",
 ]
 
@@ -93,27 +94,26 @@ WSGI_APPLICATION = "afidu.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # uncomment the below DATABASES setting to use sqlite
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
-# comment the below DATABASES setting to use sqlite
-DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DATABASE_URL.path.replace('/', ''),
-        'USER': DATABASE_URL.username,
-        'PASSWORD': DATABASE_URL.password,
-        'HOST': DATABASE_URL.hostname,
-        'PORT': DATABASE_URL.port,
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# comment the below DATABASES setting to use sqlite
+# DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': DATABASE_URL.path.replace('/', ''),
+#         'USER': DATABASE_URL.username,
+#         'PASSWORD': DATABASE_URL.password,
+#         'HOST': DATABASE_URL.hostname,
+#         'PORT': DATABASE_URL.port,
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

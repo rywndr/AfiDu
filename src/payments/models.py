@@ -29,6 +29,15 @@ class PaymentConfig(models.Model):
         validators=[MinValueValidator(1)],
         help_text="Maximum number of installments allowed per payment"
     )
+    
+    # minimum payment amount
+    minimum_payment_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=50000,
+        validators=[MinValueValidator(0)],
+        help_text="Minimum payment amount per installment in IDR"
+    )
 
     # mid sem (star and end)
     mid_semester_start = models.IntegerField(
@@ -71,6 +80,7 @@ class PaymentConfig(models.Model):
                 year=year,
                 monthly_fee=150000,
                 max_installments=2,
+                minimum_payment_amount=50000,
                 mid_semester_start=1,
                 mid_semester_end=3,
                 final_semester_start=7,
@@ -80,7 +90,7 @@ class PaymentConfig(models.Model):
         return config
 
     def __str__(self):
-        return f"Payment Config {self.year} (Monthly: {self.monthly_fee} IDR)"
+        return f"Payment Config {self.year} (Monthly: {self.monthly_fee} IDR, Min: {self.minimum_payment_amount} IDR)"
 
 
 class Payment(models.Model):
@@ -114,31 +124,36 @@ class Payment(models.Model):
         # remain == 0 if student overpaid
         self.remaining_amount = diff if diff > Decimal("0.00") else Decimal("0.00")
 
-        # Keep track of whether this was paid via installments
-        # Don't reset is_installment to False if amount_paid reaches the full amount
-        # Only set is_installment to True if it's a new installment payment
-        if self.amount_paid > Decimal("0.00") and not self.paid:
-            if self.current_installment > 0:
-                # If we already have installments recorded, maintain that status
-                self.is_installment = True
-            else:
-                # Otherwise, set installment status based on whether it's a partial payment
-                self.is_installment = self.amount_paid < config.monthly_fee
+        # Only auto-manage installment fields if they're not being explicitly set
+        # Check if this save is coming from the UpdatePaymentView (which manages installments)
+        skip_auto_installment = kwargs.pop('skip_auto_installment', False)
+        
+        if not skip_auto_installment:
+            # Keep track of whether this was paid via installments
+            # Don't reset is_installment to False if amount_paid reaches the full amount
+            # Only set is_installment to True if it's a new installment payment
+            if self.amount_paid > Decimal("0.00") and not self.paid:
+                if self.current_installment > 0:
+                    # If we already have installments recorded, maintain that status
+                    self.is_installment = True
+                else:
+                    # Otherwise, set installment status based on whether it's a partial payment
+                    self.is_installment = self.amount_paid < config.monthly_fee
 
-        # Update current installment count if this is an installment payment
-        if self.is_installment and self.amount_paid > 0:
-            # If this is a new installment, increment the count
-            if self.current_installment == 0:
-                self.current_installment = 1
-            # If amount_paid changed and is less than monthly_fee, it's another installment
-            elif 'amount_paid' in kwargs.get('update_fields', []) and self.amount_paid < config.monthly_fee:
-                self.current_installment += 1
-                if self.current_installment > config.max_installments:
-                    self.current_installment = config.max_installments
-        elif self.amount_paid == 0:
-            # Reset installment count if unpaid
-            self.current_installment = 0
-            self.is_installment = False
+            # Update current installment count if this is an installment payment
+            if self.is_installment and self.amount_paid > 0:
+                # If this is a new installment, increment the count
+                if self.current_installment == 0:
+                    self.current_installment = 1
+                # If amount_paid changed and is less than monthly_fee, it's another installment
+                elif 'amount_paid' in kwargs.get('update_fields', []) and self.amount_paid < config.monthly_fee:
+                    self.current_installment += 1
+                    if self.current_installment > config.max_installments:
+                        self.current_installment = config.max_installments
+            elif self.amount_paid == 0:
+                # Reset installment count if unpaid
+                self.current_installment = 0
+                self.is_installment = False
 
         # paid == student paid full
         self.paid = self.amount_paid >= config.monthly_fee

@@ -13,6 +13,7 @@ class PaymentConfigForm(forms.ModelForm):
         fields = [
             "year",
             "monthly_fee",
+            "minimum_payment_amount",
             "max_installments",
             "mid_semester_start",
             "mid_semester_end",
@@ -20,82 +21,62 @@ class PaymentConfigForm(forms.ModelForm):
             "final_semester_end",
         ]
         widgets = {
-            "year": forms.Select(
+            "year": forms.HiddenInput(),
+            "monthly_fee": forms.NumberInput(
                 attrs={
                     "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "mt-1 block w-full pl-10 border-gray-300 rounded-md shadow-sm "
                         "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
+                    "placeholder": "150000",
                 }
             ),
-            "monthly_fee": forms.TextInput(
+            "minimum_payment_amount": forms.NumberInput(
                 attrs={
-                    "placeholder": "0",
-                    "aria-label": "Monthly fee amount in IDR",
                     "class": (
-                        "block w-full py-2 pl-10 pr-3 "
-                        "border border-gray-300 bg-white rounded-md shadow-sm "
-                        "focus:outline-none focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
+                        "mt-1 block w-full pl-10 border-gray-300 rounded-md shadow-sm "
+                        "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
+                    "placeholder": "50000",
                 }
             ),
             "max_installments": forms.NumberInput(
                 attrs={
-                    "min": 1,
-                    "max": 10,
-                    "aria-label": "Maximum number of installments",
                     "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "mt-1 block w-full border-gray-300 rounded-md shadow-sm "
+                        "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
+                    ),
+                    "min": "1",
+                }
+            ),
+            "mid_semester_start": forms.Select(
+                attrs={
+                    "class": (
+                        "mt-1 block w-full border-gray-300 rounded-md shadow-sm "
                         "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
                 }
             ),
-            "mid_semester_start": forms.NumberInput(
+            "mid_semester_end": forms.Select(
                 attrs={
-                    "min": 1,
-                    "max": 12,
-                    "aria-label": "Mid semester start month",
                     "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "mt-1 block w-full border-gray-300 rounded-md shadow-sm "
                         "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
                 }
             ),
-            "mid_semester_end": forms.NumberInput(
+            "final_semester_start": forms.Select(
                 attrs={
-                    "min": 1,
-                    "max": 12,
-                    "aria-label": "Mid semester end month",
                     "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "mt-1 block w-full border-gray-300 rounded-md shadow-sm "
                         "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
                 }
             ),
-            "final_semester_start": forms.NumberInput(
+            "final_semester_end": forms.Select(
                 attrs={
-                    "min": 1,
-                    "max": 12,
-                    "aria-label": "Final semester start month",
                     "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
-                        "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
-                    ),
-                }
-            ),
-            "final_semester_end": forms.NumberInput(
-                attrs={
-                    "min": 1,
-                    "max": 12,
-                    "aria-label": "Final semester end month",
-                    "class": (
-                        "mt-1 block w-full py-2 px-3 border border-gray-300 "
-                        "bg-white rounded-md shadow-sm focus:outline-none "
+                        "mt-1 block w-full border-gray-300 rounded-md shadow-sm "
                         "focus:ring-[#ff4f25] focus:border-[#ff4f25] sm:text-sm"
                     ),
                 }
@@ -104,10 +85,27 @@ class PaymentConfigForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        current_year = datetime.date.today().year
-        self.fields["year"].widget.choices = [
-            (y, str(y)) for y in range(current_year - 2, current_year + 8)
+
+        # Month choices for semester fields
+        month_choices = [
+            (1, "January"),
+            (2, "February"),
+            (3, "March"),
+            (4, "April"),
+            (5, "May"),
+            (6, "June"),
+            (7, "July"),
+            (8, "August"),
+            (9, "September"),
+            (10, "October"),
+            (11, "November"),
+            (12, "December"),
         ]
+
+        self.fields["mid_semester_start"].widget.choices = month_choices
+        self.fields["mid_semester_end"].widget.choices = month_choices
+        self.fields["final_semester_start"].widget.choices = month_choices
+        self.fields["final_semester_end"].widget.choices = month_choices
 
     def clean_monthly_fee(self):
         raw = self.cleaned_data.get("monthly_fee")
@@ -121,6 +119,15 @@ class PaymentConfigForm(forms.ModelForm):
         if raw <= 0:
             raise ValidationError("Jumlah pembayaran bulanan harus lebih dari nol")
         return raw
+
+    def clean_minimum_payment_amount(self):
+        minimum_payment = self.cleaned_data.get("minimum_payment_amount")
+        monthly_fee = self.cleaned_data.get("monthly_fee")
+
+        if minimum_payment and monthly_fee and minimum_payment >= monthly_fee:
+            raise ValidationError("Minimum payment amount must be less than the monthly fee.")
+
+        return minimum_payment
 
     def clean(self):
         cleaned = super().clean()

@@ -71,6 +71,7 @@
           </div>
         </div>
         
+        {% if user.is_superuser %}
          <div class="mt-6 flex gap-3">
           <a href="{% url 'students:student-edit' student.pk %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="px-2 py-2 bg-gray-200 hover:bg-gray-300 text-[#5a5656] rounded-lg font-medium inline-flex items-center transition duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -85,6 +86,7 @@
             Delete
           </a>
         </div>
+        {% endif %}
       </div>
     </div>
   </div>

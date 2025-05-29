@@ -1,0 +1,30 @@
+[
+    {
+      "model": "students.student",
+      "pk": 1,
+      "fields": {
+        "name": "John Doe",
+        "gender": "Male",
+        "age": 15,
+        "date_of_birth": "2010-05-12",
+        "contact_number": "+6281234567890",
+        "address": "123 Main Street, Jakarta",
+        "assigned_class": 1,
+        "level": "Junior 1"
+      }
+    },
+    {
+      "model": "students.student",
+      "pk": 2,
+      "fields": {
+        "name": "Jane Smith",
+        "gender": "Female",
+        "age": 16,
+        "date_of_birth": "2009-07-15",
+        "contact_number": "+6287654321098",
+        "address": "456 Park Avenue, Bandung",
+        "assigned_class": 2,
+        "level": "Junior 2"
+      }
+    }
+  ]

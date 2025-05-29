@@ -87,11 +87,12 @@
                 <a
                   href="{% url 'reports:report-list' %}"
                   class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'reports' %}"
-                />
+                >
                   <i class="fas fa-file-alt mr-2 w-6"></i>
                   <span>Reports</span>
                 </a>
               </li>
+              {% if user.is_superuser %}
               <li>
                 <a
                   href="{% url 'payments:payment_list' %}"
@@ -101,6 +102,16 @@
                   <span>Payments</span>
                 </a>
               </li>
+              <li>
+                <a
+                  href="{% url 'administrators:staff-list' %}"
+                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'administrators' %}"
+                >
+                  <i class="fas fa-users-cog mr-2 w-6"></i>
+                  <span>Staff</span>
+                </a>
+              </li>
+              {% endif %}
               <li>
                 <a
                   href="{% url 'documents:document_list' %}"

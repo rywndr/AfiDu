@@ -394,11 +394,25 @@
         alert('Payment amount cannot exceed the monthly fee.');
         return;
       }
+      
+      // If payment is less than monthly fee and not already an installment payment,
+      // automatically convert to installment payment
+      if (amountPaid < fee && amountPaid > 0) {
+        // auto-convert to installment payment
+        fd.append('auto_convert_to_installment', 'true');
+        fd.append('installment_1', amountPaid);
+        fd.append('installment_count', 1);
+        fd.append('is_installment', 'true');
+      } else {
+        fd.append('is_installment', 'false');
+      }
     }
     
     // Add the total amount to the form data
     fd.append('amount_paid', amountPaid);
-    fd.append('is_installment', isInstallment);
+    if (!fd.has('is_installment')) {
+      fd.append('is_installment', isInstallment);
+    }
 
     fetch(`/payments/update/${id}/`, {
       method:'POST',
@@ -407,8 +421,11 @@
     })
     .then(r=>r.json())
     .then(d=>{
-      if(d.success) location.reload();
-      else alert('error: '+d.message);
+      if(d.success) {
+        location.reload();
+      } else {
+        alert('error: '+d.message);
+      }
     })
     .catch(()=>alert('error updating payment'));
   }
