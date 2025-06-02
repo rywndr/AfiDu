@@ -155,7 +155,7 @@
                   {{ item.student.name }}
                 </a>
               </td>
-              <td class="px-4 py-2 whitespace-nowrap">{{ item.student.assigned_class }}</td>
+              <td class="px-4 py-2 whitespace-nowrap">{{ item.student.assigned_class.name }}</td>
               <td class="px-4 py-2 whitespace-nowrap">{{ item.student.level }}</td>
               {% for key, label in score_categories %}
                 <td class="px-4 py-2 text-center">

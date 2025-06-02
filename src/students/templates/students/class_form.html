@@ -36,13 +36,19 @@
                         {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" rows="3" %}
                     {% elif field.name == 'max_students' %}
                         {% render_field field class="shadow-sm block w-1/3 sm:text-sm border border-gray-300 rounded-md p-2" min="1" max="100" %}
+                    {% elif field.name == 'days' %}
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                            {% for choice in field %}
+                                <div class="flex items-center">
+                                    {{ choice.tag }}
+                                    <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">{{ choice.choice_label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
                         {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" %}
                     {% endif %}
                 </div>
-                {% if field.help_text and field.name != 'start_time' and field.name != 'end_time' and field.name != 'max_students' %}
-                    <p class="mt-1 text-sm text-[#5a5656]">{{ field.help_text }}</p>
-                {% endif %}
                 {% for error in field.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ error }}</p>
                 {% endfor %}

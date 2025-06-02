@@ -1,8 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms.widgets import DateInput, Select, TextInput
+from django.forms.widgets import DateInput, Select, TextInput, CheckboxSelectMultiple
 
-from .models import Student, StudentClass
+from .models import Student, StudentClass, DAYS_OF_WEEK
 
 
 class StudentForm(forms.ModelForm):
@@ -92,21 +92,64 @@ class StudentForm(forms.ModelForm):
 
 
 class StudentClassForm(forms.ModelForm):
+    days = forms.MultipleChoiceField(
+        choices=DAYS_OF_WEEK,
+        widget=CheckboxSelectMultiple(attrs={
+            'class': 'grid grid-cols-2 gap-2'
+        }),
+        required=False,
+        help_text="Select the days when this class runs"
+    )
+
     class Meta:
         model = StudentClass
-        fields = ["name", "description"]
+        fields = ["name", "description", "start_time", "end_time", "max_students", "days"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded",
+                    "class": "shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2",
                     "placeholder": "Enter class name",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded",
+                    "class": "shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2",
                     "placeholder": "Enter description",
                     "rows": 3,
                 }
             ),
+            "start_time": forms.TimeInput(
+                attrs={
+                    "class": "shadow-sm block w-1/2 sm:text-sm border border-gray-300 rounded-md p-2",
+                    "type": "time",
+                }
+            ),
+            "end_time": forms.TimeInput(
+                attrs={
+                    "class": "shadow-sm block w-1/2 sm:text-sm border border-gray-300 rounded-md p-2",
+                    "type": "time",
+                }
+            ),
+            "max_students": forms.NumberInput(
+                attrs={
+                    "class": "shadow-sm block w-1/3 sm:text-sm border border-gray-300 rounded-md p-2",
+                    "min": "1",
+                    "max": "100",
+                }
+            ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Set initial value for days field if instance exists
+        if self.instance and self.instance.pk and self.instance.days:
+            self.fields['days'].initial = self.instance.days
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Convert the days list to JSON format for storage
+        instance.days = self.cleaned_data.get('days', [])
+        if commit:
+            instance.save()
+        return instance

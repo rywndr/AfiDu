@@ -10,7 +10,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from .forms import StudentForm
+from .forms import StudentForm, StudentClassForm
 from .models import Student, StudentClass
 
 
@@ -265,7 +265,7 @@ class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
 
 class StudentClassCreateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassContextMixin, CreateView):
     model = StudentClass
-    fields = ["name", "description", "start_time", "end_time", "max_students"]
+    form_class = StudentClassForm
     template_name = "students/class_form.html"
     success_url = reverse_lazy("students:class-list")
 
@@ -280,7 +280,7 @@ class StudentClassCreateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassCo
 
 class StudentClassUpdateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassContextMixin, UpdateView):
     model = StudentClass
-    fields = ["name", "description", "start_time", "end_time", "max_students"]
+    form_class = StudentClassForm
     template_name = "students/class_form.html"
     success_url = reverse_lazy("students:class-list")
 

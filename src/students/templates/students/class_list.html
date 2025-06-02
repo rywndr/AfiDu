@@ -25,26 +25,46 @@
         <!-- class cards -->
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {% for class in classes %}
-            <div class="relative bg-white rounded-lg shadow-xl overflow-hidden transform hover:scale-105 transition duration-300">
+            <div class="relative bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
             <div class="absolute inset-0 bg-white opacity-10"></div>
             <div class="p-6 relative">
-                <div class="flex justify-between items-start mb-2">
-                    <h2 class="text-2xl font-bold text-gray-800">{{ class.name }}</h2>
-                    <div class="flex flex-col items-end space-y-1">
-                        <!-- clss time badge -->
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+                <div class="mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">{{ class.name }}</h2>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                            <i class="fas fa-clock mr-2"></i>
                             {{ class.start_time|time:"H:i" }} - {{ class.end_time|time:"H:i" }}
                         </span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
-                            {{ class.current_student_count }}/{{ class.max_students }} students
+                        
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                            <i class="fas fa-calendar-days mr-2"></i>
+                            {{ class.days_short_display }}
                         </span>
+                        
+                        {% if class.is_full %}
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                                <i class="fas fa-users mr-2"></i>
+                                {{ class.current_student_count }}/{{ class.max_students }} (Full)
+                            </span>
+                        {% elif class.available_spots <= 3 %}
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                                <i class="fas fa-users mr-2"></i>
+                                {{ class.current_student_count }}/{{ class.max_students }} ({{ class.available_spots }} left)
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                                <i class="fas fa-users mr-2"></i>
+                                {{ class.current_student_count }}/{{ class.max_students }} students
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
                 
                 {% if class.description %}
-                <p class="text-gray-600 mb-4">{{ class.description }}</p>
+                <p class="text-gray-600 mb-6 leading-relaxed">{{ class.description }}</p>
                 {% else %}
-                <p class="text-gray-600 mb-4 italic">No description provided.</p>
+                <p class="text-gray-500 mb-6 italic">No description provided.</p>
                 {% endif %}
 
                 {% if user.is_superuser %}

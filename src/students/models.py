@@ -1,8 +1,19 @@
 from django.core.validators import RegexValidator
 from django.db import models
 from django.core.exceptions import ValidationError
+import json
 
 # Create your models here.
+
+DAYS_OF_WEEK = [
+    ("monday", "Monday"),
+    ("tuesday", "Tuesday"),
+    ("wednesday", "Wednesday"),
+    ("thursday", "Thursday"),
+    ("friday", "Friday"),
+    ("saturday", "Saturday"),
+    ("sunday", "Sunday"),
+]
 
 GENDER = [
     ("Male", "Male"),
@@ -36,6 +47,7 @@ class StudentClass(models.Model):
     start_time = models.TimeField(help_text="Class start time")
     end_time = models.TimeField(help_text="Class end time")
     max_students = models.PositiveIntegerField(default=20, help_text="Maximum number of students allowed in this class")
+    days = models.JSONField(default=list, blank=True, help_text="Days when this class runs")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,11 +71,53 @@ class StudentClass(models.Model):
     def available_spots(self):
         return max(0, self.max_students - self.current_student_count)
 
+    @property
+    def days_display(self):
+        if not self.days:
+            return "No days set"
+        
+        day_names = []
+        days_map = dict(DAYS_OF_WEEK)
+        for day in self.days:
+            if day in days_map:
+                day_names.append(days_map[day])
+        
+        if not day_names:
+            return "No days set"
+        
+        return ", ".join(day_names)
+
+    @property
+    def days_short_display(self):
+        if not self.days:
+            return "N/A"
+        
+        short_names = []
+        days_map = {
+            "monday": "Mon",
+            "tuesday": "Tue", 
+            "wednesday": "Wed",
+            "thursday": "Thu",
+            "friday": "Fri",
+            "saturday": "Sat",
+            "sunday": "Sun"
+        }
+        
+        for day in self.days:
+            if day in days_map:
+                short_names.append(days_map[day])
+        
+        if not short_names:
+            return "N/A"
+        
+        return ", ".join(short_names)
+
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
-        return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')})"
+        days_str = self.days_short_display if self.days else "No schedule"
+        return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}, {days_str})"
 
 
 class Student(models.Model):
