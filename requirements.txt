@@ -21,6 +21,7 @@ docxcompose==1.4.0
 docxtpl==0.19.1
 dotenv==0.9.9
 fonttools==4.56.0
+greenlet==3.2.2
 Jinja2==3.1.6
 kombu==5.5.1
 lxml==5.3.1
@@ -41,6 +42,8 @@ reportlab==4.3.1
 rjsmin==1.2.2
 setuptools==78.1.0
 six==1.17.0
+SQLAlchemy==2.0.41
+sqlparams==6.2.0
 sqlparse==0.5.3
 tinycss2==1.4.0
 tinyhtml5==2.0.0
@@ -50,5 +53,6 @@ tzdata==2025.1
 vine==5.1.0
 wcwidth==0.2.13
 webencodings==0.5.1
+whitenoise==6.9.0
 XlsxWriter==3.2.3
 zopfli==0.2.3.post1
