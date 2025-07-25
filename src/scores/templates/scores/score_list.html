@@ -188,7 +188,13 @@
                         {{ student.name }}
                       </a>
                     </td>
-                    <td class="w-1/12 px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class.name }}</td>
+                    <td class="w-1/12 px-4 py-4 whitespace-nowrap text-gray-700">
+                      {% if student.assigned_class %}
+                        {{ student.assigned_class.name }}
+                      {% else %}
+                        <span class="text-gray-400 italic">Not assigned</span>
+                      {% endif %}
+                    </td>
                     <td class="w-1/12 px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
                     {% for field in form.exercise_fields %}
                       <td class="w-8 px-2 py-4 whitespace-nowrap text-center">

@@ -11,13 +11,13 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
-from dotenv import load_dotenv
-from urllib.parse import urlparse
 from pathlib import Path
+
+from django.urls import reverse_lazy
+from dotenv import load_dotenv
 
 load_dotenv()
 
-from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -93,7 +93,7 @@ WSGI_APPLICATION = "afidu.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# uncomment the below DATABASES setting to use sqlite
+# comment the below DATABASES setting to use sqlite
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -101,7 +101,7 @@ DATABASES = {
     }
 }
 
-# comment the below DATABASES setting to use sqlite
+# uncomment the below DATABASES setting to use PostgreSQL
 # DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
 
 # DATABASES = {

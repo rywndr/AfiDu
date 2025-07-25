@@ -256,7 +256,7 @@ class StudentDeleteView(LoginRequiredMixin, SuperuserRequiredMixin, StudentConte
         return super().form_invalid(form)
 
 
-# classes
+# kelas
 class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
     model = StudentClass
     template_name = "students/class_list.html"

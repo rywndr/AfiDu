@@ -156,7 +156,13 @@
                   {{ student.name }}
                 </a>
               </td>
-              <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.assigned_class.name }}</td>
+              <td class="px-4 py-4 whitespace-nowrap text-gray-700">
+                {% if student.assigned_class %}
+                  {{ student.assigned_class.name }}
+                {% else %}
+                  <span class="text-gray-400 italic">Not assigned</span>
+                {% endif %}
+              </td>
               <td class="px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
               <td class="px-4 py-4 whitespace-nowrap">
                 <div class="flex items-center justify-center space-x-2">
