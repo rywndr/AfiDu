@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronsUpDown, LogOut, UserCircle, UserPlus } from "lucide-react";
+import { ChevronsUpDown, LogOut, UserCircle } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -97,18 +97,18 @@ export function SidebarUser() {
         router.push("/profile");
     };
 
-    const handleNavigateCreateAccount = () => {
-        router.push("/admin/create-account");
-    };
-
     return (
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger render={<button type="button" />}>
+                    <DropdownMenuTrigger
+                        nativeButton={false}
+                        render={<div role="button" tabIndex={0} />}
+                    >
                         <SidebarMenuButton
                             size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground pointer-events-none"
+                            render={<div role="button" tabIndex={-1} />}
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
                         >
                             <UserAvatar name={userName} image={userImage} />
                             <UserInfo name={userName} email={userEmail} />
@@ -142,12 +142,6 @@ export function SidebarUser() {
                             <DropdownMenuItem onClick={handleNavigateProfile}>
                                 <UserCircle className="mr-2" />
                                 Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={handleNavigateCreateAccount}
-                            >
-                                <UserPlus className="mr-2" />
-                                Create Account
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />

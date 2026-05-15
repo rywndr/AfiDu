@@ -8,22 +8,28 @@ import { cn } from "@/lib/utils";
 
 function Checkbox({
     className,
+    onCheckedChange,
     ...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+}: React.ComponentProps<typeof CheckboxPrimitive.Root> & {
+    onCheckedChange?: (checked: boolean) => void;
+}) {
     return (
         <CheckboxPrimitive.Root
             data-slot="checkbox"
             className={cn(
-                "peer border-input data-[checked]:bg-primary data-[checked]:text-primary-foreground data-[checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/60 size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50",
+                "peer inline-flex items-center justify-center border-input data-[checked]:bg-primary data-[checked]:text-primary-foreground data-[checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/60 h-4 w-4 min-h-4 min-w-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50",
                 className,
             )}
+            onCheckedChange={(checked) => {
+                onCheckedChange?.(checked);
+            }}
             {...props}
         >
             <CheckboxPrimitive.Indicator
                 data-slot="checkbox-indicator"
-                className="flex items-center justify-center text-current"
+                className="flex items-center justify-center text-current transition-opacity data-[unchecked]:opacity-0"
             >
-                <CheckIcon className="size-3.5" />
+                <CheckIcon className="size-3.5" strokeWidth={3} />
             </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
     );

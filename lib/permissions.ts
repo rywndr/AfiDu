@@ -3,10 +3,12 @@
  *
  * Roles:
  *  - super-admin : Full access to every page and action (default better-auth admin provided role).
- *  - admin       : Dashboard, profile, payments, reports, documents CRUD,
- *                  read-only to students & scores.
- *  - teacher     : Dashboard, profile, students, scores, reports,
- *                  materials CRUD.
+ *  - admin       : Dashboard, profile, payments, documents CRUD,
+ *                  read-only students, classes & subjects.
+ *                  NO access to materials.
+ *  - teacher     : Dashboard, profile, documents,
+ *                  read-only students, classes, subjects & materials.
+ *                  NO access to payments or settings.
  *
  * To change access rules, edit arrays below.
  */
@@ -41,11 +43,12 @@ export const PAGES = {
     DASHBOARD: "dashboard",
     PROFILE: "profile",
     STUDENTS: "students",
-    SCORES: "scores",
+    CLASSES: "classes",
+    SUBJECTS: "subjects",
     MATERIALS: "materials",
-    REPORTS: "reports",
     PAYMENTS: "payments",
     DOCUMENTS: "documents",
+    SETTINGS: "settings",
 } as const;
 
 export type Page = (typeof PAGES)[keyof typeof PAGES];
@@ -72,46 +75,59 @@ export const PERMISSIONS: PermissionsMap = {
         delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
     },
 
+    // Admin: view only.  Teacher: view only.  Only super-admin can CUD.
     students: {
         view: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-        create: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        update: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        delete: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
+        create: [ROLES.SUPER_ADMIN],
+        update: [ROLES.SUPER_ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
     },
 
-    scores: {
+    // Admin: view only.  Teacher: view only.  Only super-admin can CUD.
+    classes: {
         view: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-        create: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        update: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        delete: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
+        create: [ROLES.SUPER_ADMIN],
+        update: [ROLES.SUPER_ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
     },
 
+    // Admin: view only.  Teacher: view only.  Only super-admin can CUD.
+    subjects: {
+        view: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
+        create: [ROLES.SUPER_ADMIN],
+        update: [ROLES.SUPER_ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
+    },
+
+    // Admin: NO access.  Teacher: view only.  Only super-admin can CUD.
     materials: {
         view: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        create: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        update: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
-        delete: [ROLES.SUPER_ADMIN, ROLES.TEACHER],
+        create: [ROLES.SUPER_ADMIN],
+        update: [ROLES.SUPER_ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
     },
 
-    reports: {
-        view: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-        create: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-        update: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-        delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
-    },
-
+    // Admin: full CRUD (except delete).  Teacher: NO access.
     payments: {
         view: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
         create: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
         update: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-        delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
     },
 
+    // Both admin and teacher can access documents.
     documents: {
-        view: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        view: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER],
         create: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
         update: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
         delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+    },
+
+    settings: {
+        view: [ROLES.SUPER_ADMIN],
+        create: [ROLES.SUPER_ADMIN],
+        update: [ROLES.SUPER_ADMIN],
+        delete: [ROLES.SUPER_ADMIN],
     },
 };
 

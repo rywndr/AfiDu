@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Loader2, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/shared/form-field";
+import { SuccessMessage } from "@/components/shared/success-message";
 import { RoleSelect } from "@/components/admin/role-select";
 import { createAccountAction } from "@/lib/actions/create-account";
 import { zodResolver } from "@/lib/zod-resolver";
@@ -23,60 +19,9 @@ import {
 } from "@/lib/validators/auth";
 import type { Role } from "@/lib/permissions";
 
-function FormField({
-    label,
-    htmlFor,
-    error,
-    children,
-}: {
-    label: string;
-    htmlFor: string;
-    error: string | undefined;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="grid gap-2">
-            <Label htmlFor={htmlFor}>{label}</Label>
-            {children}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-    );
-}
-
-function SuccessMessage({
-    name,
-    email,
-    onReset,
-}: {
-    name: string;
-    email: string;
-    onReset: () => void;
-}) {
-    return (
-        <Card className="max-w-lg w-full">
-            <CardHeader className="text-center">
-                <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-green-500/10">
-                    <CheckCircle className="size-6 text-green-600" />
-                </div>
-                <CardTitle className="text-lg md:text-xl">
-                    Account Created
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                    The account for{" "}
-                    <span className="font-medium text-foreground">{name}</span>{" "}
-                    ({email}) has been created successfully.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button onClick={onReset} variant="outline" className="w-full">
-                    Create Another Account
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
+// Main Form
 export function CreateAccountForm() {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [apiError, setApiError] = useState<string | null>(null);
     const [createdUser, setCreatedUser] = useState<{
@@ -101,7 +46,7 @@ export function CreateAccountForm() {
         },
     });
 
-    const onSubmit = async (data: CreateAccountFormValues) => {
+    const onSubmit = useCallback(async (data: CreateAccountFormValues) => {
         setApiError(null);
         setLoading(true);
 
@@ -114,137 +59,133 @@ export function CreateAccountForm() {
             });
 
             if (!result.success) {
-                setApiError(result.error ?? "Failed to create account");
+                const msg = result.error ?? "Gagal membuat akun";
+                setApiError(msg);
+                toast.error(msg);
                 return;
             }
 
+            toast.success(`Akun untuk ${data.name} berhasil dibuat!`);
             setCreatedUser({ name: data.name, email: data.email });
         } catch {
-            setApiError("An unexpected error occurred. Please try again.");
+            const msg = "Terjadi kesalahan. Silakan coba lagi.";
+            setApiError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         setCreatedUser(null);
         setApiError(null);
         reset();
-    };
+    }, [reset]);
 
     if (createdUser) {
         return (
             <SuccessMessage
-                name={createdUser.name}
-                email={createdUser.email}
+                title="Akun Berhasil Dibuat"
+                description={
+                    <>
+                        Akun untuk{" "}
+                        <span className="font-medium text-foreground">
+                            {createdUser.name}
+                        </span>{" "}
+                        ({createdUser.email}) telah berhasil dibuat.
+                    </>
+                }
+                resetLabel="Buat Akun Lain"
                 onReset={handleReset}
             />
         );
     }
 
     return (
-        <Card className="max-w-lg w-full">
-            <CardHeader>
-                <CardTitle className="text-lg md:text-xl">
-                    Create Account
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                    Create a new user account and assign a role
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
-                    <FormField
-                        label="Full Name"
-                        htmlFor="name"
-                        error={errors.name?.message}
-                    >
-                        <Input
-                            id="name"
-                            type="text"
-                            placeholder="John Doe"
-                            aria-invalid={!!errors.name}
-                            {...register("name")}
-                        />
-                    </FormField>
+        <div className="rounded-lg border bg-card p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+                <FormField label="Nama Lengkap" error={errors.name?.message}>
+                    <Input
+                        id="name"
+                        type="text"
+                        placeholder="John Doe"
+                        aria-invalid={!!errors.name}
+                        {...register("name")}
+                    />
+                </FormField>
 
-                    <FormField
-                        label="Email"
-                        htmlFor="email"
-                        error={errors.email?.message}
-                    >
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="john@example.com"
-                            aria-invalid={!!errors.email}
-                            {...register("email")}
-                        />
-                    </FormField>
+                <FormField label="Email" error={errors.email?.message}>
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        aria-invalid={!!errors.email}
+                        {...register("email")}
+                    />
+                </FormField>
 
-                    <FormField
-                        label="Password"
-                        htmlFor="password"
-                        error={errors.password?.message}
-                    >
-                        <Input
-                            id="password"
-                            type="password"
-                            placeholder="Min. 8 characters"
-                            autoComplete="new-password"
-                            aria-invalid={!!errors.password}
-                            {...register("password")}
-                        />
-                    </FormField>
+                <FormField label="Password" error={errors.password?.message}>
+                    <Input
+                        id="password"
+                        type="password"
+                        placeholder="Min. 8 karakter"
+                        autoComplete="new-password"
+                        aria-invalid={!!errors.password}
+                        {...register("password")}
+                    />
+                </FormField>
 
-                    <FormField
-                        label="Confirm Password"
-                        htmlFor="confirmPassword"
-                        error={errors.confirmPassword?.message}
-                    >
-                        <Input
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Re-enter password"
-                            autoComplete="new-password"
-                            aria-invalid={!!errors.confirmPassword}
-                            {...register("confirmPassword")}
-                        />
-                    </FormField>
+                <FormField
+                    label="Konfirmasi Password"
+                    error={errors.confirmPassword?.message}
+                >
+                    <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Ketik ulang password"
+                        autoComplete="new-password"
+                        aria-invalid={!!errors.confirmPassword}
+                        {...register("confirmPassword")}
+                    />
+                </FormField>
 
-                    <FormField
-                        label="Role"
-                        htmlFor="role"
-                        error={errors.role?.message}
-                    >
-                        <Controller
-                            name="role"
-                            control={control}
-                            render={({ field }) => (
-                                <RoleSelect
-                                    value={field.value as Role | undefined}
-                                    onValueChange={field.onChange}
-                                    disabled={loading}
-                                />
-                            )}
-                        />
-                    </FormField>
+                <FormField label="Peran" error={errors.role?.message}>
+                    <Controller
+                        name="role"
+                        control={control}
+                        render={({ field }) => (
+                            <RoleSelect
+                                value={field.value as Role | undefined}
+                                onValueChange={field.onChange}
+                                disabled={loading}
+                            />
+                        )}
+                    />
+                </FormField>
 
-                    {apiError && (
-                        <p className="text-sm text-destructive text-center">
-                            {apiError}
-                        </p>
-                    )}
+                {apiError && (
+                    <p className="text-sm text-destructive">{apiError}</p>
+                )}
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                <div className="flex items-center gap-3 pt-2">
+                    <Button type="submit" className="flex-1" disabled={loading}>
                         {loading ? (
                             <Loader2 size={16} className="animate-spin" />
                         ) : (
-                            <span>Create Account</span>
+                            "Buat Akun"
                         )}
                     </Button>
-                </form>
-            </CardContent>
-        </Card>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.back()}
+                        disabled={loading}
+                    >
+                        <ArrowLeft className="mr-1 size-4" />
+                        Kembali
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 }

@@ -33,7 +33,11 @@ interface RoleSelectProps {
     disabled?: boolean;
 }
 
-export function RoleSelect({ value, onValueChange, disabled }: RoleSelectProps) {
+export function RoleSelect({
+    value,
+    onValueChange,
+    disabled,
+}: RoleSelectProps) {
     return (
         <Select
             value={value ?? ""}
@@ -41,7 +45,9 @@ export function RoleSelect({ value, onValueChange, disabled }: RoleSelectProps) 
             disabled={disabled}
         >
             <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a role" />
+                <span className="truncate">
+                    {value ? formatRoleLabel(value) : "Select a role"}
+                </span>
             </SelectTrigger>
             <SelectContent>
                 {ALL_ROLES.map((role) => (
