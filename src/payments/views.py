@@ -5,8 +5,6 @@ from urllib.parse import urlencode
 
 import pytz
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -15,14 +13,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView, UpdateView, View
 
+from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
 from students.models import LEVELS, Student, StudentClass
 
 from .forms import PaymentConfigForm
 from .models import Payment, PaymentConfig, PaymentInstallment
-
-
-def is_superuser(user):
-    return user.is_superuser
 
 
 class PaymentContextMixin:
@@ -61,14 +56,11 @@ class PaymentContextMixin:
         return context
 
 
-class PaymentListView(LoginRequiredMixin, UserPassesTestMixin, PaymentContextMixin, ListView):
+class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
     model = Student
     template_name = "payments/payment_list.html"
     context_object_name = "students"
     paginate_by = 5
-
-    def test_func(self):
-        return self.request.user.is_superuser
 
     def get_paginate_by(self, queryset):
         per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
@@ -292,12 +284,8 @@ class PaymentListView(LoginRequiredMixin, UserPassesTestMixin, PaymentContextMix
         # remove the automatic redirect to #payment-table anchor
         return super().get(request, *args, **kwargs)
 
-    def handle_no_permission(self):
-        # Custom handling for when user doesn't have permission
-        return render(self.request, '403.html', status=403)
 
-
-class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
+class PaymentConfigView(SuperuserRequiredMixin, PaymentContextMixin, UpdateView):
     model = PaymentConfig
     form_class = PaymentConfigForm
     template_name = "payments/payment_config.html"
@@ -347,7 +335,7 @@ class PaymentConfigView(LoginRequiredMixin, PaymentContextMixin, UpdateView):
         return context
 
 
-class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailView):
+class StudentPaymentDetailView(StaffRequiredMixin, PaymentContextMixin, DetailView):
     model = Student
     template_name = "payments/payment_detail.html"
     context_object_name = "student"
@@ -414,7 +402,7 @@ class StudentPaymentDetailView(LoginRequiredMixin, PaymentContextMixin, DetailVi
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class UpdatePaymentView(LoginRequiredMixin, View):
+class UpdatePaymentView(StaffRequiredMixin, View):
     def post(self, request, payment_id):
         payment = get_object_or_404(Payment, id=payment_id)
         try:
@@ -629,7 +617,7 @@ class TogglePaymentView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class GetInstallmentDataView(LoginRequiredMixin, View):
+class GetInstallmentDataView(StaffRequiredMixin, View):
     def get(self, request, payment_id):
         payment = get_object_or_404(Payment, id=payment_id)
         

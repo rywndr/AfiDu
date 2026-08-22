@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -9,6 +8,8 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+
+from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
 
 from .forms import StudentForm, StudentClassForm
 from .models import Student, StudentClass
@@ -43,22 +44,7 @@ class StudentContextMixin:
         return context
 
 
-class SuperuserRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def handle_no_permission(self):
-        """
-        custom handler for when user doesn't have permission.
-        renders our custom 403 template instead of default.
-        """
-        if self.request.user.is_authenticated:
-            return render(self.request, '403.html', status=403)
-        else:
-            return super().handle_no_permission()
-
-
-class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
+class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
     model = Student
     template_name = "students/student_list.html"
     context_object_name = "students"
@@ -155,7 +141,7 @@ class StudentListView(LoginRequiredMixin, StudentContextMixin, ListView):
 
         return context
 
-class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
+class StudentDetailView(StaffRequiredMixin, StudentContextMixin, DetailView):
     model = Student
     template_name = "students/student_detail.html"
     context_object_name = "student"
@@ -201,7 +187,7 @@ class StudentDetailView(LoginRequiredMixin, StudentContextMixin, DetailView):
         return context
 
 
-class StudentCreateView(LoginRequiredMixin, SuperuserRequiredMixin, StudentContextMixin, CreateView):
+class StudentCreateView(SuperuserRequiredMixin, StudentContextMixin, CreateView):
     model = Student
     form_class = StudentForm
     template_name = "students/student_form.html"
@@ -216,7 +202,7 @@ class StudentCreateView(LoginRequiredMixin, SuperuserRequiredMixin, StudentConte
         return super().form_invalid(form)
 
 
-class StudentUpdateView(LoginRequiredMixin, SuperuserRequiredMixin, StudentContextMixin, UpdateView):
+class StudentUpdateView(SuperuserRequiredMixin, StudentContextMixin, UpdateView):
     model = Student
     form_class = StudentForm
     template_name = "students/student_form.html"
@@ -242,7 +228,7 @@ class StudentUpdateView(LoginRequiredMixin, SuperuserRequiredMixin, StudentConte
         return super().form_invalid(form)
 
 
-class StudentDeleteView(LoginRequiredMixin, SuperuserRequiredMixin, StudentContextMixin, DeleteView):
+class StudentDeleteView(SuperuserRequiredMixin, StudentContextMixin, DeleteView):
     model = Student
     template_name = "students/student_confirm_delete.html"
     success_url = reverse_lazy("students:student-list")
@@ -257,13 +243,13 @@ class StudentDeleteView(LoginRequiredMixin, SuperuserRequiredMixin, StudentConte
 
 
 # kelas
-class StudentClassListView(LoginRequiredMixin, ClassContextMixin, ListView):
+class StudentClassListView(StaffRequiredMixin, ClassContextMixin, ListView):
     model = StudentClass
     template_name = "students/class_list.html"
     context_object_name = "classes"
 
 
-class StudentClassCreateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassContextMixin, CreateView):
+class StudentClassCreateView(SuperuserRequiredMixin, ClassContextMixin, CreateView):
     model = StudentClass
     form_class = StudentClassForm
     template_name = "students/class_form.html"
@@ -278,7 +264,7 @@ class StudentClassCreateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassCo
         return super().form_invalid(form)
 
 
-class StudentClassUpdateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassContextMixin, UpdateView):
+class StudentClassUpdateView(SuperuserRequiredMixin, ClassContextMixin, UpdateView):
     model = StudentClass
     form_class = StudentClassForm
     template_name = "students/class_form.html"
@@ -293,7 +279,7 @@ class StudentClassUpdateView(LoginRequiredMixin, SuperuserRequiredMixin, ClassCo
         return super().form_invalid(form)
 
 
-class StudentClassDeleteView(LoginRequiredMixin, SuperuserRequiredMixin, ClassContextMixin, DeleteView):
+class StudentClassDeleteView(SuperuserRequiredMixin, ClassContextMixin, DeleteView):
     model = StudentClass
     template_name = "students/class_confirm_delete.html"
     success_url = reverse_lazy("students:class-list")

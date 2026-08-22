@@ -1,44 +1,24 @@
-from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
-import json
+
+from core.constants import (
+    DAYS_OF_WEEK,
+    DAYS_SHORT,
+    GENDER,
+    LEVELS,
+    phone_validator,
+)
 
 # Create your models here.
 
-DAYS_OF_WEEK = [
-    ("monday", "Monday"),
-    ("tuesday", "Tuesday"),
-    ("wednesday", "Wednesday"),
-    ("thursday", "Thursday"),
-    ("friday", "Friday"),
-    ("saturday", "Saturday"),
-    ("sunday", "Sunday"),
+__all__ = [
+    "DAYS_OF_WEEK",
+    "GENDER",
+    "LEVELS",
+    "phone_validator",
+    "StudentClass",
+    "Student",
 ]
-
-GENDER = [
-    ("Male", "Male"),
-    ("Female", "Female"),
-]
-
-LEVELS = [
-    ("Mix Class", "Mix Class"),
-    ("Beginner 1", "Beginner 1"),
-    ("Beginner 2", "Beginner 2"),
-    ("Elementary 1", "Elementary 1"),
-    ("Elementary 2", "Elementary 2"),
-    ("Elementary 3", "Elementary 3"),
-    ("Junior 1", "Junior 1"),
-    ("Junior 2", "Junior 2"),
-    ("Junior 3", "Junior 3"),
-    ("Senior 1", "Senior 1"),
-    ("Senior 2", "Senior 2"),
-    ("Senior 3", "Senior 3"),
-]
-
-phone_validator = RegexValidator(
-    regex=r"^\+62\d{9,13}$",
-    message="Phone number must start with +62 and contain 9-13 digits.",
-)
 
 
 class StudentClass(models.Model):
@@ -91,25 +71,12 @@ class StudentClass(models.Model):
     def days_short_display(self):
         if not self.days:
             return "N/A"
-        
-        short_names = []
-        days_map = {
-            "monday": "Mon",
-            "tuesday": "Tue", 
-            "wednesday": "Wed",
-            "thursday": "Thu",
-            "friday": "Fri",
-            "saturday": "Sat",
-            "sunday": "Sun"
-        }
-        
-        for day in self.days:
-            if day in days_map:
-                short_names.append(days_map[day])
-        
+
+        short_names = [DAYS_SHORT[day] for day in self.days if day in DAYS_SHORT]
+
         if not short_names:
             return "N/A"
-        
+
         return ", ".join(short_names)
 
     class Meta:
@@ -134,6 +101,66 @@ class Student(models.Model):
         StudentClass, on_delete=models.SET_NULL, null=True, blank=True
     )
     level = models.CharField(max_length=20, choices=LEVELS)
+
+    # e-learning login. Provisioned explicitly (see provision_login) rather than
+    # created alongside the student record, because not every student needs one.
+    email = models.EmailField(
+        blank=True,
+        help_text="Email used for the student's e-learning login.",
+    )
+    user = models.OneToOneField(
+        "login.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="student_profile",
+        help_text="Linked e-learning account, if one has been provisioned.",
+    )
+
+    @property
+    def has_login(self):
+        return self.user_id is not None
+
+    @transaction.atomic
+    def provision_login(self, email=None, password=None):
+        """
+        Create (or re-link) the e-learning account for this student.
+
+        Returns the ``CustomUser``. Raises ``ValidationError`` if no email is
+        available or the email is already taken by another account.
+        """
+        from login.models import CustomUser
+
+        email = (email or self.email or "").strip().lower()
+        if not email:
+            raise ValidationError(
+                {"email": "An email address is required to provision a login."}
+            )
+
+        if self.user_id:
+            # already provisioned; just rotate the password if one was given
+            if password:
+                self.user.set_student_password(password)
+            return self.user
+
+        clash = CustomUser.objects.filter(email__iexact=email).first()
+        if clash is not None:
+            raise ValidationError(
+                {"email": f"{email} is already used by another account."}
+            )
+
+        first_name, _, last_name = self.name.partition(" ")
+        user = CustomUser.objects.create_student_user(
+            email=email,
+            password=password,
+            first_name=first_name[:30],
+            last_name=last_name[:30],
+        )
+
+        self.user = user
+        self.email = email
+        self.save(update_fields=["user", "email"])
+        return user
 
     def clean(self):
         super().clean()

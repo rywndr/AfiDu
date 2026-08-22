@@ -136,7 +136,9 @@ def generate_student_summary_pdf(student, config):
             year = int(academic_year)
             
             # get all scores for this academic year
-            all_scores = Score.objects.filter(student=student, year=year)
+            all_scores = Score.objects.filter(
+                student=student, year=year
+            ).prefetch_related('entries')
             
             # apply semester filter if specified
             if semester_filter == 'mid':

@@ -1,8 +1,10 @@
 from datetime import datetime
+from decimal import Decimal
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, UpdateView
@@ -10,7 +12,7 @@ from django.views.generic import TemplateView, UpdateView
 from students.models import LEVELS, Student, StudentClass
 
 from .forms import ScoreConfigForm, ScoreForm
-from .models import Score, ScoreConfig
+from .models import Score, ScoreConfig, ScoreEntry
 
 
 class ScoreContextMixin:
@@ -36,7 +38,7 @@ class ScoreContextMixin:
         return context
 
 
-class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
+class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
     template_name = "scores/score_list.html"
 
     def get_context_data(self, **kwargs):
@@ -133,7 +135,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
                 year=year,
                 semester=semester,
                 category=category,
-            ).select_related('student')
+            ).select_related('student').prefetch_related('entries')
             
             for score in scores_qs:
                 existing_scores[score.student_id] = score
@@ -141,6 +143,9 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         forms = []
         for student in current_page_students:
             score = existing_scores.get(student.id)
+            # the template reads `student.score.score_sum` / `.final_score`;
+            # attach the already-fetched row so those columns render on load
+            student.score = score
             if score:
                 form = ScoreForm(
                     instance=score,
@@ -239,7 +244,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
             year=year, 
             semester=semester, 
             category=category
-        ).select_related('student')
+        ).select_related('student').prefetch_related('entries')
         
         for score in scores_qs:
             existing_scores[score.student_id] = score
@@ -280,7 +285,7 @@ class ScoreListView(LoginRequiredMixin, ScoreContextMixin, TemplateView):
         return redirect(redirect_url)
 
 
-class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
+class ScoreConfigView(StaffRequiredMixin, ScoreContextMixin, UpdateView):
     model = ScoreConfig
     form_class = ScoreConfigForm
     template_name = "scores/config.html"
@@ -459,23 +464,30 @@ class ScoreConfigView(LoginRequiredMixin, ScoreContextMixin, UpdateView):
             config.formula = cd["formula"]
             config.save()
 
-        filters = {}
-        scores_to_update = []
-        for score in Score.objects.filter(**filters).only('id', 'exercise_scores'):
-            current_scores = score.exercise_scores or []
-            new_scores = []
-            for i in range(config.num_exercises):
-                if i < len(current_scores):
-                    new_scores.append(current_scores[i])
-                else:
-                    new_scores.append(0)
+        # bring every score's exercise slots in line with the new configuration:
+        # add missing slots at 0, drop slots beyond the new count.
+        with transaction.atomic():
+            target_slots = range(1, config.num_exercises + 1)
+            entries_to_create = []
 
-            if new_scores != score.exercise_scores:
-                score.exercise_scores = new_scores
-                scores_to_update.append(score)
-        
-        if scores_to_update:
-            Score.objects.bulk_update(scores_to_update, ['exercise_scores'])
+            scores = Score.objects.only("id").prefetch_related("entries")
+            for score in scores.iterator(chunk_size=500):
+                existing_slots = {entry.slot for entry in score.entries.all()}
+                for slot in target_slots:
+                    if slot not in existing_slots:
+                        entries_to_create.append(
+                            ScoreEntry(
+                                score=score,
+                                slot=slot,
+                                points=Decimal("0.00"),
+                                source=ScoreEntry.SOURCE_MANUAL,
+                            )
+                        )
+
+            if entries_to_create:
+                ScoreEntry.objects.bulk_create(entries_to_create, batch_size=1000)
+
+            ScoreEntry.objects.filter(slot__gt=config.num_exercises).delete()
 
         messages.success(self.request, "Configuration saved successfully.")
         return redirect(self.request.path)

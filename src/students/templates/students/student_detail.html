@@ -69,6 +69,22 @@
             <span class="text-gray-500 font-medium w-32 inline-block">Assigned Level</span>
             <span class="text-gray-800">{{ student.level }}</span>
           </div>
+          <div class="pb-3 border-b border-gray-100">
+            <span class="text-gray-500 font-medium w-32 inline-block align-top">E-Learning</span>
+            {% if student.has_login %}
+              <span class="text-gray-800">{{ student.user.email }}</span>
+              <p class="text-xs text-gray-500 mt-1 ml-32">
+                Used to sign in to the e-learning app. Starts with the default
+                password; the student should change it after signing in.
+              </p>
+            {% else %}
+              <span class="text-gray-800 italic">No login yet</span>
+              <p class="text-xs text-gray-500 mt-1 ml-32">
+                Run <code>manage.py provision_student_logins --student-id {{ student.pk }}</code>
+                to create one.
+              </p>
+            {% endif %}
+          </div>
         </div>
         
         {% if user.is_superuser %}

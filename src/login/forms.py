@@ -13,6 +13,17 @@ class LoginWithEmailForm(AuthenticationForm):
         required=False, initial=False, widget=forms.CheckboxInput()
     )
 
+    def confirm_login_allowed(self, user):
+        # students belong to the public e-learning app, not this internal one.
+        # their credentials live on AuthAccount, so they normally cannot
+        # authenticate here anyway -- this is the explicit backstop.
+        if getattr(user, "is_student", False):
+            raise forms.ValidationError(
+                "This account cannot sign in here.",
+                code="student_not_allowed",
+            )
+        super().confirm_login_allowed(user)
+
 
 class EmailExistencePasswordResetForm(PasswordResetForm):
     """
@@ -21,11 +32,14 @@ class EmailExistencePasswordResetForm(PasswordResetForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         User = get_user_model()
-        
-        # check email exists
-        if not User.objects.filter(email=email).exists():
+
+        # check email exists among staff accounts. students reset their password
+        # through the e-learning app, not here.
+        if not User.objects.filter(email=email).exclude(
+            role=User.ROLE_STUDENT
+        ).exists():
             raise forms.ValidationError("There is no user with this email address.")
-            
+
         return email
 
 

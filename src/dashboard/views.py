@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.db.models import Count, Sum, Avg, Q, Max, F
 from django.utils import timezone
 from django.views.generic import TemplateView
@@ -16,7 +16,7 @@ from study_materials.models import StudyMaterial
 User = get_user_model()
 
 
-class DashboardView(LoginRequiredMixin, TemplateView):
+class DashboardView(StaffRequiredMixin, TemplateView):
     template_name = "dashboard/dashboard.html"
     
     greetings = [
@@ -93,7 +93,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             scores = Score.objects.filter(
                 year=current_year,
                 category=category_key
-            ).select_related('student')
+            ).select_related('student').prefetch_related('entries')
             
             best_score = None
             best_student = None

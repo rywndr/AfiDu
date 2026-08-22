@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+from urllib.parse import urlparse
 from pathlib import Path
 
 from django.urls import reverse_lazy
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     "scores",
     "reports",
     "study_materials",
+    "assignments",
     "payments",
     "documents",
     "administrators",
@@ -94,26 +96,26 @@ WSGI_APPLICATION = "afidu.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # comment the below DATABASES setting to use sqlite
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-# uncomment the below DATABASES setting to use PostgreSQL
-# DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
-
 # DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': DATABASE_URL.path.replace('/', ''),
-#         'USER': DATABASE_URL.username,
-#         'PASSWORD': DATABASE_URL.password,
-#         'HOST': DATABASE_URL.hostname,
-#         'PORT': DATABASE_URL.port,
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+# uncomment the below DATABASES setting to use PostgreSQL
+DATABASE_URL = urlparse(os.getenv("DATABASE_URL"))
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': DATABASE_URL.path.replace('/', ''),
+        'USER': DATABASE_URL.username,
+        'PASSWORD': DATABASE_URL.password,
+        'HOST': DATABASE_URL.hostname,
+        'PORT': DATABASE_URL.port,
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -158,11 +160,66 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Media storage. Uploads go to Cloudflare R2 when the R2_* variables are set,
+# and to the local filesystem otherwise
+R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID")
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+
+USE_R2 = all(
+    [R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]
+)
+
+if USE_R2:
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+
+    AWS_ACCESS_KEY_ID = R2_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY = R2_SECRET_ACCESS_KEY
+    AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
+    AWS_S3_ENDPOINT_URL = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    # R2 has a single pseudo-region and requires SigV4
+    AWS_S3_REGION_NAME = "auto"
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_S3_ADDRESSING_STYLE = "virtual"
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    # R2 does not support server-side checksum headers the way S3 does
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
+    if R2_PUBLIC_DOMAIN:
+        # public bucket: serve unsigned URLs from the custom domain
+        AWS_S3_CUSTOM_DOMAIN = R2_PUBLIC_DOMAIN
+        AWS_QUERYSTRING_AUTH = False
+    else:
+        # private bucket: hand out presigned URLs
+        AWS_QUERYSTRING_AUTH = True
+        AWS_QUERYSTRING_EXPIRE = int(os.getenv("R2_URL_EXPIRE_SECONDS", "3600"))
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+
 LOGIN_URL = reverse_lazy("login:login")
 LOGIN_REDIRECT_URL = reverse_lazy("dashboard:dashboard")
 LOGOUT_REDIRECT_URL = reverse_lazy("login:login")
 
 AUTH_USER_MODEL = "login.CustomUser"
+
+# Every student gets an account automatically (see students/signals.py)
+# student emails are derived from their name on this domain,
+# it is not routable, so no mail is ever delivered to it
+STUDENT_LOGIN_EMAIL_DOMAIN = os.getenv("STUDENT_LOGIN_EMAIL_DOMAIN", "afidu.local")
+# Shared starting password
+STUDENT_DEFAULT_PASSWORD = os.getenv("STUDENT_DEFAULT_PASSWORD", "1234")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

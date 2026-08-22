@@ -18,6 +18,7 @@ class StudentForm(forms.ModelForm):
             "address",
             "assigned_class",
             "level",
+            "email",
         ]
         widgets = {
             "date_of_birth": DateInput(
@@ -35,6 +36,9 @@ class StudentForm(forms.ModelForm):
             ),
             "profile_photo": forms.ClearableFileInput(),
             "gender": Select(),
+            "email": forms.EmailInput(
+                attrs={"placeholder": "Leave blank to generate automatically"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -50,6 +54,30 @@ class StudentForm(forms.ModelForm):
             choices.append((class_obj.id, label))
 
         self.fields["assigned_class"].choices = choices
+
+        # the e-learning login email. Optional: when left blank one is derived
+        # from the student's name (see students/provisioning.py).
+        self.fields["email"].required = False
+        self.fields["email"].label = "E-Learning email"
+        self.fields["email"].help_text = (
+            "Optional. Leave blank and a login address is generated from the "
+            "student's name."
+        )
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if not email:
+            return ""
+
+        from login.models import CustomUser
+
+        clash = CustomUser.objects.filter(email__iexact=email)
+        if self.instance.pk and self.instance.user_id:
+            clash = clash.exclude(pk=self.instance.user_id)
+        if clash.exists():
+            raise ValidationError(f"{email} is already used by another account.")
+
+        return email
 
     def clean_assigned_class(self):
         assigned_class = self.cleaned_data.get("assigned_class")

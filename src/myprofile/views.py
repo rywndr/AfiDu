@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, UpdateView
 
@@ -19,7 +19,7 @@ class ProfileContextMixin:
         return context
 
 
-class ProfileView(LoginRequiredMixin, ProfileContextMixin, TemplateView):
+class ProfileView(StaffRequiredMixin, ProfileContextMixin, TemplateView):
     template_name = "myprofile/profile.html"
 
     def get_context_data(self, **kwargs):
@@ -30,7 +30,7 @@ class ProfileView(LoginRequiredMixin, ProfileContextMixin, TemplateView):
         return context
 
 
-class EditProfileView(LoginRequiredMixin, ProfileContextMixin, UpdateView):
+class EditProfileView(StaffRequiredMixin, ProfileContextMixin, UpdateView):
     form_class = ProfileUpdateForm
     template_name = "myprofile/edit_profile.html"
     success_url = reverse_lazy("myprofile:profile")

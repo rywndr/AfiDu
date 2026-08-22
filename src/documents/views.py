@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.views.generic import TemplateView, View
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -28,11 +28,11 @@ class DocumentContextMixin:
         return context
 
 
-class DocumentListView(LoginRequiredMixin, DocumentContextMixin, TemplateView):
+class DocumentListView(StaffRequiredMixin, DocumentContextMixin, TemplateView):
     template_name = "documents/document_list.html"
 
 
-class StudentRegistrationFormView(LoginRequiredMixin, DocumentContextMixin, View):
+class StudentRegistrationFormView(StaffRequiredMixin, DocumentContextMixin, View):
     """download student registration form."""
     
     def get(self, request):
@@ -43,7 +43,7 @@ class StudentRegistrationFormView(LoginRequiredMixin, DocumentContextMixin, View
         return HttpResponseRedirect(static('docs/student_registration_form.pdf'))
 
 
-class StudentPaymentCardView(LoginRequiredMixin, DocumentContextMixin, View):
+class StudentPaymentCardView(StaffRequiredMixin, DocumentContextMixin, View):
     """Download student payment card."""
     
     def get(self, request):
@@ -54,7 +54,7 @@ class StudentPaymentCardView(LoginRequiredMixin, DocumentContextMixin, View):
         return HttpResponseRedirect(static('docs/student_payment_card.pdf'))
 
 
-class StudentListDocumentView(LoginRequiredMixin, DocumentContextMixin, TemplateView):
+class StudentListDocumentView(StaffRequiredMixin, DocumentContextMixin, TemplateView):
     """download student list."""
     
     template_name = "documents/student_list_config.html"
@@ -176,7 +176,7 @@ class StudentListDocumentView(LoginRequiredMixin, DocumentContextMixin, Template
             return render(request, self.template_name, context)
 
 
-class PaymentReportConfigView(LoginRequiredMixin, DocumentContextMixin, TemplateView):
+class PaymentReportConfigView(StaffRequiredMixin, DocumentContextMixin, TemplateView):
     """config page for payment report before downloading."""
     
     template_name = "documents/payment_report_config.html"
@@ -206,7 +206,7 @@ class PaymentReportConfigView(LoginRequiredMixin, DocumentContextMixin, Template
         return redirect('documents:payment_report_download')
 
 
-class PaymentReportDownloadView(LoginRequiredMixin, DocumentContextMixin, View):
+class PaymentReportDownloadView(StaffRequiredMixin, DocumentContextMixin, View):
     """download the configured payment report."""
     
     def get(self, request):
@@ -344,7 +344,7 @@ class PaymentReportDownloadView(LoginRequiredMixin, DocumentContextMixin, View):
             return redirect('documents:payment_report_config')
 
 
-class StudentSummaryConfigView(LoginRequiredMixin, DocumentContextMixin, TemplateView):
+class StudentSummaryConfigView(StaffRequiredMixin, DocumentContextMixin, TemplateView):
     """config page for student summary."""
     
     template_name = "documents/student_summary_config.html"
@@ -383,7 +383,7 @@ class StudentSummaryConfigView(LoginRequiredMixin, DocumentContextMixin, Templat
         return redirect('documents:student_summary_download')
 
 
-class StudentSummaryDownloadView(LoginRequiredMixin, DocumentContextMixin, View):
+class StudentSummaryDownloadView(StaffRequiredMixin, DocumentContextMixin, View):
     """download configured student summary."""
     
     def get(self, request):

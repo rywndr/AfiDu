@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -22,7 +22,7 @@ class StudyMaterialContextMixin:
         context.update(self.get_study_material_context())
         return context
 
-class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListView):
+class StudyMaterialListView(StaffRequiredMixin, StudyMaterialContextMixin, ListView):
     model = StudyMaterial
     template_name = "study_materials/list.html"
     context_object_name = "materials"
@@ -94,7 +94,7 @@ class StudyMaterialListView(LoginRequiredMixin, StudyMaterialContextMixin, ListV
         context["current_sort_by"] = sort_by
         return context
 
-class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, CreateView):
+class StudyMaterialCreateView(StaffRequiredMixin, StudyMaterialContextMixin, CreateView):
     model = StudyMaterial
     form_class = StudyMaterialForm
     template_name = "study_materials/upload.html"
@@ -109,7 +109,7 @@ class StudyMaterialCreateView(LoginRequiredMixin, StudyMaterialContextMixin, Cre
         messages.error(self.request, "Failed to upload study material. Please check the form and try again.")
         return super().form_invalid(form)
 
-class StudyMaterialUpdateView(LoginRequiredMixin, StudyMaterialContextMixin, UpdateView):
+class StudyMaterialUpdateView(StaffRequiredMixin, StudyMaterialContextMixin, UpdateView):
     model = StudyMaterial
     form_class = StudyMaterialForm
     template_name = "study_materials/edit.html"
@@ -130,7 +130,7 @@ class StudyMaterialUpdateView(LoginRequiredMixin, StudyMaterialContextMixin, Upd
         messages.error(self.request, "Failed to update study material.")
         return super().form_invalid(form)
 
-class StudyMaterialDeleteView(LoginRequiredMixin, StudyMaterialContextMixin, DeleteView):
+class StudyMaterialDeleteView(StaffRequiredMixin, StudyMaterialContextMixin, DeleteView):
     model = StudyMaterial
     template_name = "study_materials/confirm_delete.html"
     success_url = reverse_lazy("study_materials:list")

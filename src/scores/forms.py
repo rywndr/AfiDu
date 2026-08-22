@@ -51,6 +51,13 @@ class ScoreForm(forms.ModelForm):
         self.config = config
         super().__init__(*args, **kwargs)
         self.exercise_fields = []
+
+        # read the existing entries once rather than per field
+        if self.instance and self.instance.pk:
+            existing_points = self.instance.exercise_points(config.num_exercises)
+        else:
+            existing_points = []
+
         for i in range(1, self.config.num_exercises + 1):
             field_name = f"exercise_{i}"
             self.fields[field_name] = forms.DecimalField(
@@ -67,13 +74,10 @@ class ScoreForm(forms.ModelForm):
                 ),
             )
 
-            if self.instance and self.instance.pk and self.instance.exercise_scores:
-                try:
-                    value = self.instance.exercise_scores[i - 1]
-                    self.fields[field_name].initial = f"{value:.2f}"
-                except IndexError:
-                    self.fields[field_name].initial = "0.00"
-            else:
+            try:
+                value = existing_points[i - 1]
+                self.fields[field_name].initial = f"{value:.2f}"
+            except IndexError:
                 self.fields[field_name].initial = "0.00"
 
             self.exercise_fields.append(self[field_name])
@@ -96,8 +100,8 @@ class ScoreForm(forms.ModelForm):
         for i in range(1, self.config.num_exercises + 1):
             field_name = f"exercise_{i}"
             score = self.cleaned_data.get(field_name)
-            exercise_scores.append(float(score) if score is not None else 0)
-        instance.exercise_scores = exercise_scores
+            exercise_scores.append(score if score is not None else 0)
+        instance.set_exercise_scores(exercise_scores)
         instance.mid_term = self.cleaned_data.get("mid_term") or 0
         instance.finals = self.cleaned_data.get("finals") or 0
         if commit:

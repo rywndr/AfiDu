@@ -2,7 +2,7 @@ import io
 import zipfile
 from datetime import datetime
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import StaffRequiredMixin
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -46,7 +46,7 @@ class ReportContextMixin:
         return scores_dict
 
 
-class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
+class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
     template_name = "reports/report_list.html"
 
     def get_context_data(self, **kwargs):
@@ -114,7 +114,7 @@ class ReportListView(LoginRequiredMixin, ReportContextMixin, TemplateView):
                 student_id__in=student_ids,
                 year=year,
                 semester=semester
-            ).select_related('student')
+            ).select_related('student').prefetch_related('entries')
             
             # Organize scores by student and category using the model's final_score property
             for score in all_scores:

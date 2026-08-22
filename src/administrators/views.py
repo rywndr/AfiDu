@@ -1,32 +1,15 @@
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import render
 from django.core.exceptions import PermissionDenied
 
+from core.mixins import SuperuserRequiredMixin
+
 User = get_user_model()
 
 
 # Create your views here.
-class SuperuserRequiredMixin(UserPassesTestMixin):
-    """
-    mixin to restrict access to superusers only.
-    """
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def handle_no_permission(self):
-        """
-        custom handler for when user doesn't have permission.
-        renders our custom 403 template instead of default.
-        """
-        if self.request.user.is_authenticated:
-            return render(self.request, '403.html', status=403)
-        else:
-            return super().handle_no_permission()
-
-
 class StaffContextMixin:
     """
     mixin to provide consistent context for staff management views.
@@ -43,7 +26,7 @@ class StaffContextMixin:
         return context
 
 
-class StaffListView(LoginRequiredMixin, SuperuserRequiredMixin, StaffContextMixin, ListView):
+class StaffListView(SuperuserRequiredMixin, StaffContextMixin, ListView):
     """
     view to list all admins and teachers, grouped by roles.
     only accessible by superusers.
