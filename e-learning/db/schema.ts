@@ -17,8 +17,12 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
+  numeric,
   pgTable,
+  smallint,
   text,
+  time,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -104,7 +108,14 @@ export const student = pgTable('students_student', {
 /** Django: students.StudentClass */
 export const studentClass = pgTable('students_studentclass', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  description: text('description').notNull(),
+  startTime: time('start_time').notNull(),
+  endTime: time('end_time').notNull(),
+  maxStudents: integer('max_students').notNull().default(20),
+  days: jsonb('days').$type<string[]>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 });
 
 /**
@@ -156,6 +167,62 @@ export const studyMaterial = pgTable(
   ],
 );
 
+/**
+ * Django: assignments.Assignment.
+ *
+ * Only the assignment row itself is mirrored -- questions, submissions and
+ * answers are not needed yet. `materialId` is the link a study material is
+ * attached through: the FK lives on this side, so one material can back several
+ * assignments but an assignment references at most one material.
+ */
+export const assignment = pgTable(
+  'assignments_assignment',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    title: varchar('title', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 280 }).notNull().unique(),
+    description: text('description').notNull(),
+    kind: varchar('kind', { length: 20 }).notNull().default('normal'),
+    category: varchar('category', { length: 20 }).notNull(),
+    level: varchar('level', { length: 20 }).notNull(),
+    studentClassId: bigint('student_class_id', { mode: 'number' }).references(
+      () => studentClass.id,
+      { onDelete: 'set null' },
+    ),
+    materialId: bigint('material_id', { mode: 'number' }).references(
+      () => studyMaterial.id,
+      { onDelete: 'set null' },
+    ),
+    year: integer('year'),
+    semester: varchar('semester', { length: 5 }),
+    createdById: bigint('created_by_id', { mode: 'number' }).references(
+      () => user.id,
+      { onDelete: 'set null' },
+    ),
+    status: varchar('status', { length: 20 }).notNull().default('draft'),
+    openAt: timestamp('open_at', { withTimezone: true }),
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    timeLimitMinutes: integer('time_limit_minutes'),
+    maxAttempts: smallint('max_attempts').notNull().default(1),
+    allowLate: boolean('allow_late').notNull().default(false),
+    allowFileUpload: boolean('allow_file_upload').notNull().default(false),
+    autoGrade: boolean('auto_grade').notNull().default(false),
+    shuffleQuestions: boolean('shuffle_questions').notNull().default(false),
+    revealAnswersAfterSubmit: boolean('reveal_answers_after_submit')
+      .notNull()
+      .default(false),
+    maxPoints: numeric('max_points', { precision: 6, scale: 2 })
+      .notNull()
+      .default('100.00'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('assignment_visible_idx').on(table.status, table.level, table.category),
+    index('assignment_due_idx').on(table.dueAt),
+  ],
+);
+
 export const schema = {
   user,
   account,
@@ -164,4 +231,5 @@ export const schema = {
   student,
   studentClass,
   studyMaterial,
+  assignment,
 };

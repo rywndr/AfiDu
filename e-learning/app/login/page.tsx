@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-import { redirectIfSignedIn } from './actions';
+import { dashboardPathFor, getSession } from '@/lib/session';
+
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = {
@@ -8,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  await redirectIfSignedIn();
+  const session = await getSession();
+  if (session) redirect(dashboardPathFor(session.user.role));
 
   return (
     <main className="flex flex-1 items-center justify-center bg-muted/40 px-4 py-12">

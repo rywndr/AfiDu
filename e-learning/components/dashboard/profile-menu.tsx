@@ -1,8 +1,9 @@
 'use client';
 
-import { ChevronDown, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Loader2, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-import { signOutAction } from '@/app/login/actions';
 import { roleAccent, type DashboardRole } from '@/components/dashboard/role-theme';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { authClient } from '@/lib/auth-client';
 
 type ProfileMenuProps = {
   userName: string;
@@ -27,6 +29,23 @@ function initialFor(name: string) {
 }
 
 export function ProfileMenu({ userName, accent }: ProfileMenuProps) {
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error(result.error.message);
+      router.replace('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('sign-out failed', error);
+      setSigningOut(false);
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -67,17 +86,20 @@ export function ProfileMenu({ userName, accent }: ProfileMenuProps) {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <form action={signOutAction}>
-          <DropdownMenuItem
-            nativeButton
-            variant="destructive"
-            className="w-full gap-2 px-2 py-2"
-            render={<button type="submit" />}
-          >
+        <DropdownMenuItem
+          nativeButton
+          variant="destructive"
+          className="w-full gap-2 px-2 py-2"
+          disabled={signingOut}
+          render={<button type="button" onClick={handleSignOut} />}
+        >
+          {signingOut ? (
+            <Loader2 aria-hidden="true" className="animate-spin" />
+          ) : (
             <LogOut aria-hidden="true" />
-            Sign out
-          </DropdownMenuItem>
-        </form>
+          )}
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
