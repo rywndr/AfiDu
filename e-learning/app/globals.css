@@ -7,9 +7,32 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --color-brand: var(--brand);
+  --color-brand-muted: var(--brand-muted);
+  --color-shell: var(--shell);
+  --color-shell-border: var(--shell-border);
+  --color-shell-divider: var(--shell-divider);
+  --color-shell-outline: var(--shell-outline);
+  --color-placeholder: var(--placeholder);
+  --color-placeholder-soft: var(--placeholder-soft);
+  --color-ink-strong: var(--ink-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-strong: var(--accent-primary-strong);
+  --color-accent-primary-soft: var(--accent-primary-soft);
+  --color-accent-warm: var(--accent-warm);
+  --color-accent-warm-strong: var(--accent-warm-strong);
+  --color-accent-warm-soft: var(--accent-warm-soft);
+  --color-accent-cool: var(--accent-cool);
+  --color-accent-cool-soft: var(--accent-cool-soft);
+  --shadow-card: 0 14px 35px -30px rgb(20 46 48 / 0.45);
+  --shadow-accent: 0 18px 50px -35px rgb(10 93 101 / 0.7);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,6 +72,27 @@
 }
 
 :root {
+  --brand: #ff4f25;
+  --brand-muted: #c74124;
+  --shell: #f2f5f5;
+  --shell-border: #e2e7e7;
+  --shell-divider: #edf0f0;
+  --shell-outline: #cbd4d4;
+  --placeholder: #e3e9e9;
+  --placeholder-soft: #eef1f1;
+  --ink-strong: #172324;
+  --ink: #243031;
+  --ink-soft: #536061;
+  --ink-muted: #6d7778;
+  --ink-subtle: #869091;
+  --accent-primary: #158d99;
+  --accent-primary-strong: #087784;
+  --accent-primary-soft: #d9f0f1;
+  --accent-warm: #ed8a00;
+  --accent-warm-strong: #b85e00;
+  --accent-warm-soft: #fff0dd;
+  --accent-cool: #357fc4;
+  --accent-cool-soft: #dceafa;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

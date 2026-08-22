@@ -3,9 +3,26 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { signInAction, type SignInState } from './actions';
 
 const initialState: SignInState = {};
+
+type FieldProps = React.ComponentProps<typeof Input> & {
+  id: string;
+  label: string;
+};
+
+function Field({ id, label, ...props }: FieldProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-sm font-medium text-foreground">
+        {label}
+      </label>
+      <Input id={id} {...props} />
+    </div>
+  );
+}
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(
@@ -15,42 +32,26 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor="email"
-          className="text-sm font-medium text-foreground"
-        >
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          disabled={pending}
-          placeholder="you@example.com"
-          className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-        />
-      </div>
+      <Field
+        id="email"
+        name="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        required
+        disabled={pending}
+        placeholder="you@example.com"
+      />
 
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor="password"
-          className="text-sm font-medium text-foreground"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          disabled={pending}
-          className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-        />
-      </div>
+      <Field
+        id="password"
+        name="password"
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        required
+        disabled={pending}
+      />
 
       {state.error ? (
         <p
