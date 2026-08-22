@@ -25,6 +25,51 @@ class ScoreConfig(models.Model):
         default="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals"
     )
 
+    # There are only ever a handful of rows, but resolving one used to cost up
+    # to four queries and it is resolved once per Score. Callers that resolve
+    # many periods take a snapshot() first and hand it to resolve().
+    @classmethod
+    def snapshot(cls):
+        """The whole (tiny) config table, keyed by period, in one query."""
+        return {(c.year, c.semester, c.category): c for c in cls.objects.all()}
+
+    @classmethod
+    def resolve(cls, year=None, semester=None, category=None, configs=None):
+        """
+        The most specific config for a period.
+
+        Pass ``configs`` (a :meth:`snapshot`) when resolving several periods so
+        the table is only read once.
+        """
+        if configs is None:
+            configs = cls.snapshot()
+
+        try:
+            year = int(year) if year not in (None, "", "None") else None
+        except (TypeError, ValueError):
+            year = None
+        semester = semester or None
+        category = category or None
+
+        candidates = [(None, None, None)]
+        if year is not None:
+            candidates.insert(0, (year, None, None))
+            if semester is not None:
+                candidates.insert(0, (year, semester, None))
+                if category is not None:
+                    candidates.insert(0, (year, semester, category))
+
+        for key in candidates:
+            config = configs.get(key)
+            if config is not None:
+                return config
+
+        # no global default yet
+        return cls.objects.create(
+            num_exercises=5,
+            formula="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
+        )
+
     def __str__(self):
         if self.year is None and self.semester is None and self.category is None:
             return "Global Default"
@@ -86,44 +131,27 @@ class Score(models.Model):
         pending = kwargs.pop("exercise_scores", None)
         super().__init__(*args, **kwargs)
         self._pending_entries = None
+        self._config_cache = None
         if pending is not None:
             self.exercise_scores = pending
 
     def get_config(self):
         """Get the most specific config applicable to this score"""
-        # try get specific config for year, semester and category
-        try:
-            return ScoreConfig.objects.get(
-                year=self.year, semester=self.semester, category=self.category
+        # cached per instance: score_sum/final_score/exercise_points each need it
+        if self._config_cache is None:
+            self._config_cache = ScoreConfig.resolve(
+                self.year, self.semester, self.category
             )
-        except ScoreConfig.DoesNotExist:
-            pass
+        return self._config_cache
 
-        # try get config for year and semester
-        try:
-            return ScoreConfig.objects.get(
-                year=self.year, semester=self.semester, category=None
-            )
-        except ScoreConfig.DoesNotExist:
-            pass
+    def set_config(self, config):
+        """
+        Seed this score's config.
 
-        # try get config for just year
-        try:
-            return ScoreConfig.objects.get(year=self.year, semester=None, category=None)
-        except ScoreConfig.DoesNotExist:
-            pass
-
-        # get/create default config
-        config, _ = ScoreConfig.objects.get_or_create(
-            year=None,
-            semester=None,
-            category=None,
-            defaults={
-                "num_exercises": 5,
-                "formula": "0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
-            },
-        )
-        return config
+        Lets a caller resolving a whole page of scores read ScoreConfig once
+        instead of once per score.
+        """
+        self._config_cache = config
 
     # ------------------------------------------------------------------
     # exercise scores

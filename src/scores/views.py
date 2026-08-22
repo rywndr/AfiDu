@@ -81,28 +81,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             per_page_str = self.request.session.get("scores_per_page", "5")
             sort_by = self.request.session.get("scores_sort_by", "")
 
-        config = None
-        try:
-            config = ScoreConfig.objects.get(
-                year=year, semester=semester, category=category
-            )
-        except ScoreConfig.DoesNotExist:
-            try:
-                config = ScoreConfig.objects.get(
-                    year=year, semester=semester, category=None
-                )
-            except ScoreConfig.DoesNotExist:
-                try:
-                    config = ScoreConfig.objects.get(
-                        year=year, semester=None, category=None
-                    )
-                except ScoreConfig.DoesNotExist:
-                    config = ScoreConfig.objects.filter(
-                        year=None, semester=None, category=None
-                    ).first() or ScoreConfig.objects.create(
-                        num_exercises=5,
-                        formula="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
-                    )
+        config = ScoreConfig.resolve(year, semester, category)
 
         students = Student.objects.select_related('assigned_class')
         if search_query:
@@ -135,9 +114,11 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                 year=year,
                 semester=semester,
                 category=category,
-            ).select_related('student').prefetch_related('entries')
+            ).prefetch_related('entries')
             
             for score in scores_qs:
+                # every score on the page shares this period's config
+                score.set_config(config)
                 existing_scores[score.student_id] = score
 
         forms = []
@@ -153,6 +134,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     year=year,
                     semester=semester,
                     category=category,
+                    config=config,
                 )
             else:
                 form = ScoreForm(
@@ -160,6 +142,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     year=year,
                     semester=semester,
                     category=category,
+                    config=config,
                 )
             form.student = student
             forms.append((student, form))
@@ -239,14 +222,17 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
 
         student_ids = [s.id for s in current_page_students]
         existing_scores = {}
+        # resolved once for the whole page rather than per form / per score
+        config = ScoreConfig.resolve(year, semester, category)
         scores_qs = Score.objects.filter(
             student_id__in=student_ids, 
             year=year, 
             semester=semester, 
             category=category
-        ).select_related('student').prefetch_related('entries')
+        ).prefetch_related('entries')
         
         for score in scores_qs:
+            score.set_config(config)
             existing_scores[score.student_id] = score
 
         for student in current_page_students:
@@ -262,6 +248,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     year=year,
                     semester=semester,
                     category=category,
+                    config=config,
                 )
                 if form.is_valid():
                     score = form.save(commit=False)
@@ -269,6 +256,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     score.year = year
                     score.semester = semester
                     score.category = category
+                    score.set_config(config)
                     score.save()
 
         redirect_url = (

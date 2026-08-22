@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.forms.widgets import DateInput, Select, TextInput, CheckboxSelectMultiple
 
 from .models import Student, StudentClass, DAYS_OF_WEEK
@@ -46,7 +47,7 @@ class StudentForm(forms.ModelForm):
 
         # update class dropdown to show capacity info
         choices = [("", "---------")]
-        for class_obj in StudentClass.objects.all():
+        for class_obj in StudentClass.objects.annotate(student_count=Count("student")):
             if class_obj.available_spots > 0:
                 label = f"{class_obj.name} ({class_obj.current_student_count}/{class_obj.max_students} students)"
             else:

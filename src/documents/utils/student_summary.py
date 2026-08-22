@@ -12,8 +12,8 @@ from reportlab.lib.units import inch, cm
 
 from django.conf import settings
 from students.models import Student
-from scores.models import Score
-from payments.models import Payment, PaymentConfig, PaymentInstallment
+from scores.models import Score, ScoreConfig
+from payments.models import Payment, PaymentConfig
 
 
 def generate_student_summary_pdf(student, config):
@@ -148,9 +148,20 @@ def generate_student_summary_pdf(student, config):
             else:
                 filtered_scores = all_scores
                 
-            filtered_scores = filtered_scores.order_by('semester', 'category')
+            # evaluated once: the per-semester slicing below is done in Python so
+            # the entries prefetch is not thrown away and re-run each time
+            filtered_scores = list(filtered_scores.order_by('semester', 'category'))
+            score_configs = ScoreConfig.snapshot()
+            for score in filtered_scores:
+                score.set_config(
+                    ScoreConfig.resolve(
+                        score.year, score.semester, score.category,
+                        configs=score_configs,
+                    )
+                )
                 
-            if filtered_scores.exists():
+            if filtered_scores:
+
                 # get semesters needeed to show
                 semesters = []
                 if semester_filter == 'mid':
@@ -164,9 +175,12 @@ def generate_student_summary_pdf(student, config):
                 
                 # show scores by semester
                 for semester in semesters:
-                    semester_scores = filtered_scores.filter(semester=semester["id"])
+                    semester_scores = [
+                        s for s in filtered_scores if s.semester == semester["id"]
+                    ]
                     
-                    if semester_scores.exists():
+                    if semester_scores:
+
                         if not semester_filter:
                             elements.append(Paragraph(f"{semester['display']} Semester", header_style))
                         
@@ -225,7 +239,12 @@ def generate_student_summary_pdf(student, config):
                 elements.append(Spacer(1, 0.1*inch))
                 
                 # get all payments for this year direct
-                all_payments = list(Payment.objects.filter(student=student, year=year).order_by('month'))
+                all_payments = list(
+                    Payment.objects.filter(student=student, year=year)
+                    .prefetch_related('installments')
+                    .order_by('month')
+                )
+
                 
                 # figure out semester months based on payment config and semester filter
                 if semester_filter == 'mid':
@@ -256,8 +275,12 @@ def generate_student_summary_pdf(student, config):
                     installments_map = {}
                     for payment in payments:
                         if payment.is_installment or (not payment.paid and payment.amount_paid > 0):
-                            # get installments for this payment
-                            installments = list(PaymentInstallment.objects.filter(payment=payment).order_by('payment_date'))
+                            # get installments for this payment (prefetched above)
+                            installments = sorted(
+                                payment.installments.all(),
+                                key=lambda i: i.payment_date,
+                            )
+
                             if installments:
                                 installments_map[payment.id] = installments
                     

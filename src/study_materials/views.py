@@ -28,7 +28,8 @@ class StudyMaterialListView(StaffRequiredMixin, StudyMaterialContextMixin, ListV
     context_object_name = "materials"
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        # the card list renders the uploader for every material
+        queryset = super().get_queryset().select_related("uploaded_by")
         
         # Get filters from request or session
         q = self.request.GET.get("q")

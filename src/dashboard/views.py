@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from payments.models import Payment, PaymentConfig
-from scores.models import Score, SCORE_CATEGORIES
+from scores.models import Score, ScoreConfig, SCORE_CATEGORIES
 from students.models import Student
 from study_materials.models import StudyMaterial
 
@@ -88,6 +88,8 @@ class DashboardView(StaffRequiredMixin, TemplateView):
         
         # Get highest scores using Score model properties
         highest_scorers = {}
+        # read the config table once for every score below
+        score_configs = ScoreConfig.snapshot()
         for category_key, category_label in SCORE_CATEGORIES:
             # Get all scores for this category and year, then find the highest using Python
             scores = Score.objects.filter(
@@ -100,6 +102,14 @@ class DashboardView(StaffRequiredMixin, TemplateView):
             best_semester = None
             
             for score in scores:
+                score.set_config(
+                    ScoreConfig.resolve(
+                        score.year,
+                        score.semester,
+                        score.category,
+                        configs=score_configs,
+                    )
+                )
                 score_value = score.final_score  # This uses the @property method
                 if score_value is not None and score_value > 0:
                     if best_score is None or score_value > best_score:

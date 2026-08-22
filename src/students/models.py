@@ -41,6 +41,11 @@ class StudentClass(models.Model):
 
     @property
     def current_student_count(self):
+        # `student_count` is supplied by an annotation where the callers render
+        # many classes at once; fall back to a COUNT for a lone instance.
+        annotated = getattr(self, "student_count", None)
+        if annotated is not None:
+            return annotated
         return self.student_set.count()
 
     @property

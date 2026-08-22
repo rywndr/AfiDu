@@ -4,7 +4,6 @@ import zipfile
 from datetime import datetime
 from decimal import Decimal
 
-from payments.models import PaymentInstallment
 from django.utils.text import slugify
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -145,8 +144,12 @@ def generate_payment_report_pdf(student, payments, config):
                 for payment in payments:
                     # check if payment is an installment or partial payment
                     if payment.is_installment or (not payment.paid and payment.amount_paid > 0):
-                        # get installments for this payment
-                        installments = list(PaymentInstallment.objects.filter(payment=payment).order_by('payment_date'))
+                        # get installments for this payment (served from the
+                        # prefetch cache when the caller supplied one)
+                        installments = sorted(
+                            payment.installments.all(), key=lambda i: i.payment_date
+                        )
+
                         installments_map[payment.id] = installments
             except ImportError:
                 show_installments = False

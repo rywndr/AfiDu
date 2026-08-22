@@ -258,7 +258,8 @@ class PaymentReportDownloadView(StaffRequiredMixin, DocumentContextMixin, View):
                 students = students.filter(id__in=student_id_list)
             
             # check if have students
-            if not students.exists():
+            students = list(students)
+            if not students:
                 messages.error(request, "No students found matching the selected criteria.")
                 return redirect('documents:payment_report_config')
             
@@ -271,16 +272,17 @@ class PaymentReportDownloadView(StaffRequiredMixin, DocumentContextMixin, View):
             # payments dictionary to store payments by student ID
             payments_by_student = {}
             
-            # fetch payments for each student
+            # fetch every student's payments in one query, then group them
+            grouped = {}
+            for payment in Payment.objects.filter(
+                student_id__in=[s.id for s in students]
+            ).prefetch_related("installments"):
+                grouped.setdefault(payment.student_id, []).append(payment)
+            
             for student in students:
-                # get payments within date range
-                payments_query = Payment.objects.filter(
-                    student=student
-                )
-                
                 # filter by year and month
                 payments = []
-                for payment in payments_query:
+                for payment in grouped.get(student.id, []):
                     payment_date = (payment.year, payment.month)
                     start_date_tuple = (start_year, start_month)
                     end_date_tuple = (end_year, end_month)

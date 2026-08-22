@@ -9,44 +9,15 @@ class ScoreForm(forms.ModelForm):
         model = Score
         fields = ["mid_term", "finals"]
 
-    def __init__(self, *args, year=None, semester=None, category=None, **kwargs):
+    def __init__(self, *args, year=None, semester=None, category=None, config=None, **kwargs):
         self.year = year
         self.semester = semester
         self.category = category
 
-        # use most specific config
-        config = None
-        if year and semester and category:
-            try:
-                config = ScoreConfig.objects.get(
-                    year=year, semester=semester, category=category
-                )
-            except ScoreConfig.DoesNotExist:
-                pass
-
-        if not config and year and semester:
-            try:
-                config = ScoreConfig.objects.get(
-                    year=year, semester=semester, category=None
-                )
-            except ScoreConfig.DoesNotExist:
-                pass
-
-        if not config and year:
-            try:
-                config = ScoreConfig.objects.get(
-                    year=year, semester=None, category=None
-                )
-            except ScoreConfig.DoesNotExist:
-                pass
-
-        if not config:
-            config = ScoreConfig.objects.filter(
-                year=None, semester=None, category=None
-            ).first() or ScoreConfig.objects.create(
-                num_exercises=5,
-                formula="0.30 * (ex_sum / num_exercises) + 0.30 * mid_term + 0.40 * finals",
-            )
+        # use most specific config; callers rendering a page of rows resolve it
+        # once and pass it in rather than paying for a lookup per form
+        if config is None:
+            config = ScoreConfig.resolve(year, semester, category)
 
         self.config = config
         super().__init__(*args, **kwargs)

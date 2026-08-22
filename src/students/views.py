@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -50,7 +51,7 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
     context_object_name = "students"
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related("assigned_class")
 
         # get filters from request or session
         query = self.request.GET.get("q")
@@ -129,8 +130,11 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
             "sort_by", self.request.session.get("student_sort_by", "")
         )
 
-        # pass student count context to list view
-        context["student_count"] = self.get_queryset().count()
+        # pass student count context to list view; the paginator already counted
+        paginator = context.get("paginator")
+        context["student_count"] = (
+            paginator.count if paginator is not None else len(context["students"])
+        )
 
         # add filter values to context
         context["current_query"] = query
@@ -247,6 +251,10 @@ class StudentClassListView(StaffRequiredMixin, ClassContextMixin, ListView):
     model = StudentClass
     template_name = "students/class_list.html"
     context_object_name = "classes"
+
+    def get_queryset(self):
+        # the template asks each class for its occupancy several times
+        return super().get_queryset().annotate(student_count=Count("student"))
 
 
 class StudentClassCreateView(SuperuserRequiredMixin, ClassContextMixin, CreateView):

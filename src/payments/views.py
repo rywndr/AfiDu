@@ -69,7 +69,7 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
         return self.paginate_by
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().select_related("assigned_class")
         
         # Get filters from request or session
         q = self.request.GET.get("q")
@@ -185,25 +185,35 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
         context["current_year"] = current_year
         context["is_current_semester_month"] = is_current_semester_month
 
+        # one query for every payment on this page instead of four per student
+        payments_by_student = {}
+        for payment in Payment.objects.filter(
+            student_id__in=[s.id for s in context["students"]], year=year
+        ):
+            payments_by_student.setdefault(payment.student_id, []).append(payment)
+
         for student in context["students"]:
             # get all payments for this student in the selected year
-            payments = Payment.objects.filter(student=student, year=year)
+            payments = payments_by_student.get(student.id, [])
             
             # calculate payment status
-            months_paid = payments.filter(paid=True).count()
-            months_partial = payments.filter(amount_paid__gt=0, paid=False).count()
+            months_paid = sum(1 for p in payments if p.paid)
+            months_partial = sum(1 for p in payments if p.amount_paid > 0 and not p.paid)
             
             # check if any payment has reached max installments but isn't fully paid
-            has_maxed_installments = payments.filter(
-                current_installment=payment_config.max_installments,
-                paid=False,
-                amount_paid__gt=0
-            ).exists()
+            has_maxed_installments = any(
+                p.current_installment == payment_config.max_installments
+                and not p.paid
+                and p.amount_paid > 0
+                for p in payments
+            )
             
             # check current month payment status
             current_month_paid = False
             if is_current_semester_month and year == current_year:
-                current_month_payment = payments.filter(month=current_month).first()
+                current_month_payment = next(
+                    (p for p in payments if p.month == current_month), None
+                )
                 current_month_paid = current_month_payment and current_month_payment.paid
             
             # determine status based on completion
@@ -349,7 +359,7 @@ class StudentPaymentDetailView(StaffRequiredMixin, PaymentContextMixin, DetailVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         year = self.get_year()
-        student = self.get_object()
+        student = self.object
 
         # get payment config
         payment_config = PaymentConfig.get_active(year)
@@ -369,12 +379,19 @@ class StudentPaymentDetailView(StaffRequiredMixin, PaymentContextMixin, DetailVi
         }
 
         # get/create payments for each semester and check installment limits
+        # one query up front; rows are only ever created on the first visit
+        existing = {
+            payment.month: payment
+            for payment in Payment.objects.filter(student=student, year=year)
+        }
         for semester_data in semesters.values():
             for month in semester_data["months"]:
-                payment, created = Payment.objects.get_or_create(
-                    student=student, year=year, month=month,
-                    defaults={"amount_paid": 0}
-                )
+                payment = existing.get(month)
+                if payment is None:
+                    payment = Payment.objects.create(
+                        student=student, year=year, month=month, amount_paid=0
+                    )
+                    existing[month] = payment
                 
                 # Add flag for installment limit reached
                 payment.installment_limit_reached = (

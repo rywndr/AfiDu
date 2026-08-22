@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
 
-from scores.models import SCORE_CATEGORIES, Score
+from scores.models import SCORE_CATEGORIES, Score, ScoreConfig
 from students.models import LEVELS, Student, StudentClass
 
 from .utils import SCORE_CATEGORIES, generate_student_report_pdf
@@ -33,16 +33,27 @@ class ReportContextMixin:
         context.update(self.get_report_context())
         return context
 
-    def get_student_scores(self, student, year, semester):
+    def get_student_scores(self, student, year, semester, configs=None):
+        # one query for every category instead of one query per category
+        if configs is None:
+            configs = ScoreConfig.snapshot()
+        found = {}
+        for score in Score.objects.filter(
+            student=student, year=year, semester=semester
+        ).prefetch_related("entries"):
+            score.set_config(
+                ScoreConfig.resolve(
+                    score.year, score.semester, score.category, configs=configs
+                )
+            )
+            found[score.category] = score
+
         scores_dict = {}
         for key, _ in SCORE_CATEGORIES:
-            try:
-                score_obj = Score.objects.get(
-                    student=student, year=year, semester=semester, category=key
-                )
-                scores_dict[key] = f"{score_obj.final_score:.2f}"
-            except Score.DoesNotExist:
-                scores_dict[key] = "N/A"
+            score_obj = found.get(key)
+            scores_dict[key] = (
+                f"{score_obj.final_score:.2f}" if score_obj is not None else "N/A"
+            )
         return scores_dict
 
 
@@ -114,10 +125,16 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
                 student_id__in=student_ids,
                 year=year,
                 semester=semester
-            ).select_related('student').prefetch_related('entries')
+            ).prefetch_related('entries')
             
             # Organize scores by student and category using the model's final_score property
+            configs = ScoreConfig.snapshot()
             for score in all_scores:
+                score.set_config(
+                    ScoreConfig.resolve(
+                        score.year, score.semester, score.category, configs=configs
+                    )
+                )
                 student_id = score.student_id
                 if student_id not in scores_by_student:
                     scores_by_student[student_id] = {}
@@ -223,11 +240,14 @@ class ExportReportsZipView(ReportContextMixin, TemplateView):
             students = students.filter(assigned_class=class_filter)
 
         in_memory = io.BytesIO()
+        configs = ScoreConfig.snapshot()
         with zipfile.ZipFile(
             in_memory, mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zipf:
             for student in students:
-                student.scores_dict = self.get_student_scores(student, year, semester)
+                student.scores_dict = self.get_student_scores(
+                    student, year, semester, configs=configs
+                )
                 pdf = generate_student_report_pdf(student, year, semester)
                 safe_name = student.name.replace(" ", "_")
                 filename = f"{safe_name}_report.pdf"

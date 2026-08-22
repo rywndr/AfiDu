@@ -67,11 +67,11 @@ class StaffListView(SuperuserRequiredMixin, StaffContextMixin, ListView):
         # apply filters to queryset
         if query:
             queryset = queryset.filter(
-                Q(first_name__icontains=query) | 
-                Q(last_name__icontains=query) | 
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query) |
                 Q(email__icontains=query)
             )
-        
+
         if role_filter:
             queryset = queryset.filter(role=role_filter)
 
@@ -106,17 +106,17 @@ class StaffListView(SuperuserRequiredMixin, StaffContextMixin, ListView):
         )
 
         # group staff by role for display
-        all_staff = self.get_queryset()
-        administrators = all_staff.filter(role=User.ROLE_SUPERUSER)
-        teachers = all_staff.filter(role=User.ROLE_TEACHER)
+        all_staff = list(context["staff_members"])
+        administrators = [s for s in all_staff if s.role == User.ROLE_SUPERUSER]
+        teachers = [s for s in all_staff if s.role == User.ROLE_TEACHER]
 
         # add context data
         context.update({
             "administrators": administrators,
             "teachers": teachers,
-            "total_administrators": administrators.count(),
-            "total_teachers": teachers.count(),
-            "total_staff": all_staff.count(),
+            "total_administrators": len(administrators),
+            "total_teachers": len(teachers),
+            "total_staff": len(all_staff),
             "current_query": query,
             "current_role_filter": role_filter,
             "current_sort_by": sort_by,
