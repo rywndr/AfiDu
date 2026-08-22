@@ -1,15 +1,17 @@
-from io import BytesIO
 import logging
+import mimetypes
+import uuid
 
 from django.conf import settings
-from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.text import slugify
-from pdf2image import convert_from_bytes, pdfinfo_from_bytes
-
 from core.constants import LEVELS, SUBJECT_CATEGORIES
+from core.storage import study_material_storage
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +20,32 @@ CATEGORY_CHOICES = SUBJECT_CATEGORIES
 LEVEL_CHOICES = LEVELS
 
 
+def study_material_upload_to(instance, filename):
+    """Generate a collision-resistant B2 key while preserving the extension."""
+    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
+    date_path = timezone.now().strftime("%Y/%m")
+    return f"study_materials/{date_path}/{uuid.uuid4().hex}.{extension}"
+
+
+def study_material_thumbnail_upload_to(instance, filename):
+    date_path = timezone.now().strftime("%Y/%m")
+    return f"study_material_thumbnails/{date_path}/{uuid.uuid4().hex}.jpg"
+
+
 # Create your models here.
 class StudyMaterial(models.Model):
+    TYPE_PDF = "pdf"
+    TYPE_VIDEO = "video"
+    TYPE_WRITE_UP = "write_up"
+    TYPE_CHOICES = [
+        (TYPE_PDF, "PDF document"),
+        (TYPE_VIDEO, "Video"),
+        (TYPE_WRITE_UP, "Write-up"),
+    ]
+    PDF_EXTENSIONS = ("pdf",)
+    VIDEO_EXTENSIONS = ("mp4", "webm", "mov", "m4v")
+    FILE_EXTENSIONS = PDF_EXTENSIONS + VIDEO_EXTENSIONS
+
     STATUS_DRAFT = "draft"
     STATUS_PUBLISHED = "published"
     STATUS_ARCHIVED = "archived"
@@ -35,6 +61,13 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     description = models.TextField(blank=True)
+    material_type = models.CharField(
+        max_length=20, choices=TYPE_CHOICES, default=TYPE_PDF
+    )
+    content = models.TextField(
+        blank=True,
+        help_text="The lesson content for a write-up material.",
+    )
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
     # optional narrower targeting: a specific class within the level
@@ -48,11 +81,16 @@ class StudyMaterial(models.Model):
     )
 
     file = models.FileField(
-        upload_to="study_materials/",
-        validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
+        upload_to=study_material_upload_to,
+        storage=study_material_storage,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=FILE_EXTENSIONS)],
     )
     thumbnail = models.ImageField(
-        upload_to="study_material_thumbnails/", blank=True, null=True
+        upload_to=study_material_thumbnail_upload_to,
+        storage=study_material_storage,
+        blank=True,
+        null=True,
     )
 
     # file metadata, captured on save so listings don't have to touch storage
@@ -94,8 +132,18 @@ class StudyMaterial(models.Model):
     def is_published(self):
         return self.status == self.STATUS_PUBLISHED
 
+    @property
+    def is_write_up(self):
+        return self.material_type == self.TYPE_WRITE_UP
+
+    @property
+    def is_video(self):
+        return self.material_type == self.TYPE_VIDEO
+
     def get_file_extension(self):
-        return self.file.name.split(".")[-1].lower()
+        if not self.file or "." not in self.file.name:
+            return ""
+        return self.file.name.rsplit(".", 1)[-1].lower()
 
     def is_visible_to(self, student):
         """
@@ -122,7 +170,47 @@ class StudyMaterial(models.Model):
             suffix += 1
         return slug
 
+    def clean(self):
+        super().clean()
+        errors = {}
+        extension = self.get_file_extension()
+
+        if self.is_write_up:
+            if not self.content.strip():
+                errors["content"] = "Write-up materials must include content."
+        else:
+            if not self.file:
+                errors["file"] = "PDF and video materials require a file."
+            elif self.material_type == self.TYPE_PDF and extension not in self.PDF_EXTENSIONS:
+                errors["file"] = "PDF materials require a .pdf file."
+            elif (
+                self.material_type == self.TYPE_VIDEO
+                and extension not in self.VIDEO_EXTENSIONS
+            ):
+                errors["file"] = (
+                    "Video materials must use MP4, WebM, MOV, or M4V format."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
     def save(self, *args, **kwargs):
+        previous_file_name = ""
+        previous_thumbnail_name = ""
+        if self.pk:
+            previous = (
+                StudyMaterial.objects.filter(pk=self.pk)
+                .only("file", "thumbnail")
+                .first()
+            )
+            if previous:
+                previous_file_name = previous.file.name
+                previous_thumbnail_name = previous.thumbnail.name
+
+        new_upload = bool(
+            self.file and not getattr(self.file, "_committed", True)
+        )
+
         if not self.slug:
             self.slug = self._build_slug()
 
@@ -131,65 +219,68 @@ class StudyMaterial(models.Model):
         elif self.status != self.STATUS_PUBLISHED:
             self.published_at = None
 
-        # capture metadata while the uploaded file is still in memory
-        if self.file:
-            if not self.original_filename:
-                self.original_filename = self.file.name.rsplit("/", 1)[-1][:255]
-            if not self.mime_type:
-                self.mime_type = "application/pdf"
+        # Capture metadata while a new upload is still in memory. These values
+        # let both apps render listings without issuing storage HEAD requests.
+        if new_upload:
+            self.original_filename = self.file.name.rsplit("/", 1)[-1][:255]
+            self.mime_type = (
+                getattr(self.file.file, "content_type", "")
+                or mimetypes.guess_type(self.file.name)[0]
+                or "application/octet-stream"
+            )
             try:
                 self.file_size_bytes = self.file.size
             except (OSError, ValueError):
                 pass
+            self.page_count = None
 
-        # save file dulu
+        # Thumbnails are legacy metadata. The material library now uses compact
+        # type icons, so saving a material removes any old generated image.
+        self.thumbnail = None
+
+        if self.is_write_up:
+            self.file = None
+            self.thumbnail = None
+            self.original_filename = ""
+            self.mime_type = "text/plain"
+            self.file_size_bytes = None
+            self.page_count = None
+        elif self.material_type == self.TYPE_VIDEO:
+            self.thumbnail = None
+            self.page_count = None
+
         super().save(*args, **kwargs)
 
-        # generate thumbnail pakai pdf2image jika file nya == PDF dan thumbnail nya belum ada.
-        # read/write through the storage API so this works on remote backends
-        # (Cloudflare R2) as well as local disk.
-        if self.file and self.get_file_extension() == "pdf" and not self.thumbnail:
+        file_storage = self._meta.get_field("file").storage
+        thumbnail_storage = self._meta.get_field("thumbnail").storage
+        if previous_file_name and previous_file_name != self.file.name:
             try:
-                self.file.open("rb")
-                try:
-                    pdf_bytes = self.file.read()
-                finally:
-                    self.file.close()
-
-                # ubah page pertama dari PDF ke jpeg
-                pages = convert_from_bytes(pdf_bytes, first_page=1, last_page=1)
-
-                update_fields = []
-                try:
-                    self.page_count = pdfinfo_from_bytes(pdf_bytes).get("Pages")
-                    update_fields.append("page_count")
-                except Exception:
-                    pass
-
-                if pages:
-                    buffer = BytesIO()
-                    pages[0].convert("RGB").save(buffer, "JPEG", quality=85)
-                    self.thumbnail.save(
-                        f"{self.pk}_thumb.jpg",
-                        ContentFile(buffer.getvalue()),
-                        save=False,
-                    )
-                    update_fields.append("thumbnail")
-
-                if update_fields:
-                    super().save(update_fields=update_fields)
-            except Exception as e:
-                # a missing poppler install or an unreadable PDF must not block
-                # the upload itself
+                file_storage.delete(previous_file_name)
+            except Exception as exc:
+                logger.warning("Could not delete replaced material file %s: %s", previous_file_name, exc)
+        if previous_thumbnail_name and previous_thumbnail_name != self.thumbnail.name:
+            try:
+                thumbnail_storage.delete(previous_thumbnail_name)
+            except Exception as exc:
                 logger.warning(
-                    "Could not generate thumbnail for study material %s: %s",
-                    self.pk,
-                    e,
+                    "Could not delete replaced material thumbnail %s: %s",
+                    previous_thumbnail_name,
+                    exc,
                 )
 
-    def delete(self, *args, **kwargs):
-        # delete file dan thumbnail dari storage
-        self.file.delete(save=False)
-        if self.thumbnail:
-            self.thumbnail.delete(save=False)
-        super().delete(*args, **kwargs)
+@receiver(post_delete, sender=StudyMaterial)
+def delete_study_material_objects(sender, instance, **kwargs):
+    """Remove media objects for individual and bulk/queryset deletions."""
+    for field_name in ("file", "thumbnail"):
+        field_file = getattr(instance, field_name)
+        if not field_file:
+            continue
+        try:
+            field_file.storage.delete(field_file.name)
+        except Exception as exc:
+            logger.warning(
+                "Could not delete %s for study material %s: %s",
+                field_name,
+                instance.pk,
+                exc,
+            )

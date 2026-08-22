@@ -9,6 +9,7 @@ from .models import StudyMaterial
 class StudyMaterialAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "material_type",
         "category",
         "level",
         "student_class",
@@ -18,7 +19,14 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         "uploaded_at",
         "edited_at",
     )
-    list_filter = ("status", "category", "level", "student_class", "uploaded_at")
+    list_filter = (
+        "material_type",
+        "status",
+        "category",
+        "level",
+        "student_class",
+        "uploaded_at",
+    )
     list_editable = ("status", "position")
     search_fields = (
         "title",
@@ -31,7 +39,6 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("uploaded_by",)
     readonly_fields = (
-        "thumbnail",
         "original_filename",
         "mime_type",
         "file_size_bytes",
@@ -45,7 +52,7 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "slug", "description")}),
         ("Targeting", {"fields": ("category", "level", "student_class")}),
         ("Publishing", {"fields": ("status", "published_at", "position")}),
-        ("File", {"fields": ("file", "thumbnail")}),
+        ("Content", {"fields": ("material_type", "content", "file")}),
         (
             "Metadata",
             {

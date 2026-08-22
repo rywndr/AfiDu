@@ -14,6 +14,7 @@ import os
 from urllib.parse import urlparse
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
 
@@ -76,7 +77,7 @@ ROOT_URLCONF = "afidu.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ["templates"],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -160,49 +161,82 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Media storage. Uploads go to Cloudflare R2 when the R2_* variables are set,
-# and to the local filesystem otherwise
-R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID")
-R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-
-USE_R2 = all(
-    [R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]
+# Media storage. Backblaze B2 exposes an S3-compatible endpoint, so uploads can
+# use django-storages. With no B2 settings development continues to use MEDIA_ROOT.
+_b2_endpoint = os.getenv("B2_ENDPOINT_URL", "").rstrip("/")
+B2_ENDPOINT_URL = (
+    f"https://{_b2_endpoint}"
+    if _b2_endpoint and "://" not in _b2_endpoint
+    else _b2_endpoint
 )
+B2_REGION_NAME = os.getenv("B2_REGION_NAME", "")
+B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME", "")
+B2_KEY_ID = os.getenv("B2_KEY_ID", "")
+B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY", "")
+B2_PUBLIC_URL = os.getenv("B2_PUBLIC_URL", "").rstrip("/")
 
-if USE_R2:
+_b2_required = {
+    "B2_ENDPOINT_URL": B2_ENDPOINT_URL,
+    "B2_REGION_NAME": B2_REGION_NAME,
+    "B2_BUCKET_NAME": B2_BUCKET_NAME,
+    "B2_KEY_ID": B2_KEY_ID,
+    "B2_APPLICATION_KEY": B2_APPLICATION_KEY,
+}
+USE_B2 = all(_b2_required.values())
+
+if any(_b2_required.values()) and not USE_B2:
+    missing = ", ".join(name for name, value in _b2_required.items() if not value)
+    raise ImproperlyConfigured(
+        f"Backblaze B2 is only partially configured. Missing: {missing}."
+    )
+
+if USE_B2:
+    if not B2_ENDPOINT_URL.startswith("https://"):
+        raise ImproperlyConfigured("B2_ENDPOINT_URL must be an HTTPS URL.")
+
+    public_domain = None
+    if B2_PUBLIC_URL:
+        parsed_public_url = urlparse(B2_PUBLIC_URL)
+        public_domain = parsed_public_url.netloc or parsed_public_url.path
+
+    b2_storage_options = {
+        "access_key": B2_KEY_ID,
+        "secret_key": B2_APPLICATION_KEY,
+        "bucket_name": B2_BUCKET_NAME,
+        "endpoint_url": B2_ENDPOINT_URL,
+        "region_name": B2_REGION_NAME,
+        "signature_version": "s3v4",
+        "addressing_style": "virtual",
+        # B2 applies ACLs at bucket level; do not send per-object ACLs.
+        "default_acl": None,
+        "object_parameters": {"CacheControl": "max-age=86400"},
+        "querystring_auth": public_domain is None,
+        "querystring_expire": int(os.getenv("B2_URL_EXPIRE_SECONDS", "3600")),
+        "custom_domain": public_domain,
+        "url_protocol": "https:",
+    }
+
     STORAGES = {
-        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {**b2_storage_options, "file_overwrite": False},
+        },
+        # Study-material object names contain UUIDs. Skipping overwrite checks
+        # avoids an unnecessary HeadObject request before every upload.
+        "study_materials": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {**b2_storage_options, "file_overwrite": True},
+        },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
         },
     }
-
-    AWS_ACCESS_KEY_ID = R2_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY = R2_SECRET_ACCESS_KEY
-    AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
-    AWS_S3_ENDPOINT_URL = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-    # R2 has a single pseudo-region and requires SigV4
-    AWS_S3_REGION_NAME = "auto"
-    AWS_S3_SIGNATURE_VERSION = "s3v4"
-    AWS_S3_ADDRESSING_STYLE = "virtual"
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None
-    # R2 does not support server-side checksum headers the way S3 does
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-
-    if R2_PUBLIC_DOMAIN:
-        # public bucket: serve unsigned URLs from the custom domain
-        AWS_S3_CUSTOM_DOMAIN = R2_PUBLIC_DOMAIN
-        AWS_QUERYSTRING_AUTH = False
-    else:
-        # private bucket: hand out presigned URLs
-        AWS_QUERYSTRING_AUTH = True
-        AWS_QUERYSTRING_EXPIRE = int(os.getenv("R2_URL_EXPIRE_SECONDS", "3600"))
 else:
     STORAGES = {
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "study_materials": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage"
+        },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
         },

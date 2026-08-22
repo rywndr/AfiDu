@@ -15,6 +15,8 @@ import {
   bigint,
   bigserial,
   boolean,
+  index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -105,4 +107,61 @@ export const studentClass = pgTable('students_studentclass', {
   name: varchar('name', { length: 100 }).notNull(),
 });
 
-export const schema = { user, account, session, verification };
+/**
+ * Django: study_materials.StudyMaterial.
+ *
+ * `file` and `thumbnail` contain Django storage object names, not permanent
+ * public URLs. Private B2 URLs must be signed when they are rendered.
+ */
+export const studyMaterial = pgTable(
+  'study_materials_studymaterial',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    title: varchar('title', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 280 }).notNull().unique(),
+    description: text('description').notNull(),
+    materialType: varchar('material_type', { length: 20 })
+      .notNull()
+      .default('pdf'),
+    content: text('content').notNull(),
+    category: varchar('category', { length: 20 }).notNull(),
+    level: varchar('level', { length: 20 }).notNull(),
+    studentClassId: bigint('student_class_id', { mode: 'number' }).references(
+      () => studentClass.id,
+      { onDelete: 'set null' },
+    ),
+    file: varchar('file', { length: 100 }).notNull(),
+    thumbnail: varchar('thumbnail', { length: 100 }),
+    originalFilename: varchar('original_filename', { length: 255 }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    fileSizeBytes: bigint('file_size_bytes', { mode: 'number' }),
+    pageCount: integer('page_count'),
+    status: varchar('status', { length: 20 }).notNull().default('draft'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    position: integer('position').notNull().default(0),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true }).notNull(),
+    editedAt: timestamp('edited_at', { withTimezone: true }).notNull(),
+    uploadedById: bigint('uploaded_by_id', { mode: 'number' }).references(
+      () => user.id,
+      { onDelete: 'cascade' },
+    ),
+  },
+  (table) => [
+    index('study_material_visible_idx').on(
+      table.status,
+      table.level,
+      table.category,
+    ),
+    index('study_material_position_idx').on(table.position),
+  ],
+);
+
+export const schema = {
+  user,
+  account,
+  session,
+  verification,
+  student,
+  studentClass,
+  studyMaterial,
+};
