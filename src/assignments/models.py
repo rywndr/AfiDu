@@ -14,25 +14,10 @@ class Assignment(models.Model):
     """
     A piece of work handed to a level or a single class.
 
-    ``kind`` decides how the e-learning app renders and grades it:
-    objective/quiz assignments are auto-graded from their questions, essay and
-    file-upload assignments are graded by hand.
+    An assignment has no type of its own: it carries whatever mix of questions a
+    teacher adds, and each ``Question.kind`` decides whether that answer is
+    scored from an answer key or marked by hand.
     """
-
-    KIND_NORMAL = "normal"
-    KIND_ESSAY = "essay"
-    KIND_OBJECTIVE = "objective"
-    KIND_QUIZ = "quiz"
-    KIND_FILE_UPLOAD = "file_upload"
-    KIND_CHOICES = [
-        (KIND_NORMAL, "Normal"),
-        (KIND_ESSAY, "Essay"),
-        (KIND_OBJECTIVE, "Objective"),
-        (KIND_QUIZ, "Quiz"),
-        (KIND_FILE_UPLOAD, "File upload"),
-    ]
-    # kinds whose questions can be scored without a human
-    AUTO_GRADABLE_KINDS = {KIND_OBJECTIVE, KIND_QUIZ}
 
     STATUS_DRAFT = "draft"
     STATUS_PUBLISHED = "published"
@@ -46,7 +31,6 @@ class Assignment(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     description = models.TextField(blank=True)
-    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_NORMAL)
 
     category = models.CharField(max_length=20, choices=SUBJECT_CATEGORIES)
     level = models.CharField(max_length=20, choices=LEVELS)
@@ -90,7 +74,7 @@ class Assignment(models.Model):
     time_limit_minutes = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Timed quizzes only. Leave empty for untimed work.",
+        help_text="Minutes allowed once started. Leave empty for untimed work.",
     )
     max_attempts = models.PositiveSmallIntegerField(default=1)
     allow_late = models.BooleanField(default=False)
@@ -145,10 +129,6 @@ class Assignment(models.Model):
         return self.time_limit_minutes is not None
 
     @property
-    def is_auto_gradable(self):
-        return self.kind in self.AUTO_GRADABLE_KINDS
-
-    @property
     def is_open(self):
         """Whether students can start or submit an attempt right now."""
         if self.status != self.STATUS_PUBLISHED:
@@ -173,21 +153,6 @@ class Assignment(models.Model):
 
         if self.due_at and self.open_at and self.due_at <= self.open_at:
             errors["due_at"] = "Due date must be after the open date."
-
-        if self.time_limit_minutes is not None and self.kind != self.KIND_QUIZ:
-            errors["time_limit_minutes"] = (
-                "Only quiz assignments can have a time limit."
-            )
-
-        if self.auto_grade and not self.is_auto_gradable:
-            errors["auto_grade"] = (
-                "Auto-grading is only available for objective and quiz assignments."
-            )
-
-        if self.kind == self.KIND_FILE_UPLOAD and not self.allow_file_upload:
-            errors["allow_file_upload"] = (
-                "File-upload assignments must allow file uploads."
-            )
 
         if self.max_attempts is not None and self.max_attempts < 1:
             errors["max_attempts"] = "At least one attempt must be allowed."
@@ -461,7 +426,7 @@ class Submission(models.Model):
                 "updated_at",
             ]
         )
-        if self.assignment.auto_grade and self.assignment.is_auto_gradable:
+        if self.assignment.auto_grade:
             self.grade_objective()
         return self
 

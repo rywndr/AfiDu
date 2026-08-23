@@ -27,7 +27,6 @@ class QuestionInline(admin.TabularInline):
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "kind",
         "category",
         "level",
         "student_class",
@@ -36,7 +35,7 @@ class AssignmentAdmin(admin.ModelAdmin):
         "due_at",
         "question_count",
     )
-    list_filter = ("status", "kind", "category", "level", "student_class")
+    list_filter = ("status", "category", "level", "student_class")
     search_fields = ("title", "slug", "description")
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("created_by", "material", "student_class")
@@ -45,7 +44,7 @@ class AssignmentAdmin(admin.ModelAdmin):
     inlines = [QuestionInline]
 
     fieldsets = (
-        (None, {"fields": ("title", "slug", "description", "kind")}),
+        (None, {"fields": ("title", "slug", "description")}),
         ("Targeting", {"fields": ("category", "level", "student_class", "material")}),
         ("Score linkage", {"fields": ("year", "semester", "max_points")}),
         (
@@ -137,9 +136,8 @@ class SubmissionAdmin(admin.ModelAdmin):
     def regrade_objective(self, request, queryset):
         graded = 0
         for submission in queryset.select_related("assignment"):
-            if submission.assignment.is_auto_gradable:
-                submission.grade_objective()
-                graded += 1
+            submission.grade_objective()
+            graded += 1
         self.message_user(request, f"Re-graded {graded} submission(s).")
 
 

@@ -94,8 +94,8 @@ class Score(models.Model):
     category = models.CharField(max_length=10, choices=SCORE_CATEGORIES)
 
     # Exercise scores now live in ScoreEntry rows so each one can point at the
-    # assignment or material that produced it. This column is kept (unused) so
-    # the migration is reversible.
+    # assignment that produced it. This column is kept (unused) so the migration
+    # is reversible.
     legacy_exercise_scores = models.JSONField(default=list, blank=True)
     mid_term = models.DecimalField(
         max_digits=5,
@@ -277,18 +277,17 @@ class ScoreEntry(models.Model):
     One exercise slot on a Score.
 
     Slots are 1-indexed and bounded by ``ScoreConfig.num_exercises``. An entry
-    may record where its value came from: a graded assignment submission, a
-    study material, or manual entry by a teacher.
+    may record where its value came from: a graded assignment submission, or
+    manual entry by a teacher. Study materials are not graded, so an entry never
+    points at one.
     """
 
     SOURCE_MANUAL = "manual"
     SOURCE_ASSIGNMENT = "assignment"
-    SOURCE_MATERIAL = "material"
     SOURCE_QUIZ = "quiz"
     SOURCE_CHOICES = [
         (SOURCE_MANUAL, "Manual"),
         (SOURCE_ASSIGNMENT, "Assignment"),
-        (SOURCE_MATERIAL, "Study material"),
         (SOURCE_QUIZ, "Quiz"),
     ]
 
@@ -307,13 +306,6 @@ class ScoreEntry(models.Model):
 
     assignment = models.ForeignKey(
         "assignments.Assignment",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="score_entries",
-    )
-    material = models.ForeignKey(
-        "study_materials.StudyMaterial",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -341,12 +333,6 @@ class ScoreEntry(models.Model):
             ),
             models.CheckConstraint(
                 condition=models.Q(slot__gte=1), name="score_entry_slot_min"
-            ),
-            # an entry is sourced from an assignment or a material, not both
-            models.CheckConstraint(
-                condition=models.Q(assignment__isnull=True)
-                | models.Q(material__isnull=True),
-                name="score_entry_single_source",
             ),
         ]
 

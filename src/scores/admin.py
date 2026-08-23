@@ -14,8 +14,8 @@ class ScoreConfigAdmin(admin.ModelAdmin):
 class ScoreEntryInline(admin.TabularInline):
     model = ScoreEntry
     extra = 0
-    fields = ("slot", "points", "source", "assignment", "material", "submission", "note")
-    raw_id_fields = ("assignment", "material", "submission")
+    fields = ("slot", "points", "source", "assignment", "submission", "note")
+    raw_id_fields = ("assignment", "submission")
     ordering = ("slot",)
 
 
@@ -44,7 +44,7 @@ class ScoreAdmin(admin.ModelAdmin):
 
 @admin.register(ScoreEntry)
 class ScoreEntryAdmin(admin.ModelAdmin):
-    list_display = ("score", "slot", "points", "source", "assignment", "material")
+    list_display = ("score", "slot", "points", "source", "assignment")
     list_filter = ("source",)
     search_fields = ("score__student__name", "note")
-    raw_id_fields = ("score", "assignment", "material", "submission")
+    raw_id_fields = ("score", "assignment", "submission")

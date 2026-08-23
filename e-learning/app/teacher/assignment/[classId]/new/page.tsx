@@ -1,64 +1,61 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
+import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
-import { isB2Configured } from '@/lib/b2';
 import { formatDays, formatTimeRange } from '@/lib/format';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
+import { listClassMaterialOptions } from '@/lib/assignments';
 import { getClassDetail } from '@/lib/study-materials';
 
-import { ModuleForm } from './upload-form';
+import { AssignmentForm } from './assignment-form';
 
 export async function generateMetadata({
   params,
-}: PageProps<'/teacher/module/[classId]/upload'>): Promise<Metadata> {
+}: PageProps<'/teacher/assignment/[classId]/new'>): Promise<Metadata> {
   const id = parseRouteId((await params).classId);
   const detail = Number.isNaN(id) ? null : await getClassDetail(id);
   return {
     title: detail
-      ? `Add a module to ${detail.name} | AfiDu E-Learning`
-      : 'Add module | AfiDu E-Learning',
+      ? `New assignment for ${detail.name} | AfiDu E-Learning`
+      : 'New assignment | AfiDu E-Learning',
   };
 }
 
-export default async function UploadModulePage({
+export default async function NewAssignmentPage({
   params,
-}: PageProps<'/teacher/module/[classId]/upload'>) {
+}: PageProps<'/teacher/assignment/[classId]/new'>) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
   const id = parseRouteId((await params).classId);
   if (Number.isNaN(id)) notFound();
-  const detail = await getClassDetail(id);
+
+  const [detail, materials] = await Promise.all([
+    getClassDetail(id),
+    listClassMaterialOptions(id),
+  ]);
   if (!detail) notFound();
 
   return (
     <>
-      <Link
-        href={`/teacher/module/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink-strong"
-      >
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Back to modules
-      </Link>
+      <BackLink href={`/teacher/assignment/${id}`}>
+        Back to assignments
+      </BackLink>
 
       <PageHeader
-        title="ADD MODULE"
+        title="NEW ASSIGNMENT"
         description={`${detail.name} · ${formatTimeRange(
           detail.startTime,
           detail.endTime,
         )} · ${formatDays(detail.days)}`}
       />
 
-      <div className="w-full">
-        <ModuleForm
-          classId={id}
-          suggestedLevel={detail.suggestedLevel}
-          storageReady={isB2Configured()}
-        />
-      </div>
+      <AssignmentForm
+        classId={id}
+        suggestedLevel={detail.suggestedLevel}
+        materials={materials}
+      />
     </>
   );
 }

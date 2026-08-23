@@ -170,10 +170,9 @@ export const studyMaterial = pgTable(
 /**
  * Django: assignments.Assignment.
  *
- * Only the assignment row itself is mirrored -- questions, submissions and
- * answers are not needed yet. `materialId` is the link a study material is
- * attached through: the FK lives on this side, so one material can back several
- * assignments but an assignment references at most one material.
+ * `materialId` is the link a study material is attached through: the FK lives on
+ * this side, so one material can back several assignments but an assignment
+ * references at most one material.
  */
 export const assignment = pgTable(
   'assignments_assignment',
@@ -182,7 +181,6 @@ export const assignment = pgTable(
     title: varchar('title', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 280 }).notNull().unique(),
     description: text('description').notNull(),
-    kind: varchar('kind', { length: 20 }).notNull().default('normal'),
     category: varchar('category', { length: 20 }).notNull(),
     level: varchar('level', { length: 20 }).notNull(),
     studentClassId: bigint('student_class_id', { mode: 'number' }).references(
@@ -223,6 +221,137 @@ export const assignment = pgTable(
   ],
 );
 
+/**
+ * Django: assignments.Question.
+ *
+ * `order` is unique per assignment, so rewriting a question list has to avoid
+ * transient collisions -- see `replaceQuestions` in `lib/assignment-mutations.ts`.
+ */
+export const question = pgTable('assignments_question', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  assignmentId: bigint('assignment_id', { mode: 'number' })
+    .notNull()
+    .references(() => assignment.id, { onDelete: 'cascade' }),
+  order: smallint('order').notNull().default(1),
+  kind: varchar('kind', { length: 20 }).notNull().default('multiple_choice'),
+  prompt: text('prompt').notNull(),
+  points: numeric('points', { precision: 6, scale: 2 }).notNull().default('1.00'),
+  explanation: text('explanation').notNull(),
+  isRequired: boolean('is_required').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+});
+
+/** Django: assignments.QuestionChoice */
+export const questionChoice = pgTable('assignments_questionchoice', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  questionId: bigint('question_id', { mode: 'number' })
+    .notNull()
+    .references(() => question.id, { onDelete: 'cascade' }),
+  order: smallint('order').notNull().default(1),
+  text: varchar('text', { length: 500 }).notNull(),
+  isCorrect: boolean('is_correct').notNull().default(false),
+});
+
+/**
+ * Django: assignments.Submission -- one attempt at an assignment.
+ *
+ * `totalScore` is `autoScore + manualScore`, kept denormalised by Django's
+ * `recalculate_total()`; grading from this app has to maintain it too.
+ */
+export const submission = pgTable(
+  'assignments_submission',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    assignmentId: bigint('assignment_id', { mode: 'number' })
+      .notNull()
+      .references(() => assignment.id, { onDelete: 'cascade' }),
+    studentId: bigint('student_id', { mode: 'number' })
+      .notNull()
+      .references(() => student.id, { onDelete: 'cascade' }),
+    attemptNumber: smallint('attempt_number').notNull().default(1),
+    status: varchar('status', { length: 20 }).notNull().default('in_progress'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }),
+    gradedAt: timestamp('graded_at', { withTimezone: true }),
+    gradedById: bigint('graded_by_id', { mode: 'number' }).references(
+      () => user.id,
+      { onDelete: 'set null' },
+    ),
+    timeSpentSeconds: integer('time_spent_seconds'),
+    autoScore: numeric('auto_score', { precision: 6, scale: 2 }),
+    manualScore: numeric('manual_score', { precision: 6, scale: 2 }),
+    totalScore: numeric('total_score', { precision: 6, scale: 2 }),
+    feedback: text('feedback').notNull(),
+    isLate: boolean('is_late').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('submission_asg_status_idx').on(table.assignmentId, table.status),
+    index('submission_stu_status_idx').on(table.studentId, table.status),
+  ],
+);
+
+/** Django: assignments.SubmissionAnswer */
+export const submissionAnswer = pgTable('assignments_submissionanswer', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  submissionId: bigint('submission_id', { mode: 'number' })
+    .notNull()
+    .references(() => submission.id, { onDelete: 'cascade' }),
+  questionId: bigint('question_id', { mode: 'number' })
+    .notNull()
+    .references(() => question.id, { onDelete: 'cascade' }),
+  selectedChoiceId: bigint('selected_choice_id', { mode: 'number' }).references(
+    () => questionChoice.id,
+    { onDelete: 'set null' },
+  ),
+  textAnswer: text('text_answer').notNull(),
+  isCorrect: boolean('is_correct'),
+  awardedPoints: numeric('awarded_points', { precision: 6, scale: 2 }),
+  feedback: text('feedback').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+});
+
+/**
+ * Django's implicit through table for `SubmissionAnswer.selected_choices`, used
+ * by multi-select questions. Column names are the ones Django generates.
+ */
+export const submissionAnswerChoice = pgTable(
+  'assignments_submissionanswer_selected_choices',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    submissionAnswerId: bigint('submissionanswer_id', { mode: 'number' })
+      .notNull()
+      .references(() => submissionAnswer.id, { onDelete: 'cascade' }),
+    questionChoiceId: bigint('questionchoice_id', { mode: 'number' })
+      .notNull()
+      .references(() => questionChoice.id, { onDelete: 'cascade' }),
+  },
+);
+
+/** Django: assignments.SubmissionFile -- `file` is a storage key, not a URL. */
+export const submissionFile = pgTable(
+  'assignments_submissionfile',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    submissionId: bigint('submission_id', { mode: 'number' })
+      .notNull()
+      .references(() => submission.id, { onDelete: 'cascade' }),
+    questionId: bigint('question_id', { mode: 'number' }).references(
+      () => question.id,
+      { onDelete: 'set null' },
+    ),
+    file: varchar('file', { length: 100 }).notNull(),
+    originalFilename: varchar('original_filename', { length: 255 }).notNull(),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('submission_file_sub_idx').on(table.submissionId)],
+);
+
 export const schema = {
   user,
   account,
@@ -232,4 +361,10 @@ export const schema = {
   studentClass,
   studyMaterial,
   assignment,
+  question,
+  questionChoice,
+  submission,
+  submissionAnswer,
+  submissionAnswerChoice,
+  submissionFile,
 };

@@ -94,7 +94,6 @@ export type EditableMaterial = {
 export type LinkedAssignment = {
   id: number;
   title: string;
-  kind: string;
   status: string;
 };
 
@@ -250,7 +249,6 @@ export async function listClassMaterials(
       materialId: assignment.materialId,
       id: assignment.id,
       title: assignment.title,
-      kind: assignment.kind,
       status: assignment.status,
     })
     .from(assignment)
@@ -336,7 +334,6 @@ export async function listLinkableAssignments(
     .select({
       id: assignment.id,
       title: assignment.title,
-      kind: assignment.kind,
       status: assignment.status,
       studentClassId: assignment.studentClassId,
       materialId: assignment.materialId,

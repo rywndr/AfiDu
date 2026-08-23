@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { isB2Configured } from '@/lib/b2';
+import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { getClassDetail, getEditableMaterial } from '@/lib/study-materials';
 
@@ -14,17 +15,12 @@ type EditModulePageProps = {
   params: Promise<{ classId: string; materialId: string }>;
 };
 
-function positiveInteger(value: string): number {
-  const id = Number(value);
-  return Number.isInteger(id) && id > 0 ? id : Number.NaN;
-}
-
 export async function generateMetadata({
   params,
 }: EditModulePageProps): Promise<Metadata> {
   const { classId, materialId } = await params;
-  const classIdNumber = positiveInteger(classId);
-  const materialIdNumber = positiveInteger(materialId);
+  const classIdNumber = parseRouteId(classId);
+  const materialIdNumber = parseRouteId(materialId);
   const material =
     Number.isNaN(classIdNumber) || Number.isNaN(materialIdNumber)
       ? null
@@ -43,8 +39,8 @@ export default async function EditModulePage({
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
   const { classId, materialId } = await params;
-  const classIdNumber = positiveInteger(classId);
-  const materialIdNumber = positiveInteger(materialId);
+  const classIdNumber = parseRouteId(classId);
+  const materialIdNumber = parseRouteId(materialId);
   if (Number.isNaN(classIdNumber) || Number.isNaN(materialIdNumber)) notFound();
 
   const [detail, material] = await Promise.all([
