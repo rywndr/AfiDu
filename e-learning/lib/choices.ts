@@ -105,6 +105,19 @@ export const SUBMISSION_STATUSES = [
 
 export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number]['value'];
 
+/**
+ * A student who has never opened an assignment has no submission row at all,
+ * which is a state the teacher's list shows and can filter on like a real one.
+ */
+export const SUBMISSION_NOT_STARTED = 'not_started';
+
+export const SUBMISSION_ROW_STATUSES = [
+  { value: SUBMISSION_NOT_STARTED, label: 'Not started' },
+  ...SUBMISSION_STATUSES,
+] as const;
+
+export type SubmissionRowStatus = (typeof SUBMISSION_ROW_STATUSES)[number]['value'];
+
 /** core.constants.SEMESTER_CHOICES */
 export const SEMESTERS = [
   { value: 'mid', label: 'MID' },
@@ -153,6 +166,10 @@ export function isQuestionKind(value: string): value is QuestionKind {
 
 export function isSubmissionStatus(value: string): value is SubmissionStatus {
   return SUBMISSION_STATUSES.some((status) => status.value === value);
+}
+
+export function isSubmissionRowStatus(value: string): value is SubmissionRowStatus {
+  return SUBMISSION_ROW_STATUSES.some((status) => status.value === value);
 }
 
 export function isSemester(value: string): value is Semester {

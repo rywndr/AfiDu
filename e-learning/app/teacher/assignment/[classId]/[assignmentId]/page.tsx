@@ -5,14 +5,17 @@ import { Pencil, Users } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
 } from '@/components/ui/empty';
 import { IconTile } from '@/components/ui/icon-tile';
+import { isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
@@ -22,6 +25,7 @@ import { getClassDetail } from '@/lib/study-materials';
 import { DeleteAssignmentButton } from '../assignment-actions';
 import { AssignmentFacts } from './assignment-facts';
 import { SubmissionCard } from './submission-card';
+import { SubmissionToolbar } from './submission-toolbar';
 
 type AssignmentPageProps = PageProps<'/teacher/assignment/[classId]/[assignmentId]'>;
 
@@ -53,8 +57,21 @@ export async function generateMetadata({
   };
 }
 
+/** The search and filter state of the submission list. */
+function readSearchParams(params: Awaited<AssignmentPageProps['searchParams']>) {
+  const statusValue = String(params.status ?? '');
+  const requestedPage = Number(params.page ?? 1);
+
+  return {
+    query: String(params.q ?? '').trim().slice(0, 100),
+    status: isSubmissionRowStatus(statusValue) ? statusValue : undefined,
+    page: Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+  };
+}
+
 export default async function AssignmentSubmissionsPage({
   params,
+  searchParams,
 }: AssignmentPageProps) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
@@ -67,8 +84,16 @@ export default async function AssignmentSubmissionsPage({
   ]);
   if (!detail || !item) notFound();
 
-  const rows = await listAssignmentSubmissions(classId, assignmentId);
-  const awaiting = rows.filter((row) => row.status === 'submitted').length;
+  const { query, status, page } = readSearchParams(await searchParams);
+  const submissionPage = await listAssignmentSubmissions(classId, assignmentId, {
+    query,
+    status,
+    page,
+  });
+  const rows = submissionPage.items;
+  const awaiting = submissionPage.awaitingCount;
+  const filtering = Boolean(query || status);
+  const basePath = `/teacher/assignment/${classId}/${assignmentId}`;
 
   return (
     <>
@@ -105,12 +130,19 @@ export default async function AssignmentSubmissionsPage({
       <AssignmentFacts item={item} />
 
       <section aria-labelledby="submissions-heading">
-        <h2
-          id="submissions-heading"
-          className="mb-3 text-lg font-bold tracking-tight text-ink sm:mb-4 sm:text-xl"
-        >
-          Students ({rows.length})
-        </h2>
+        <div className="mb-3 flex flex-col gap-2 sm:mb-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+          <h2
+            id="submissions-heading"
+            className="text-lg font-bold tracking-tight text-ink sm:text-xl lg:shrink-0 lg:py-2"
+          >
+            Students ({submissionPage.total}
+            {filtering ? ' found' : ''})
+          </h2>
+
+          <div className="min-w-0 lg:max-w-2xl lg:flex-1">
+            <SubmissionToolbar query={query} status={status} />
+          </div>
+        </div>
 
         {rows.length === 0 ? (
           <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
@@ -121,10 +153,21 @@ export default async function AssignmentSubmissionsPage({
                 </IconTile>
               </EmptyMedia>
               <EmptyDescription>
-                No students are assigned to {detail.name} yet, so there is nothing
-                to mark. Students are added to classes in the internal AfiDu app.
+                {filtering
+                  ? 'No students match the current search and filters.'
+                  : `No students are assigned to ${detail.name} yet, so there is nothing to mark. Students are added to classes in the internal AfiDu app.`}
               </EmptyDescription>
             </EmptyHeader>
+            {filtering ? (
+              <EmptyContent>
+                <Link
+                  href={basePath}
+                  className={buttonVariants({ variant: 'outline', size: 'lg' })}
+                >
+                  Clear filters
+                </Link>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : (
           <ul className="flex flex-col gap-3 sm:gap-4">
@@ -140,6 +183,13 @@ export default async function AssignmentSubmissionsPage({
             ))}
           </ul>
         )}
+
+        <QueryPagination
+          pathname={basePath}
+          page={submissionPage.page}
+          totalPages={submissionPage.totalPages}
+          query={{ q: query || undefined, status }}
+        />
       </section>
     </>
   );

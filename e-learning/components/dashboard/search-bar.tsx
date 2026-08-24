@@ -92,7 +92,7 @@ export function SearchBar({
           aria-label={label}
           placeholder={placeholder}
           maxLength={MAX_QUERY_LENGTH}
-          className="pr-9 pl-9"
+          className="pr-9 pl-9 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           value={value}
           onChange={(event) => setValue(event.target.value)}
         />

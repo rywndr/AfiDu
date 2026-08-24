@@ -34,11 +34,13 @@ import {
   isSemester,
   isSubjectCategory,
   questionHasChoices,
+  SUBMISSION_NOT_STARTED,
   type AssignmentStatus,
   type Level,
   type QuestionKind,
   type Semester,
   type SubjectCategory,
+  type SubmissionRowStatus,
 } from '@/lib/choices';
 import { recordingQuestionIdFromFilename } from '@/lib/recordings';
 
@@ -145,6 +147,16 @@ export type SubmissionRow = {
   manualScore: string | null;
   totalScore: string | null;
   timeSpentSeconds: number | null;
+};
+
+export type SubmissionPage = {
+  items: SubmissionRow[];
+  total: number;
+  allTotal: number;
+  awaitingCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 };
 
 export type AnswerDetail = {
@@ -560,11 +572,21 @@ export async function listQuestions(
  *
  * Students who have not started appear with a null submission, and a student who
  * has since moved class still shows if they submitted, flagged `inClass: false`.
+ *
+ * A roster is one class, so the search, status filter and page are applied to
+ * the assembled list rather than in SQL -- the merge with the submissions has to
+ * happen in memory anyway.
  */
 export async function listAssignmentSubmissions(
   classId: number,
   assignmentId: number,
-): Promise<SubmissionRow[]> {
+  options: {
+    query?: string;
+    status?: SubmissionRowStatus;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<SubmissionPage> {
   const [roster, submissions] = await Promise.all([
     db
       .select({ id: student.id, name: student.name, level: student.level })
@@ -644,7 +666,31 @@ export async function listAssignmentSubmissions(
       timeSpentSeconds: row.timeSpentSeconds,
     }));
 
-  return [...fromRoster, ...others];
+  const all = [...fromRoster, ...others];
+  const needle = options.query?.trim().slice(0, 100).toLowerCase() ?? '';
+  const items = all.filter((row) => {
+    if (needle && !row.studentName.toLowerCase().includes(needle)) return false;
+    if (options.status && (row.status ?? SUBMISSION_NOT_STARTED) !== options.status) {
+      return false;
+    }
+    return true;
+  });
+
+  const pageSize = Math.min(Math.max(options.pageSize ?? 10, 1), 50);
+  const total = items.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(Math.max(options.page ?? 1, 1), totalPages);
+  const start = (page - 1) * pageSize;
+
+  return {
+    items: items.slice(start, start + pageSize),
+    total,
+    allTotal: all.length,
+    awaitingCount: all.filter((row) => row.status === AWAITING_GRADING).length,
+    page,
+    pageSize,
+    totalPages,
+  };
 }
 
 /**
