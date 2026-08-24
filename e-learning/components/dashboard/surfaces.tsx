@@ -32,24 +32,35 @@ const surfaceCardBody = {
 
 type DashboardSectionProps = {
   title: string;
+  description?: string;
   aside?: ReactNode;
   children: ReactNode;
 };
 
-function DashboardSection({ title, aside, children }: DashboardSectionProps) {
+function DashboardSection({
+  title,
+  description,
+  aside,
+  children,
+}: DashboardSectionProps) {
   // an id has to be one word for `aria-labelledby`, which reads a space as a
   // separator between two ids
   const headingId = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-heading`;
 
   return (
     <section aria-labelledby={headingId}>
-      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
-        <h2
-          id={headingId}
-          className="text-lg font-bold tracking-tight text-ink sm:text-xl lg:text-2xl"
-        >
-          {title}
-        </h2>
+      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+        <div className="min-w-0">
+          <h2
+            id={headingId}
+            className="text-lg font-bold tracking-tight text-ink sm:text-xl lg:text-2xl"
+          >
+            {title}
+          </h2>
+          {description ? (
+            <p className="mt-1 text-sm text-ink-muted">{description}</p>
+          ) : null}
+        </div>
         {aside}
       </div>
       {children}

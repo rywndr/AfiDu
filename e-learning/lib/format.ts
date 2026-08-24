@@ -50,6 +50,15 @@ export function formatDate(value: Date): string {
   });
 }
 
+export function formatWeekday(value: Date): string {
+  return value.toLocaleDateString('en-GB', {
+    timeZone: DISPLAY_TIME_ZONE,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 /**
  * Django's `TIME_ZONE`. Datetimes are formatted in it explicitly rather than in
  * whatever zone the runtime happens to be in, so a server render and the client
@@ -105,6 +114,47 @@ function zonedParts(value: Date): ZonedParts {
 
 function pad(value: number, length = 2): string {
   return String(value).padStart(length, '0');
+}
+
+/**
+ * The calendar day an instant falls on in `DISPLAY_TIME_ZONE`, counted in days
+ * since the epoch. Subtracting two of these gives whole days apart, which is
+ * what "yesterday" means to a reader, unlike a 24 hour difference.
+ */
+function zonedDayNumber(value: Date): number {
+  const { year, month, day } = zonedParts(value);
+  return Date.UTC(year, month - 1, day) / 86_400_000;
+}
+
+/**
+ * `today` / `tomorrow` / `in 3 days` / `4 days ago`, and a plain date once it is
+ * a week out either way. Reads as the tail of a sentence: `Due ${...}`.
+ */
+export function formatRelativeDay(value: Date, now: Date = new Date()): string {
+  const days = zonedDayNumber(value) - zonedDayNumber(now);
+  if (days === 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  if (days === -1) return 'yesterday';
+  if (days > 1 && days < 7) return `in ${pluralize(days, 'day')}`;
+  if (days < -1 && days > -7) return `${pluralize(-days, 'day')} ago`;
+  return `on ${formatDate(value)}`;
+}
+
+/**
+ * `12m ago` / `3h ago` / `Yesterday`, the timestamp an activity list puts beside
+ * a row. Minutes and hours only within the same calendar day, so an event at
+ * 23:50 reads as `Yesterday` in the morning rather than `9h ago`.
+ */
+export function formatTimeAgo(value: Date, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - value.getTime()) / 60_000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const days = zonedDayNumber(now) - zonedDayNumber(value);
+  if (days <= 0) return `${Math.floor(minutes / 60)}h ago`;
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return formatDate(value);
 }
 
 /** The `YYYY-MM-DDTHH:mm` an `<input type="datetime-local">` expects. */

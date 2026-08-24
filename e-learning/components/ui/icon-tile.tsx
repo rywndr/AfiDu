@@ -10,6 +10,8 @@ const iconTileVariants = cva(
         primary: 'bg-accent-primary-soft text-accent-primary',
         warm: 'bg-accent-warm-soft text-accent-warm-strong',
         cool: 'bg-accent-cool-soft text-accent-cool',
+        danger: 'bg-destructive/10 text-destructive',
+        neutral: 'bg-placeholder text-ink-soft',
       },
     },
     defaultVariants: {
