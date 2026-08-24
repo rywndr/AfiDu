@@ -11,9 +11,16 @@ import { getClassDetail } from '@/lib/study-materials';
 
 import { AssignmentForm } from '../../new/assignment-form';
 
+type EditAssignmentPageProps = {
+  params: Promise<{
+    classId: string;
+    assignmentId: string;
+  }>;
+};
+
 export async function generateMetadata({
   params,
-}: PageProps<'/teacher/assignment/[classId]/[assignmentId]/edit'>): Promise<Metadata> {
+}: EditAssignmentPageProps): Promise<Metadata> {
   const { classId, assignmentId } = await params;
   const classIdNumber = parseRouteId(classId);
   const assignmentIdNumber = parseRouteId(assignmentId);
@@ -31,7 +38,7 @@ export async function generateMetadata({
 
 export default async function EditAssignmentPage({
   params,
-}: PageProps<'/teacher/assignment/[classId]/[assignmentId]/edit'>) {
+}: EditAssignmentPageProps) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
   const { classId, assignmentId } = await params;
