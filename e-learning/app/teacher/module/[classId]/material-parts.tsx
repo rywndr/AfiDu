@@ -1,33 +1,15 @@
 import Link from 'next/link';
-import { BookOpen, FileText, Pencil, UserRound, Video } from 'lucide-react';
+import { Pencil, UserRound } from 'lucide-react';
 
-import { FileActions } from '@/components/dashboard/file-links';
+import { FileActions, materialFileHref } from '@/components/dashboard/file-links';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { IconTile } from '@/components/ui/icon-tile';
 import { statusBadgeClass } from '@/lib/choices';
 import { formatBytes, formatDate } from '@/lib/format';
 import type { MaterialSummary } from '@/lib/study-materials';
 import { cn } from '@/lib/utils';
 
 import { DeleteMaterialButton } from './material-actions';
-
-/** `StudyMaterial.TYPE_CHOICES`, as icons. */
-const typeIcon = {
-  pdf: FileText,
-  video: Video,
-  write_up: BookOpen,
-} as const;
-
-export function MaterialIcon({ material }: { material: MaterialSummary }) {
-  const Icon = typeIcon[material.materialType as keyof typeof typeIcon] ?? FileText;
-
-  return (
-    <IconTile tone={material.materialType === 'video' ? 'cool' : 'warm'}>
-      <Icon aria-hidden="true" strokeWidth={1.8} />
-    </IconTile>
-  );
-}
 
 export function MaterialBadges({ material }: { material: MaterialSummary }) {
   return (
@@ -66,10 +48,7 @@ export function MaterialFileLinks({ material }: { material: MaterialSummary }) {
   if (!material.file) return null;
 
   return (
-    <FileActions
-      href={`/api/study-materials/${material.id}/file`}
-      className="text-sm"
-    />
+    <FileActions href={materialFileHref(material.id)} className="text-sm" />
   );
 }
 

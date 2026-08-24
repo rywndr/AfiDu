@@ -1,15 +1,8 @@
 import type { Metadata } from 'next';
 import { ClipboardCheck, GraduationCap } from 'lucide-react';
 
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
 import { pluralize } from '@/lib/format';
 import { requireStudentProfile } from '@/lib/student-access';
 import { listStudentAssignments } from '@/lib/student-assignments';
@@ -30,22 +23,10 @@ export default async function StudentAssignmentPage() {
           title="ASSIGNMENT"
           description="Your exercises and quizzes appear here."
         />
-        <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-          <EmptyHeader>
-            <EmptyMedia>
-              <IconTile>
-                <GraduationCap aria-hidden="true" />
-              </IconTile>
-            </EmptyMedia>
-            <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-              No class yet
-            </EmptyTitle>
-            <EmptyDescription>
-              You are not in a class at the moment, so there is nothing set for you.
-              Your teacher assigns classes in the AfiDu office app.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={GraduationCap} title="No class yet">
+          You are not in a class at the moment, so there is nothing set for you.
+          Your teacher assigns classes in the AfiDu office app.
+        </EmptyState>
       </>
     );
   }
@@ -68,22 +49,10 @@ export default async function StudentAssignmentPage() {
       />
 
       {assignments.length === 0 ? (
-        <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-          <EmptyHeader>
-            <EmptyMedia>
-              <IconTile>
-                <ClipboardCheck aria-hidden="true" />
-              </IconTile>
-            </EmptyMedia>
-            <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-              Nothing set yet
-            </EmptyTitle>
-            <EmptyDescription>
-              When your teacher publishes an assignment for {profile.className} it shows
-              up here, with its due date and how many attempts you get.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={ClipboardCheck} title="Nothing set yet">
+          When your teacher publishes an assignment for {profile.className} it shows
+          up here.
+        </EmptyState>
       ) : (
         <ul className="grid gap-3 sm:gap-4 xl:grid-cols-2">
           {assignments.map((item) => (

@@ -181,6 +181,11 @@ export function questionHasChoices(kind: string): boolean {
   return (CHOICE_QUESTION_KINDS as readonly string[]).includes(kind);
 }
 
+/** The label a material's type is shown under. */
+export function materialTypeLabel(type: string): string {
+  return MATERIAL_TYPES.find((option) => option.value === type)?.label ?? type;
+}
+
 /** The label a choice list uses, so the UI can say "options" or "answer". */
 export function questionKindLabel(kind: string): string {
   return QUESTION_KINDS.find((option) => option.value === kind)?.label ?? kind;

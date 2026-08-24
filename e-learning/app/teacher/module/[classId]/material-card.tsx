@@ -1,3 +1,4 @@
+import { MaterialTypeIcon } from '@/components/dashboard/material-type-icon';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
 import type { ListView } from '@/lib/list-view';
@@ -8,7 +9,6 @@ import {
   MaterialActions,
   MaterialBadges,
   MaterialFileLinks,
-  MaterialIcon,
   MaterialMeta,
 } from './material-parts';
 
@@ -19,13 +19,12 @@ type MaterialCardProps = {
   view: ListView;
 };
 
-/** Wide layout: icon, details and actions on one line. */
 function MaterialRow({ material, classId, assignments }: Omit<MaterialCardProps, 'view'>) {
   return (
     <SurfaceCard>
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start gap-3.5 sm:gap-4">
-          <MaterialIcon material={material} />
+          <MaterialTypeIcon materialType={material.materialType} />
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -79,7 +78,7 @@ function MaterialTile({
     <SurfaceCard className="h-full">
       <CardContent className="flex h-full flex-col p-4 sm:p-5">
         <div className="flex items-start gap-3.5">
-          <MaterialIcon material={material} />
+          <MaterialTypeIcon materialType={material.materialType} />
 
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-base font-semibold break-words text-ink-strong">

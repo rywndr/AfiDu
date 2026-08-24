@@ -3,15 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { Lock } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
 import { isB2Configured } from '@/lib/b2';
 import { parseRouteId } from '@/lib/route-params';
 import { requireStudentProfile } from '@/lib/student-access';
@@ -79,22 +72,10 @@ export default async function StudentAssignmentDetailPage({
       ) : null}
 
       {!attempt && !gate.canStart ? (
-        <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-          <EmptyHeader>
-            <EmptyMedia>
-              <IconTile>
-                <Lock aria-hidden="true" />
-              </IconTile>
-            </EmptyMedia>
-            <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-              Not open for you
-            </EmptyTitle>
-            <EmptyDescription>
-              {gate.notice ??
-                'This assignment cannot be started right now. Ask your teacher if you think that is wrong.'}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={Lock} title="Not open for you">
+          {gate.notice ??
+            'This assignment cannot be started right now. Ask your teacher if you think that is wrong.'}
+        </EmptyState>
       ) : null}
     </>
   );
