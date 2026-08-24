@@ -37,7 +37,9 @@ type DashboardSectionProps = {
 };
 
 function DashboardSection({ title, aside, children }: DashboardSectionProps) {
-  const headingId = `${title.toLowerCase()}-heading`;
+  // an id has to be one word for `aria-labelledby`, which reads a space as a
+  // separator between two ids
+  const headingId = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-heading`;
 
   return (
     <section aria-labelledby={headingId}>

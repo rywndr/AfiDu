@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { CalendarDays, ChevronRight, ClipboardCheck } from 'lucide-react';
+import { CalendarDays, ChevronRight } from 'lucide-react';
 
 import { MetaItem } from '@/components/dashboard/facts';
+import { LinkedNotice } from '@/components/dashboard/linked-notice';
 import { MaterialTypeIcon } from '@/components/dashboard/material-type-icon';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { Badge } from '@/components/ui/badge';
@@ -45,14 +46,13 @@ export function StudentModuleCard({ material }: { material: StudentMaterial }) {
               <MetaItem icon={CalendarDays}>
                 Added {formatDate(material.uploadedAt)}
               </MetaItem>
-              {material.linkedAssignments.length > 0 ? (
-                <MetaItem icon={ClipboardCheck}>
-                  <span className="truncate">
-                    {material.linkedAssignments.map((item) => item.title).join(', ')}
-                  </span>
-                </MetaItem>
-              ) : null}
             </div>
+
+            <LinkedNotice
+              to="assignment"
+              titles={material.linkedAssignments.map((item) => item.title)}
+              className="mt-2.5"
+            />
           </div>
 
           <ChevronRight

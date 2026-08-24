@@ -3,7 +3,7 @@
  */
 import 'server-only';
 
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 
 import { db } from '@/db';
 import {
@@ -24,6 +24,7 @@ import {
 import {
   paginate,
   parseSearchQuery,
+  type ListOrder,
   type ListQueryOptions,
   type PageResult,
 } from '@/lib/list-query';
@@ -61,6 +62,7 @@ export type StudentAssignment = {
   maxPoints: string;
   materialId: number | null;
   materialTitle: string | null;
+  createdAt: Date;
   questionCount: number;
   attemptsUsed: number;
   latestAttempt: LatestAttempt | null;
@@ -130,7 +132,15 @@ const assignmentColumns = {
   maxPoints: assignment.maxPoints,
   materialId: assignment.materialId,
   materialTitle: studyMaterial.title,
+  createdAt: assignment.createdAt,
 };
+
+/** Creation order for the dashboard feed, soonest due first otherwise. */
+function assignmentOrder(order: ListOrder = 'default'): SQL[] {
+  return order === 'newest'
+    ? [desc(assignment.createdAt)]
+    : [sql`${assignment.dueAt} asc nulls last`, desc(assignment.createdAt)];
+}
 
 /**
  * The state a student's assignment is in, using the same values as the
@@ -152,7 +162,8 @@ function isOutstanding(item: Pick<StudentAssignment, 'latestAttempt'>): boolean 
 }
 
 /**
- * Published assignments for one class, soonest due first.
+ * Published assignments for one class, soonest due first, or newest first when
+ * `order` asks for it.
  *
  * The `status` filter reads the newest attempt, which no column holds, so this
  * reads the class's assignments in full and then filters and pages them in
@@ -169,7 +180,7 @@ export async function listStudentAssignments(
     .where(
       and(eq(assignment.studentClassId, classId), eq(assignment.status, PUBLISHED)),
     )
-    .orderBy(sql`${assignment.dueAt} asc nulls last`, desc(assignment.createdAt));
+    .orderBy(...assignmentOrder(options.order));
 
   if (rows.length === 0) {
     return { ...paginate([], 0, options), outstanding: 0 };

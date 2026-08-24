@@ -8,13 +8,22 @@
 
 /** Cards per page on the module and assignment lists. */
 export const DEFAULT_PAGE_SIZE = 6;
-const MAX_PAGE_SIZE = 50;
+/** The most rows one read returns, whatever `pageSize` asks for. */
+export const MAX_PAGE_SIZE = 50;
 /** Matches the `maxLength` on the search input. */
 const MAX_QUERY_LENGTH = 100;
+
+/**
+ * How a list is sorted. `default` is each list's own arrangement, which is the
+ * teacher's ordering for modules and the due date for assignments. `newest` is
+ * the order rows were added, which the dashboard feed merges the two lists on.
+ */
+export type ListOrder = 'default' | 'newest';
 
 export type ListQueryOptions = {
   page?: number;
   pageSize?: number;
+  order?: ListOrder;
 };
 
 /** One page of a list, plus the counts its heading and empty state need. */

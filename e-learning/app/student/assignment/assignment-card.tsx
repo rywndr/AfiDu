@@ -9,6 +9,7 @@ import {
 
 import { SubmissionStatusPill } from '@/components/assignments/submission-status-pill';
 import { MetaItem } from '@/components/dashboard/facts';
+import { LinkedNotice } from '@/components/dashboard/linked-notice';
 import { Pill } from '@/components/dashboard/pill';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ export function StudentAssignmentCard({ item }: { item: StudentAssignment }) {
     hasOpenAttempt: latest?.status === 'in_progress',
   });
   const marked = latest?.totalScore ?? null;
+  const linkedModules = item.materialTitle ? [item.materialTitle] : [];
 
   return (
     <Link
@@ -83,8 +85,13 @@ export function StudentAssignmentCard({ item }: { item: StudentAssignment }) {
               </span>
             </div>
 
-            {gate.notice ? (
-              <Pill className="mt-2.5 bg-shell text-ink-soft">{gate.notice}</Pill>
+            {linkedModules.length > 0 || gate.notice ? (
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                <LinkedNotice to="module" titles={linkedModules} />
+                {gate.notice ? (
+                  <Pill className="bg-shell text-ink-soft">{gate.notice}</Pill>
+                ) : null}
+              </div>
             ) : null}
           </div>
 

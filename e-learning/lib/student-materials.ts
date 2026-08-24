@@ -30,6 +30,7 @@ import {
   likePattern,
   parseSearchQuery,
   resolvePageWindow,
+  type ListOrder,
   type ListQueryOptions,
   type PageResult,
 } from '@/lib/list-query';
@@ -91,6 +92,13 @@ function readableBy(classId: number) {
   );
 }
 
+/** Upload order for the dashboard feed, the teacher's arrangement otherwise. */
+function materialOrder(order: ListOrder = 'default') {
+  return order === 'newest'
+    ? [desc(studyMaterial.uploadedAt), desc(studyMaterial.id)]
+    : [asc(studyMaterial.position), desc(studyMaterial.uploadedAt)];
+}
+
 /**
  * Whether a student in `classId` may read `material`. Used where the row is
  * already in hand, so the file route can check one material without repeating
@@ -107,7 +115,8 @@ export function canStudentReadMaterial(
 }
 
 /**
- * Published modules for one class, in the order the teacher arranged them.
+ * Published modules for one class, in the order the teacher arranged them, or in
+ * upload order when `order` asks for it.
  *
  * The search and both filters go into the SQL, so `total` counts matching rows
  * and one page of them comes back rather than the lot.
@@ -149,7 +158,7 @@ export async function listStudentMaterials(
     .select(materialColumns)
     .from(studyMaterial)
     .where(where)
-    .orderBy(asc(studyMaterial.position), desc(studyMaterial.uploadedAt))
+    .orderBy(...materialOrder(options.order))
     .limit(pageSize)
     .offset(offset);
 
