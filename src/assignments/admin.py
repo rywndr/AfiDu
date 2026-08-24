@@ -19,7 +19,7 @@ class QuestionChoiceInline(admin.TabularInline):
 class QuestionInline(admin.TabularInline):
     model = Question
     extra = 1
-    fields = ("order", "kind", "prompt", "points", "is_required")
+    fields = ("order", "kind", "prompt", "audio", "points", "is_required")
     show_change_link = True
 
 

@@ -1,4 +1,4 @@
-/** Display helpers shared by the module pages. Safe on both sides of the wire. */
+/** Display helpers */
 
 import { DAYS_SHORT } from '@/lib/choices';
 
@@ -152,6 +152,19 @@ export function formatDuration(seconds: number | null | undefined): string {
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m`;
   return `${Math.floor(minutes / 60)}h ${pad(minutes % 60)}m`;
+}
+
+/**
+ * `9:05` / `1:04:30`, the clock a timed attempt counts down on. Minutes are only
+ * padded once there are hours in front of them, so most of a test reads as
+ * `24:59` rather than `0:24:59`.
+ */
+export function formatCountdown(seconds: number): string {
+  const left = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(left / 3600);
+  const minutes = Math.floor(left / 60) % 60;
+  const rest = `${hours > 0 ? pad(minutes) : minutes}:${pad(left % 60)}`;
+  return hours > 0 ? `${hours}:${rest}` : rest;
 }
 
 /**

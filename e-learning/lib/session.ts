@@ -67,8 +67,8 @@ export async function requireRole(roles: readonly string[]) {
 }
 
 /**
- * The Student record behind a student login, plus its class name. Memoised per
- * render pass so a layout and its page share one query.
+ * The Student record behind a student login, plus its class. Memoised per render
+ * pass so a layout and its page share one query.
  */
 export const getStudentProfile = cache(async (userId: number | string) => {
   const id = typeof userId === 'string' ? Number.parseInt(userId, 10) : userId;
@@ -79,6 +79,7 @@ export const getStudentProfile = cache(async (userId: number | string) => {
       id: student.id,
       name: student.name,
       level: student.level,
+      classId: student.assignedClassId,
       className: studentClass.name,
     })
     .from(student)

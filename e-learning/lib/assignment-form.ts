@@ -12,6 +12,7 @@ import type {
   AssignmentFormValues,
   AssignmentInput,
   QuestionFormValues,
+  UploadedQuestionAudio,
 } from '@/lib/form-schemas';
 import type { EditableAssignment } from '@/lib/assignments';
 
@@ -47,6 +48,9 @@ export function emptyQuestion(): QuestionFormValues {
     explanation: '',
     isRequired: true,
     choices: defaultChoices('multiple_choice'),
+    audio: null,
+    hasAudio: false,
+    audioUrl: null,
   };
 }
 
@@ -89,6 +93,9 @@ export function toAssignmentFormValues(
           text: choice.text,
           isCorrect: choice.isCorrect,
         })),
+        audio: null,
+        hasAudio: item.hasAudio,
+        audioUrl: item.audioUrl,
       })) ?? [],
   };
 }
@@ -96,6 +103,7 @@ export function toAssignmentFormValues(
 export function toAssignmentInput(
   classId: number,
   values: AssignmentFormValues,
+  uploadedAudio: (UploadedQuestionAudio | null)[] = [],
 ): AssignmentInput {
   return {
     classId,
@@ -118,7 +126,7 @@ export function toAssignmentInput(
     autoGrade: values.autoGrade,
     shuffleQuestions: values.shuffleQuestions,
     revealAnswersAfterSubmit: values.revealAnswersAfterSubmit,
-    questions: values.questions.map((item) => ({
+    questions: values.questions.map((item, index) => ({
       id: item.id,
       kind: item.kind,
       prompt: item.prompt,
@@ -126,6 +134,7 @@ export function toAssignmentInput(
       explanation: item.explanation,
       isRequired: item.isRequired,
       choices: questionHasChoices(item.kind) ? item.choices : [],
+      audio: uploadedAudio[index] ?? null,
     })),
   };
 }

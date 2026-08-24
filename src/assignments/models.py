@@ -2,8 +2,11 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -183,6 +186,7 @@ class Question(models.Model):
     KIND_SHORT_TEXT = "short_text"
     KIND_ESSAY = "essay"
     KIND_FILE_UPLOAD = "file_upload"
+    KIND_AUDIO_RECORDING = "audio_recording"
     KIND_CHOICES = [
         (KIND_MULTIPLE_CHOICE, "Multiple choice"),
         (KIND_MULTI_SELECT, "Multi select"),
@@ -190,6 +194,7 @@ class Question(models.Model):
         (KIND_SHORT_TEXT, "Short text"),
         (KIND_ESSAY, "Essay"),
         (KIND_FILE_UPLOAD, "File upload"),
+        (KIND_AUDIO_RECORDING, "Recorded audio"),
     ]
     # question kinds that carry QuestionChoice rows and can be auto-scored
     CHOICE_KINDS = {KIND_MULTIPLE_CHOICE, KIND_MULTI_SELECT, KIND_TRUE_FALSE}
@@ -202,6 +207,12 @@ class Question(models.Model):
         max_length=20, choices=KIND_CHOICES, default=KIND_MULTIPLE_CHOICE
     )
     prompt = models.TextField()
+    audio = models.FileField(
+        upload_to="questions/%Y/%m/",
+        blank=True,
+        validators=[FileExtensionValidator(["mp3"])],
+        help_text="Optional MP3 played with the question.",
+    )
     points = models.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -227,6 +238,16 @@ class Question(models.Model):
     def __str__(self):
         return f"Q{self.order}: {self.prompt[:50]}"
 
+    def save(self, *args, **kwargs):
+        old_audio = None
+        if self.pk:
+            old_audio = type(self).objects.filter(pk=self.pk).values_list(
+                "audio", flat=True
+            ).first()
+        super().save(*args, **kwargs)
+        if old_audio and old_audio != self.audio.name:
+            self.audio.storage.delete(old_audio)
+
     @property
     def has_choices(self):
         return self.kind in self.CHOICE_KINDS
@@ -234,6 +255,12 @@ class Question(models.Model):
     @property
     def is_auto_gradable(self):
         return self.has_choices
+
+
+@receiver(post_delete, sender=Question)
+def delete_question_audio(sender, instance, **kwargs):
+    if instance.audio:
+        instance.audio.delete(save=False)
 
 
 class QuestionChoice(models.Model):

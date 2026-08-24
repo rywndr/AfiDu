@@ -9,7 +9,11 @@ import { emptyQuestion, type AssignmentSectionProps } from '@/lib/assignment-for
 
 import { QuestionEditor } from './assignment-question-editor';
 
-export function AssignmentQuestionsSection({ form, disabled }: AssignmentSectionProps) {
+export function AssignmentQuestionsSection({
+  form,
+  disabled,
+  storageReady,
+}: AssignmentSectionProps & { storageReady: boolean }) {
   const questions = useFieldArray({ control: form.control, name: 'questions' });
 
   return (
@@ -40,6 +44,7 @@ export function AssignmentQuestionsSection({ form, disabled }: AssignmentSection
               <QuestionEditor
                 form={form}
                 disabled={disabled}
+                storageReady={storageReady}
                 index={index}
                 isFirst={index === 0}
                 isLast={index === questions.fields.length - 1}

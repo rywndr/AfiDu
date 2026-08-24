@@ -5,6 +5,13 @@ import { ChevronRight, ClipboardCheck, Clock, Hourglass, Users } from 'lucide-re
 import { PageHeader } from '@/components/dashboard/page-header';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { IconTile } from '@/components/ui/icon-tile';
 import { formatDays, formatTimeRange } from '@/lib/format';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
@@ -27,20 +34,22 @@ export default async function TeacherAssignmentPage() {
       />
 
       {classes.length === 0 ? (
-        <SurfaceCard variant="empty">
-          <CardContent className="px-5 py-12 sm:px-10 sm:py-16">
-            <IconTile className="mx-auto">
-              <ClipboardCheck aria-hidden="true" />
-            </IconTile>
-            <h2 className="mt-5 text-lg font-bold text-ink sm:text-xl">
+        <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
+          <EmptyHeader>
+            <EmptyMedia>
+              <IconTile>
+                <ClipboardCheck aria-hidden="true" />
+              </IconTile>
+            </EmptyMedia>
+            <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
               No classes yet
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-muted">
+            </EmptyTitle>
+            <EmptyDescription>
               Classes are created in the internal AfiDu app. Add one there and it will
               show up here.
-            </p>
-          </CardContent>
-        </SurfaceCard>
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           {classes.map((studentClass) => (

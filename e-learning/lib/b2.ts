@@ -70,12 +70,26 @@ function s3(): S3Client {
  * one flat, date-partitioned namespace with collision-free keys.
  */
 export function studyMaterialKey(filename: string): string {
+  return datedKey('study_materials', filename);
+}
+
+/** The `submissions/%Y/%m/` prefix `SubmissionFile.file` uploads to. */
+export function submissionFileKey(filename: string): string {
+  return datedKey('submissions', filename);
+}
+
+/** The `questions/%Y/%m/` prefix used by `Question.audio`. */
+export function questionAudioKey(filename: string): string {
+  return datedKey('questions', filename);
+}
+
+function datedKey(prefix: string, filename: string): string {
   const extension = fileExtension(filename) || 'bin';
   const now = new Date();
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   const id = crypto.randomUUID().replaceAll('-', '');
-  return `study_materials/${year}/${month}/${id}.${extension}`;
+  return `${prefix}/${year}/${month}/${id}.${extension}`;
 }
 
 /** Short-lived signed PUT the browser uploads straight to B2 with. */

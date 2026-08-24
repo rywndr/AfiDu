@@ -17,6 +17,7 @@ import {
   type AssignmentFormValues,
 } from '@/lib/form-schemas';
 import type { EditableAssignment, MaterialOption } from '@/lib/assignments';
+import { uploadQuestionAudio } from '@/lib/question-audio-upload';
 
 import { AssignmentDetailsSection } from './assignment-details-section';
 import { AssignmentQuestionsSection } from './assignment-questions-section';
@@ -26,6 +27,7 @@ type AssignmentFormProps = {
   classId: number;
   suggestedLevel: string | null;
   materials: MaterialOption[];
+  storageReady: boolean;
   initialAssignment?: EditableAssignment;
 };
 
@@ -33,6 +35,7 @@ export function AssignmentForm({
   classId,
   suggestedLevel,
   materials,
+  storageReady,
   initialAssignment,
 }: AssignmentFormProps) {
   const router = useRouter();
@@ -51,13 +54,23 @@ export function AssignmentForm({
     setRequestError(null);
 
     try {
+      const uploadedAudio = await Promise.all(
+        values.questions.map((question) =>
+          question.audio
+            ? uploadQuestionAudio(classId, question.audio)
+            : Promise.resolve(null),
+        ),
+      );
+
       await apiRequest<{ success: true }>(
         initialAssignment
           ? `/api/assignments/${initialAssignment.id}`
           : '/api/assignments',
         {
           method: initialAssignment ? 'PATCH' : 'POST',
-          body: JSON.stringify(toAssignmentInput(classId, values)),
+          body: JSON.stringify(
+            toAssignmentInput(classId, values, uploadedAudio),
+          ),
         },
       );
 
@@ -82,7 +95,11 @@ export function AssignmentForm({
         materials={materials}
       />
       <AssignmentScheduleSection form={form} disabled={saving} />
-      <AssignmentQuestionsSection form={form} disabled={saving} />
+      <AssignmentQuestionsSection
+        form={form}
+        disabled={saving}
+        storageReady={storageReady}
+      />
 
       <FormAlert message={requestError} />
 

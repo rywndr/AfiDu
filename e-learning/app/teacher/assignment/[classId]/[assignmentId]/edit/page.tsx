@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { getEditableAssignment, listClassMaterialOptions } from '@/lib/assignments';
+import { isB2Configured } from '@/lib/b2';
 import { getClassDetail } from '@/lib/study-materials';
 
 import { AssignmentForm } from '../../new/assignment-form';
@@ -60,6 +61,7 @@ export default async function EditAssignmentPage({
         classId={classIdNumber}
         suggestedLevel={detail.suggestedLevel}
         materials={materials}
+        storageReady={isB2Configured()}
         initialAssignment={item}
       />
     </>

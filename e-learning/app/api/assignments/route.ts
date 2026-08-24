@@ -4,6 +4,7 @@ import { apiError, authorizeApiRequest, readJson } from '@/lib/api';
 import { createAssignmentSchema } from '@/lib/form-schemas';
 import { ROLE_SUPERUSER, ROLE_TEACHER } from '@/lib/session';
 import { createAssignment } from '@/lib/assignment-mutations';
+import { isValidQuestionAudioUpload } from '@/lib/upload-token';
 
 const STAFF_ROLES = [ROLE_TEACHER, ROLE_SUPERUSER];
 
@@ -20,6 +21,16 @@ export async function POST(request: Request) {
       400,
       input.error.flatten().fieldErrors,
     );
+  }
+
+  if (
+    input.data.questions.some(
+      (question) =>
+        question.audio &&
+        !isValidQuestionAudioUpload(question.audio, input.data.classId),
+    )
+  ) {
+    return apiError('An MP3 upload is invalid or expired. Upload it again.', 400);
   }
 
   const userId = Number(authorization.session.user.id);

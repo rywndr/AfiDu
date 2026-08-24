@@ -10,8 +10,6 @@ const surfaceCardVariants = cva('py-0 ring-0', {
     variant: {
       tile: 'justify-center rounded-2xl border-0 shadow-card',
       row: 'justify-center rounded-none border-0 border-b border-shell-divider last:border-b-0',
-      empty:
-        'rounded-3xl border border-dashed border-shell-outline bg-white/60 text-center shadow-none',
     },
   },
   defaultVariants: {

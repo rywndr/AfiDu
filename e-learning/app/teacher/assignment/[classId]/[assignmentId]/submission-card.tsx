@@ -11,6 +11,11 @@ import { CardContent } from '@/components/ui/card';
 import { formatDateTime, formatDuration } from '@/lib/format';
 import type { SubmissionRow } from '@/lib/assignments';
 
+import { ResetSubmissionButton } from './submission-actions';
+
+/** An attempt still being worked on must not be pulled out from under a student. */
+const IN_PROGRESS = 'in_progress';
+
 type SubmissionCardProps = {
   row: SubmissionRow;
   classId: number;
@@ -28,6 +33,8 @@ export function SubmissionCard({
   const href = row.submissionId
     ? `/teacher/assignment/${classId}/${assignmentId}/submissions/${row.submissionId}`
     : null;
+  // an attempt still in progress has nothing to look at and must not be reset
+  const actionable = href !== null && row.status !== IN_PROGRESS;
   const breakdown = scoreBreakdown(row.autoScore, row.manualScore);
 
   return (
@@ -78,19 +85,28 @@ export function SubmissionCard({
             ) : null}
           </div>
 
-          {href ? (
-            <Link
-              href={href}
-              className={buttonVariants({
-                variant: row.status === 'submitted' ? 'default' : 'secondary',
-                size: 'sm',
-              })}
-            >
-              {row.status === 'submitted' ? 'Mark' : 'View'}
-            </Link>
+          {actionable && href ? (
+            <div className="flex items-center gap-1.5">
+              <ResetSubmissionButton
+                classId={classId}
+                assignmentId={assignmentId}
+                studentId={row.studentId}
+                studentName={row.studentName}
+                attemptCount={row.attemptCount}
+              />
+              <Link
+                href={href}
+                className={buttonVariants({
+                  variant: row.status === 'submitted' ? 'default' : 'secondary',
+                  size: 'sm',
+                })}
+              >
+                {row.status === 'submitted' ? 'Mark' : 'View'}
+              </Link>
+            </div>
           ) : (
             <span className="text-xs font-semibold text-ink-subtle">
-              Nothing to mark
+              {href ? 'Still working' : 'Nothing to mark'}
             </span>
           )}
         </div>

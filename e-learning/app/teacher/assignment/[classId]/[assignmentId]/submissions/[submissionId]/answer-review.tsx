@@ -145,6 +145,10 @@ export function AnswerReview({
         </Pill>
       </div>
 
+      {answer.audioUrl ? (
+        <audio controls preload="metadata" src={answer.audioUrl} className="mt-2 w-full" />
+      ) : null}
+
       {answer.autoGradable ? (
         <>
           <ChoiceAnswer answer={answer} />
@@ -162,7 +166,11 @@ export function AnswerReview({
         </div>
       )}
 
-      <SubmissionFiles submissionId={submissionId} files={answer.files} />
+      <SubmissionFiles
+        submissionId={submissionId}
+        files={answer.files}
+        inlineAudio={answer.kind === 'audio_recording'}
+      />
 
       {fieldIndex === undefined ? null : (
         <AnswerMarks

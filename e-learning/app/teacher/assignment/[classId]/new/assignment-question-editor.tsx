@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
 import {
   CheckboxField,
@@ -28,6 +29,7 @@ type QuestionEditorProps = AssignmentSectionProps & {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
+  storageReady: boolean;
 };
 
 function IconAction({
@@ -53,7 +55,7 @@ function QuestionToolbar({
   onMoveUp,
   onMoveDown,
   onRemove,
-}: Omit<QuestionEditorProps, 'form'>) {
+}: Omit<QuestionEditorProps, 'form' | 'storageReady'>) {
   return (
     <div className="flex shrink-0 items-center gap-1">
       <IconAction
@@ -88,6 +90,8 @@ export function QuestionEditor({ form, disabled, ...toolbar }: QuestionEditorPro
   } = form;
   const { index } = toolbar;
   const kind = useWatch({ control, name: `questions.${index}.kind` });
+  const audio = useWatch({ control, name: `questions.${index}.audio` });
+  const audioUrl = useWatch({ control, name: `questions.${index}.audioUrl` });
   const questionErrors = errors.questions?.[index];
 
   return (
@@ -148,6 +152,50 @@ export function QuestionEditor({ form, disabled, ...toolbar }: QuestionEditorPro
           error={questionErrors?.prompt?.message}
           {...register(`questions.${index}.prompt`)}
         />
+
+        <div className="sm:col-span-4">
+          <label
+            htmlFor={`question-audio-${index}`}
+            className="mb-1.5 block text-sm font-semibold text-ink"
+          >
+            Listening audio (optional)
+          </label>
+          <Controller
+            control={control}
+            name={`questions.${index}.audio`}
+            render={({ field: { onChange, onBlur, name, ref } }) => (
+              <input
+                ref={ref}
+                id={`question-audio-${index}`}
+                name={name}
+                type="file"
+                accept=".mp3,audio/mpeg"
+                disabled={disabled || !toolbar.storageReady}
+                onBlur={onBlur}
+                onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+                className="block w-full cursor-pointer rounded-lg border border-border bg-background p-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent-warm-soft file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-accent-warm-strong disabled:opacity-50"
+              />
+            )}
+          />
+          {questionErrors?.audio?.message ? (
+            <p className="mt-1.5 text-xs font-semibold text-destructive">
+              {questionErrors.audio.message}
+            </p>
+          ) : (
+            <p className="mt-1.5 text-xs text-ink-subtle">
+              {audio
+                ? `${audio.name} selected`
+                : audioUrl
+                  ? 'The current MP3 will be kept unless you choose another.'
+                  : toolbar.storageReady
+                    ? 'MP3 only, up to 25MB.'
+                    : 'File storage is not configured.'}
+            </p>
+          )}
+          {!audio && audioUrl ? (
+            <audio controls preload="metadata" src={audioUrl} className="mt-2 w-full" />
+          ) : null}
+        </div>
 
         {questionHasChoices(kind) ? (
           <ChoiceOptions

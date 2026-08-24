@@ -26,6 +26,7 @@ import {
   submissionFile,
   user,
 } from '@/db/schema';
+import { isB2Configured, presignDownload } from '@/lib/b2';
 import {
   isAssignmentStatus,
   isLevel,
@@ -39,6 +40,7 @@ import {
   type Semester,
   type SubjectCategory,
 } from '@/lib/choices';
+import { recordingQuestionIdFromFilename } from '@/lib/recordings';
 
 export type AssignmentClassSummary = {
   id: number;
@@ -98,6 +100,8 @@ export type EditableQuestion = {
   points: string;
   explanation: string;
   isRequired: boolean;
+  hasAudio: boolean;
+  audioUrl: string | null;
   choices: EditableChoice[];
 };
 
@@ -151,6 +155,7 @@ export type AnswerDetail = {
   points: string;
   explanation: string;
   isRequired: boolean;
+  audioUrl: string | null;
   choices: (EditableChoice & { chosen: boolean })[];
   answerId: number | null;
   textAnswer: string;
@@ -164,6 +169,7 @@ export type AnswerDetail = {
 
 export type SubmissionFileRef = {
   id: number;
+  questionId: number | null;
   originalFilename: string;
   sizeBytes: number | null;
   mimeType: string;
@@ -499,6 +505,7 @@ export async function listQuestions(
       order: question.order,
       kind: question.kind,
       prompt: question.prompt,
+      audio: question.audio,
       points: question.points,
       explanation: question.explanation,
       isRequired: question.isRequired,
@@ -535,11 +542,17 @@ export async function listQuestions(
 
   // A kind Django knows about but this app does not would break the editor, so
   // it is normalised to the closest free-text kind rather than dropped.
-  return rows.map((row) => ({
-    ...row,
-    kind: isQuestionKind(row.kind) ? row.kind : 'short_text',
-    choices: byQuestion.get(row.id) ?? [],
-  }));
+  const storageReady = isB2Configured();
+  return Promise.all(
+    rows.map(async ({ audio, ...row }) => ({
+      ...row,
+      kind: isQuestionKind(row.kind) ? row.kind : 'short_text',
+      hasAudio: Boolean(audio),
+      audioUrl:
+        audio && storageReady ? await presignDownload(audio) : null,
+      choices: byQuestion.get(row.id) ?? [],
+    })),
+  );
 }
 
 /**
@@ -744,15 +757,26 @@ export async function getSubmissionDetail(
   const answerByQuestion = new Map(answers.map((answer) => [answer.questionId, answer]));
   const filesByQuestion = new Map<number, SubmissionFileRef[]>();
   const unattachedFiles: SubmissionFileRef[] = [];
+  const validQuestionIds = new Set(questions.map((item) => item.id));
   for (const { questionId, file, ...meta } of files) {
-    const ref: SubmissionFileRef = { ...meta, hasFile: Boolean(file) };
-    if (questionId === null) {
+    const inferredQuestionId = recordingQuestionIdFromFilename(meta.originalFilename);
+    const linkedQuestionId =
+      questionId ??
+      (inferredQuestionId !== null && validQuestionIds.has(inferredQuestionId)
+        ? inferredQuestionId
+        : null);
+    const ref: SubmissionFileRef = {
+      ...meta,
+      questionId: linkedQuestionId,
+      hasFile: Boolean(file),
+    };
+    if (linkedQuestionId === null) {
       unattachedFiles.push(ref);
       continue;
     }
-    const existing = filesByQuestion.get(questionId);
+    const existing = filesByQuestion.get(linkedQuestionId);
     if (existing) existing.push(ref);
-    else filesByQuestion.set(questionId, [ref]);
+    else filesByQuestion.set(linkedQuestionId, [ref]);
   }
 
   const answerDetails: AnswerDetail[] = questions.map((item) => {
@@ -767,6 +791,7 @@ export async function getSubmissionDetail(
       points: item.points,
       explanation: item.explanation,
       isRequired: item.isRequired,
+      audioUrl: item.audioUrl,
       choices: item.choices.map((choice) => ({
         ...choice,
         chosen:

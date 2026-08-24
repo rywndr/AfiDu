@@ -9,6 +9,7 @@ import {
   SEMESTERS,
   SUBJECT_CATEGORIES,
   questionHasChoices,
+  validateQuestionAudio,
   validateUpload,
 } from '@/lib/choices';
 
@@ -318,6 +319,12 @@ const questionExplanation = z
   .string()
   .max(10_000, 'The explanation is too long.');
 
+const browserQuestionAudio = z.custom<File | null>(
+  (value) =>
+    value === null || (typeof File !== 'undefined' && value instanceof File),
+  { error: 'Choose a valid MP3 file.' },
+);
+
 const questionFormSchema = z.object({
   id: z.number().int().positive().nullable(),
   kind: z.enum(questionKinds, { error: 'Choose a question type.' }),
@@ -326,6 +333,9 @@ const questionFormSchema = z.object({
   explanation: questionExplanation,
   isRequired: z.boolean(),
   choices: z.array(choiceFieldsSchema).max(20, 'A question may have 20 options.'),
+  audio: browserQuestionAudio,
+  hasAudio: z.boolean(),
+  audioUrl: z.string().nullable(),
 });
 
 const assignmentSharedSchema = z.object({
@@ -400,11 +410,31 @@ export const assignmentFormSchema = assignmentSharedSchema
 
     values.questions.forEach((item, index) => {
       refineChoices(item.kind, item.choices, context, ['questions', index]);
+      if (item.audio) {
+        const problem = validateQuestionAudio(item.audio.name, item.audio.size);
+        if (problem) {
+          context.addIssue({
+            code: 'custom',
+            path: ['questions', index, 'audio'],
+            message: problem,
+          });
+        }
+      }
     });
   });
 
 export type AssignmentFormValues = z.infer<typeof assignmentFormSchema>;
 export type QuestionFormValues = z.infer<typeof questionFormSchema>;
+
+const uploadedQuestionAudioSchema = z.object({
+  key: z
+    .string()
+    .regex(/^questions\/\d{4}\/\d{2}\/[a-f0-9]{32}\.mp3$/, 'Invalid audio key.'),
+  originalFilename: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(100),
+  size: z.number().int().positive(),
+  uploadToken: z.string().min(1),
+});
 
 const questionInputSchema = z.object({
   id: z.number().int().positive().nullable(),
@@ -414,6 +444,7 @@ const questionInputSchema = z.object({
   explanation: questionExplanation,
   isRequired: z.boolean(),
   choices: z.array(choiceFieldsSchema).max(20),
+  audio: uploadedQuestionAudioSchema.nullable(),
 });
 
 const assignmentInputSchema = assignmentSharedSchema
@@ -431,6 +462,19 @@ const assignmentInputSchema = assignmentSharedSchema
     refineAssignment(values, context);
     values.questions.forEach((item, index) => {
       refineChoices(item.kind, item.choices, context, ['questions', index]);
+      if (item.audio) {
+        const problem = validateQuestionAudio(
+          item.audio.originalFilename,
+          item.audio.size,
+        );
+        if (problem) {
+          context.addIssue({
+            code: 'custom',
+            path: ['questions', index, 'audio'],
+            message: problem,
+          });
+        }
+      }
     });
   });
 
@@ -438,6 +482,15 @@ export const createAssignmentSchema = assignmentInputSchema;
 export const updateAssignmentSchema = assignmentInputSchema;
 
 export type AssignmentInput = z.infer<typeof assignmentInputSchema>;
+
+export const questionAudioUploadTicketSchema = z.object({
+  classId: z.number().int().positive(),
+  filename: z.string().trim().min(1).max(255),
+  size: z.number().int().positive(),
+  contentType: z.string().trim().min(1).max(100),
+});
+
+export type UploadedQuestionAudio = z.infer<typeof uploadedQuestionAudioSchema>;
 
 /* ------------------------------------------------------------------ *
  * Grading
@@ -466,6 +519,11 @@ export const gradeSubmissionSchema = z.object({
 
 export type GradeSubmissionInput = z.infer<typeof gradeSubmissionSchema>;
 
+/** Which student's attempts to throw away, and the class that owns them. */
+export const resetSubmissionsSchema = classMutationSchema.extend({
+  studentId: z.number().int().positive(),
+});
+
 /** The same payload as the browser holds it, before the numbers are parsed. */
 export const gradeFormSchema = z.object({
   status: z.enum(gradeStatuses, { error: 'Choose a status.' }),
@@ -485,3 +543,73 @@ export const gradeFormSchema = z.object({
 });
 
 export type GradeFormValues = z.infer<typeof gradeFormSchema>;
+
+// Student attemps
+
+const MAX_ANSWER_LENGTH = 20_000;
+
+export const startAttemptSchema = z.object({
+  assignmentId: z.number().int().positive(),
+});
+
+const attemptAnswerSchema = z.object({
+  questionId: z.number().int().positive(),
+  /** Multiple choice and true/false. */
+  selectedChoiceId: z.number().int().positive().nullable(),
+  /** Multi select. */
+  selectedChoiceIds: z.array(z.number().int().positive()).max(20),
+  /** Short text and essay. */
+  textAnswer: z.string().max(MAX_ANSWER_LENGTH, 'That answer is too long.'),
+});
+
+/** `submissions/YYYY/MM/<uuid>.<ext>`, the layout `SubmissionFile` writes to. */
+const submissionFileSchema = z.object({
+  key: z
+    .string()
+    .regex(/^submissions\/\d{4}\/\d{2}\/[a-f0-9]{32}\.[a-z0-9]+$/, 'Invalid upload key.'),
+  originalFilename: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(100),
+  size: z.number().int().positive(),
+  uploadToken: z.string().min(1),
+  questionId: z.number().int().positive().nullable(),
+});
+
+export const saveAttemptSchema = z.object({
+  /** False saves a draft and leaves the attempt open; true hands it in. */
+  finalize: z.boolean(),
+  answers: z.array(attemptAnswerSchema).max(200),
+  /** Files uploaded during this attempt that are not recorded yet. */
+  files: z.array(submissionFileSchema).max(100),
+});
+
+export type SaveAttemptInput = z.infer<typeof saveAttemptSchema>;
+export type AttemptAnswerInput = z.infer<typeof attemptAnswerSchema>;
+export type SubmissionFileInput = z.infer<typeof submissionFileSchema>;
+
+export const submissionUploadTicketSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  size: z.number().int().positive(),
+  contentType: z.string().trim().min(1).max(100),
+  questionId: z.number().int().positive().nullable(),
+});
+
+export const deletePendingSubmissionFileSchema = submissionFileSchema;
+
+/**
+ * The browser form. Every answer is a string or a list of strings because that
+ * is what the controls hold; whether one is *required* depends on the question,
+ * so that check is `missingRequiredAnswers` rather than a schema rule, and a
+ * half-finished draft has to stay saveable.
+ */
+export const attemptFormSchema = z.object({
+  answers: z.array(
+    z.object({
+      questionId: z.number().int().positive(),
+      choiceId: z.string(),
+      choiceIds: z.array(z.string()),
+      textAnswer: z.string().max(MAX_ANSWER_LENGTH, 'That answer is too long.'),
+    }),
+  ),
+});
+
+export type AttemptFormValues = z.infer<typeof attemptFormSchema>;

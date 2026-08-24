@@ -7,9 +7,11 @@ import type { SubmissionFileRef } from '@/lib/assignments';
 export function SubmissionFiles({
   submissionId,
   files,
+  inlineAudio = false,
 }: {
   submissionId: number;
   files: SubmissionFileRef[];
+  inlineAudio?: boolean;
 }) {
   if (files.length === 0) return null;
 
@@ -21,7 +23,14 @@ export function SubmissionFiles({
           className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
         >
           <FileMeta filename={file.originalFilename} sizeBytes={file.sizeBytes} />
-          {file.hasFile ? (
+          {file.hasFile && (inlineAudio || file.mimeType.startsWith('audio/')) ? (
+            <audio
+              controls
+              preload="metadata"
+              src={`/api/submissions/${submissionId}/files/${file.id}`}
+              className="w-full sm:w-80"
+            />
+          ) : file.hasFile ? (
             <FileActions href={`/api/submissions/${submissionId}/files/${file.id}`} />
           ) : (
             <span className="text-xs text-ink-subtle">File missing</span>

@@ -83,6 +83,7 @@ export const QUESTION_KINDS = [
   { value: 'short_text', label: 'Short text' },
   { value: 'essay', label: 'Essay' },
   { value: 'file_upload', label: 'File upload' },
+  { value: 'audio_recording', label: 'Recorded audio' },
 ] as const;
 
 export type QuestionKind = (typeof QUESTION_KINDS)[number]['value'];
@@ -219,6 +220,69 @@ export function validateUpload(
   const limit = maxUploadBytes(type);
   if (size > limit) {
     return `The file size should not exceed ${limit / (1024 * 1024)}MB.`;
+  }
+  return null;
+}
+
+/**
+ * What a student may hand in.
+ *
+ * `SubmissionFile.file` is a plain Django `FileField` with no validation of its
+ * own, so these limits are this app's rule rather than a mirror of one. They are
+ * checked in the browser and again when the upload ticket is signed.
+ */
+export const SUBMISSION_EXTENSIONS = [
+  'pdf',
+  'doc',
+  'docx',
+  'txt',
+  'rtf',
+  'odt',
+  'jpg',
+  'jpeg',
+  'png',
+  'webp',
+  'heic',
+  'mp3',
+  'm4a',
+  'wav',
+  'webm',
+  'ogg',
+  'mp4',
+  'zip',
+] as const;
+
+export const MAX_SUBMISSION_SIZE_MB = 25;
+export const MAX_SUBMISSION_FILES = 10;
+
+export const MAX_QUESTION_AUDIO_SIZE_MB = 25;
+
+/** A listening prompt is deliberately MP3-only, matching the Django validator. */
+export function validateQuestionAudio(filename: string, size: number): string | null {
+  if (fileExtension(filename) !== 'mp3') {
+    return 'Question audio must be an .mp3 file.';
+  }
+  if (size <= 0) return 'The selected audio file is empty.';
+  if (size > MAX_QUESTION_AUDIO_SIZE_MB * 1024 * 1024) {
+    return `Question audio must be ${MAX_QUESTION_AUDIO_SIZE_MB}MB or smaller.`;
+  }
+  return null;
+}
+
+export function validateSubmissionUpload(
+  filename: string,
+  size: number,
+): string | null {
+  if (!(SUBMISSION_EXTENSIONS as readonly string[]).includes(fileExtension(filename))) {
+    return `That file type is not accepted. Use ${SUBMISSION_EXTENSIONS.slice(0, 5)
+      .map((extension) => `.${extension}`)
+      .join(', ')} or a similar document, image or audio file.`;
+  }
+  if (size <= 0) {
+    return 'The selected file is empty.';
+  }
+  if (size > MAX_SUBMISSION_SIZE_MB * 1024 * 1024) {
+    return `Each file must be ${MAX_SUBMISSION_SIZE_MB}MB or smaller.`;
   }
   return null;
 }

@@ -7,6 +7,7 @@ import { formatDays, formatTimeRange } from '@/lib/format';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listClassMaterialOptions } from '@/lib/assignments';
+import { isB2Configured } from '@/lib/b2';
 import { getClassDetail } from '@/lib/study-materials';
 
 import { AssignmentForm } from './assignment-form';
@@ -55,6 +56,7 @@ export default async function NewAssignmentPage({
         classId={id}
         suggestedLevel={detail.suggestedLevel}
         materials={materials}
+        storageReady={isB2Configured()}
       />
     </>
   );

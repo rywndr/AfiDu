@@ -11,6 +11,13 @@ import {
   surfaceCardBody,
 } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { IconTile, iconTileVariants } from '@/components/ui/icon-tile';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -104,23 +111,25 @@ export function PlaceholderSection({ title, kind }: PlaceholderSectionProps) {
 
 export function EmptyDashboardPage({ label }: { label: string }) {
   return (
-    <SurfaceCard variant="empty">
-      <CardContent className="px-5 py-12 sm:px-10 sm:py-16">
-        <IconTile className="mx-auto">
-          {label === 'Module' ? (
-            <BookOpen aria-hidden="true" />
-          ) : (
-            <ClipboardCheck aria-hidden="true" />
-          )}
-        </IconTile>
-        <h2 className="mt-5 text-lg font-bold text-ink sm:text-xl">
+    <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
+      <EmptyHeader>
+        <EmptyMedia>
+          <IconTile>
+            {label === 'Module' ? (
+              <BookOpen aria-hidden="true" />
+            ) : (
+              <ClipboardCheck aria-hidden="true" />
+            )}
+          </IconTile>
+        </EmptyMedia>
+        <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
           {label} page placeholder
-        </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-muted">
+        </EmptyTitle>
+        <EmptyDescription>
           This page is ready for the {label.toLowerCase()} experience when its data and
           workflows are implemented.
-        </p>
-      </CardContent>
-    </SurfaceCard>
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }

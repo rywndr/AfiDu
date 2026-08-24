@@ -11,10 +11,8 @@
  * 2. **`Assignment.save()` fills the slug**, and `(assignment, order)` on
  *    questions and `(question, order)` on choices are unique, so reordering has
  *    to avoid transient collisions.
- *
- * `neon-http` has no interactive transactions, so related statements are grouped
- * into `db.batch()` calls, which run atomically.
  */
+
 import 'server-only';
 
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -32,7 +30,9 @@ import {
   submissionFile,
 } from '@/db/schema';
 import { questionHasChoices } from '@/lib/choices';
+import { deleteObject } from '@/lib/b2';
 import type { AssignmentInput, GradeSubmissionInput } from '@/lib/form-schemas';
+import { scoreObjectiveAnswers } from '@/lib/objective-grading';
 import { buildAssignmentSlug } from '@/lib/assignments';
 
 export type MutationResult = { error?: string; status?: number };
@@ -107,14 +107,22 @@ export async function createAssignment(
   input: AssignmentInput,
   userId: number | null,
 ): Promise<MutationResult> {
+  const uploadedAudio = input.questions.flatMap((item) =>
+    item.audio ? [item.audio.key] : [],
+  );
+  const fail = async (error: string, status = 400): Promise<MutationResult> => {
+    await Promise.all(uploadedAudio.map(deleteObject));
+    return { error, status };
+  };
+
   if (!(await classExists(input.classId))) {
-    return { error: 'That class no longer exists.', status: 404 };
+    return fail('That class no longer exists.', 404);
   }
   if (
     input.materialId !== null &&
     !(await materialBelongsToClass(input.materialId, input.classId))
   ) {
-    return { error: 'That module is not available to this class.', status: 400 };
+    return fail('That module is not available to this class.');
   }
 
   const now = new Date();
@@ -141,7 +149,7 @@ export async function createAssignment(
     return {};
   } catch (error) {
     console.error('could not create assignment', error);
-    return { error: 'Could not save the assignment. Please try again.', status: 500 };
+    return fail('Could not save the assignment. Please try again.', 500);
   }
 }
 
@@ -149,6 +157,13 @@ export async function updateAssignment(
   input: AssignmentInput,
   assignmentId: number,
 ): Promise<MutationResult> {
+  const replacementAudio = input.questions.flatMap((item) =>
+    item.audio ? [item.audio.key] : [],
+  );
+  const fail = async (error: string, status = 400): Promise<MutationResult> => {
+    await Promise.all(replacementAudio.map(deleteObject));
+    return { error, status };
+  };
   const [current] = await db
     .select({ id: assignment.id, title: assignment.title, slug: assignment.slug })
     .from(assignment)
@@ -157,12 +172,12 @@ export async function updateAssignment(
     )
     .limit(1);
 
-  if (!current) return { error: 'That assignment no longer exists.', status: 404 };
+  if (!current) return fail('That assignment no longer exists.', 404);
   if (
     input.materialId !== null &&
     !(await materialBelongsToClass(input.materialId, input.classId))
   ) {
-    return { error: 'That module is not available to this class.', status: 400 };
+    return fail('That module is not available to this class.');
   }
 
   try {
@@ -178,11 +193,12 @@ export async function updateAssignment(
       })
       .where(eq(assignment.id, assignmentId));
 
-    await replaceQuestions(assignmentId, input.questions);
+    const discardedAudio = await replaceQuestions(assignmentId, input.questions);
+    await Promise.all(discardedAudio.map(deleteObject));
     return {};
   } catch (error) {
     console.error('could not update assignment', error);
-    return { error: 'Could not update the assignment. Please try again.', status: 500 };
+    return fail('Could not update the assignment. Please try again.', 500);
   }
 }
 
@@ -199,6 +215,11 @@ export async function deleteAssignment(
     .limit(1);
 
   if (!row) return { error: 'That assignment no longer exists.', status: 404 };
+
+  const questionAudio = await db
+    .select({ key: question.audio })
+    .from(question)
+    .where(eq(question.assignmentId, assignmentId));
 
   const submissionIds = () =>
     db
@@ -240,6 +261,88 @@ export async function deleteAssignment(
     return { error: 'Could not delete the assignment. Please try again.', status: 500 };
   }
 
+  await Promise.all(
+    questionAudio.filter((file) => file.key).map((file) => deleteObject(file.key)),
+  );
+
+  return {};
+}
+
+/**
+ * Throw away every attempt one student made at an assignment, so they can start
+ * again from a clean slate. Cascades by hand like `deleteAssignment` does, and
+ * the uploads go with it: the rows first, then the B2 objects behind them, in
+ * the same order as `deleteStudyMaterial`.
+ */
+export async function resetStudentSubmissions(
+  classId: number,
+  assignmentId: number,
+  studentId: number,
+): Promise<MutationResult> {
+  const [row] = await db
+    .select({ id: assignment.id })
+    .from(assignment)
+    .where(
+      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, classId)),
+    )
+    .limit(1);
+
+  if (!row) return { error: 'That assignment no longer exists.', status: 404 };
+
+  const submissionIds = () =>
+    db
+      .select({ id: submission.id })
+      .from(submission)
+      .where(
+        and(
+          eq(submission.assignmentId, assignmentId),
+          eq(submission.studentId, studentId),
+        ),
+      );
+
+  // read the keys while the rows are still there
+  const files = await db
+    .select({ key: submissionFile.file })
+    .from(submissionFile)
+    .where(inArray(submissionFile.submissionId, submissionIds()));
+
+  try {
+    await db.batch([
+      db
+        .delete(submissionAnswerChoice)
+        .where(
+          inArray(
+            submissionAnswerChoice.submissionAnswerId,
+            db
+              .select({ id: submissionAnswer.id })
+              .from(submissionAnswer)
+              .where(inArray(submissionAnswer.submissionId, submissionIds())),
+          ),
+        ),
+      db
+        .delete(submissionAnswer)
+        .where(inArray(submissionAnswer.submissionId, submissionIds())),
+      db
+        .delete(submissionFile)
+        .where(inArray(submissionFile.submissionId, submissionIds())),
+      db
+        .delete(submission)
+        .where(
+          and(
+            eq(submission.assignmentId, assignmentId),
+            eq(submission.studentId, studentId),
+          ),
+        ),
+    ]);
+  } catch (error) {
+    console.error('could not reset submission', error);
+    return { error: 'Could not reset the submission. Please try again.', status: 500 };
+  }
+
+  for (const file of files) {
+    if (file.key) await deleteObject(file.key);
+  }
+
   return {};
 }
 
@@ -266,6 +369,7 @@ async function insertQuestions(
         order,
         kind: item.kind,
         prompt: item.prompt,
+        audio: item.audio?.key ?? '',
         points: decimal(item.points),
         explanation: item.explanation.trim(),
         isRequired: item.isRequired,
@@ -302,9 +406,9 @@ async function insertQuestions(
 async function replaceQuestions(
   assignmentId: number,
   questions: QuestionInput[],
-): Promise<void> {
+): Promise<string[]> {
   const existing = await db
-    .select({ id: question.id })
+    .select({ id: question.id, audio: question.audio })
     .from(question)
     .where(eq(question.assignmentId, assignmentId));
 
@@ -314,6 +418,10 @@ async function replaceQuestions(
     questions.filter(isKept).map((item) => item.id as number),
   );
   const removedIds = [...existingIds].filter((id) => !keptIds.has(id));
+  const existingAudio = new Map(existing.map((row) => [row.id, row.audio]));
+  const discardedAudio = existing
+    .filter((row) => removedIds.includes(row.id) && row.audio)
+    .map((row) => row.audio);
 
   const now = new Date();
   const statements: BatchItem[] = [];
@@ -343,6 +451,7 @@ async function replaceQuestions(
           order: index + 1,
           kind: item.kind,
           prompt: item.prompt,
+          audio: item.audio?.key ?? existingAudio.get(item.id as number) ?? '',
           points: decimal(item.points),
           explanation: item.explanation.trim(),
           isRequired: item.isRequired,
@@ -355,7 +464,12 @@ async function replaceQuestions(
   await runBatch(statements);
 
   for (const item of questions) {
-    if (isKept(item)) await syncChoices(item.id as number, choicesFor(item));
+    if (!isKept(item)) continue;
+    await syncChoices(item.id as number, choicesFor(item));
+    const previousAudio = existingAudio.get(item.id as number);
+    if (item.audio && previousAudio && previousAudio !== item.audio.key) {
+      discardedAudio.push(previousAudio);
+    }
   }
 
   // the parked rows sit at 1001 and up, so the new ones can take their final
@@ -366,6 +480,7 @@ async function replaceQuestions(
       .map((item, index) => ({ item, order: index + 1 }))
       .filter(({ item }) => !isKept(item)),
   );
+  return discardedAudio;
 }
 
 /**
@@ -455,11 +570,10 @@ function deleteQuestionStatements(questionIds: number[]) {
  * Score one attempt.
  *
  * Mirrors `Submission.grade_objective()` and `recalculate_total()`: choice
- * questions are scored from their answer key into `auto_score`, the points the
- * teacher awarded by hand make up `manual_score`, and `total_score` is their
- * sum -- null only when neither side has a value. A choice question with no
- * correct option configured cannot be graded, so its answer is left unscored
- * rather than silently marked wrong.
+ * questions are scored from their answer key into `auto_score` by
+ * `scoreObjectiveAnswers`, the points the teacher awarded by hand make up
+ * `manual_score`, and `total_score` is their sum -- null only when neither side
+ * has a value.
  */
 export async function gradeSubmission(
   submissionId: number,
@@ -479,90 +593,24 @@ export async function gradeSubmission(
 
   if (!current) return { error: 'That submission no longer exists.', status: 404 };
 
-  const answers = await db
-    .select({
-      id: submissionAnswer.id,
-      questionId: submissionAnswer.questionId,
-      selectedChoiceId: submissionAnswer.selectedChoiceId,
-      kind: question.kind,
-      points: question.points,
-    })
-    .from(submissionAnswer)
-    .innerJoin(question, eq(submissionAnswer.questionId, question.id))
-    .where(eq(submissionAnswer.submissionId, submissionId));
-
-  const answerIds = answers.map((answer) => answer.id);
-  const questionIds = answers.map((answer) => answer.questionId);
-
-  const [choices, multiChoices] = await Promise.all([
-    questionIds.length
-      ? db
-          .select({
-            id: questionChoice.id,
-            questionId: questionChoice.questionId,
-            isCorrect: questionChoice.isCorrect,
-          })
-          .from(questionChoice)
-          .where(inArray(questionChoice.questionId, questionIds))
-      : [],
-    answerIds.length
-      ? db
-          .select({
-            answerId: submissionAnswerChoice.submissionAnswerId,
-            choiceId: submissionAnswerChoice.questionChoiceId,
-          })
-          .from(submissionAnswerChoice)
-          .where(inArray(submissionAnswerChoice.submissionAnswerId, answerIds))
-      : [],
-  ]);
-
-  const correctByQuestion = new Map<number, Set<number>>();
-  for (const choice of choices) {
-    if (!choice.isCorrect) continue;
-    const existing = correctByQuestion.get(choice.questionId);
-    if (existing) existing.add(choice.id);
-    else correctByQuestion.set(choice.questionId, new Set([choice.id]));
-  }
-
-  const chosenByAnswer = new Map<number, Set<number>>();
-  for (const link of multiChoices) {
-    const existing = chosenByAnswer.get(link.answerId);
-    if (existing) existing.add(link.choiceId);
-    else chosenByAnswer.set(link.answerId, new Set([link.choiceId]));
-  }
+  const { answers, marks, autoScore } = await scoreObjectiveAnswers(submissionId);
 
   const submitted = new Map(input.answers.map((answer) => [answer.answerId, answer]));
   const now = new Date();
   const statements: BatchItem[] = [];
 
-  let autoScore: number | null = null;
   let manualFromAnswers: number | null = null;
 
   for (const answer of answers) {
     if (questionHasChoices(answer.kind)) {
-      const correct = correctByQuestion.get(answer.questionId);
-      const chosen =
-        answer.kind === 'multi_select'
-          ? (chosenByAnswer.get(answer.id) ?? new Set<number>())
-          : new Set(
-              answer.selectedChoiceId === null ? [] : [answer.selectedChoiceId],
-            );
-
-      let isCorrect: boolean | null = null;
-      let awarded: number | null = null;
-
-      if (correct && correct.size > 0) {
-        isCorrect =
-          chosen.size === correct.size && [...chosen].every((id) => correct.has(id));
-        awarded = isCorrect ? Number(answer.points) : 0;
-        autoScore = (autoScore ?? 0) + awarded;
-      }
+      const mark = marks.get(answer.id);
+      const awarded = mark?.awardedPoints ?? null;
 
       statements.push(
         db
           .update(submissionAnswer)
           .set({
-            isCorrect,
+            isCorrect: mark?.isCorrect ?? null,
             awardedPoints: awarded === null ? null : decimal(awarded),
             feedback: submitted.get(answer.id)?.feedback.trim() ?? '',
             updatedAt: now,

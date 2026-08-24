@@ -235,6 +235,7 @@ export const question = pgTable('assignments_question', {
   order: smallint('order').notNull().default(1),
   kind: varchar('kind', { length: 20 }).notNull().default('multiple_choice'),
   prompt: text('prompt').notNull(),
+  audio: varchar('audio', { length: 100 }).notNull().default(''),
   points: numeric('points', { precision: 6, scale: 2 }).notNull().default('1.00'),
   explanation: text('explanation').notNull(),
   isRequired: boolean('is_required').notNull().default(true),
