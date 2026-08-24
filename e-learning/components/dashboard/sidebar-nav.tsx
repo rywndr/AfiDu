@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, ClipboardCheck, LayoutDashboard } from 'lucide-react';
+import { BookOpen, ClipboardCheck, ExternalLink, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,12 +18,14 @@ const navigation = [
   { label: 'Assignment', segment: 'assignment', icon: ClipboardCheck },
 ] as const;
 
+const MANAGEMENT_URL = 'http://127.0.0.1:8000/';
+
 export function SidebarNav({ role, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
   const basePath = `/${role}`;
 
   return (
-    <nav aria-label={`${role} navigation`}>
+    <nav aria-label={`${role} navigation`} className="flex flex-1 flex-col">
       <ul className="flex flex-col gap-1.5">
         {navigation.map(({ label, segment, icon: Icon }) => {
           const href = segment ? `${basePath}/${segment}` : basePath;
@@ -50,6 +52,24 @@ export function SidebarNav({ role, onNavigate }: SidebarNavProps) {
           );
         })}
       </ul>
+
+      <div className="mt-auto flex flex-col gap-1 pt-8">
+        {/* staff-only shortcut: students have no access to the Django app */}
+        {role === 'teacher' && (
+          <a
+            href={MANAGEMENT_URL}
+            onClick={onNavigate}
+            className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-ink-muted transition-colors hover:bg-shell hover:text-ink-soft"
+          >
+            <ExternalLink aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2} />
+            <span className="leading-none">AfiDu Management</span>
+          </a>
+        )}
+
+        <p className="px-4 text-[0.7rem] text-ink-subtle">
+          &copy; {new Date().getFullYear()} AfiDu. All rights reserved.
+        </p>
+      </div>
     </nav>
   );
 }
