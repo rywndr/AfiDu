@@ -4,17 +4,10 @@ import { notFound } from 'next/navigation';
 import { ClipboardCheck } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
 import { isAssignmentStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
 import { listViewClass, parseListView } from '@/lib/list-view';
@@ -113,20 +106,9 @@ export default async function ClassAssignmentPage({
         </h2>
 
         {assignments.length === 0 ? (
-          <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-            <EmptyHeader>
-              <EmptyMedia>
-                <IconTile>
-                  <ClipboardCheck aria-hidden="true" />
-                </IconTile>
-              </EmptyMedia>
-              <EmptyDescription>
-                {filtering
-                  ? 'No assignments match the current search and filters.'
-                  : 'No assignments for this class yet. Create the first one to get started.'}
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
+          <EmptyState
+            icon={ClipboardCheck}
+            action={
               <Link
                 href={filtering ? clearFiltersHref : `/teacher/assignment/${id}/new`}
                 className={buttonVariants({
@@ -136,8 +118,12 @@ export default async function ClassAssignmentPage({
               >
                 {filtering ? 'Clear filters' : 'New assignment'}
               </Link>
-            </EmptyContent>
-          </Empty>
+            }
+          >
+            {filtering
+              ? 'No assignments match the current search and filters.'
+              : 'No assignments for this class yet.'}
+          </EmptyState>
         ) : (
           <ul className={listViewClass(view)}>
             {assignments.map((item) => (

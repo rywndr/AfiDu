@@ -4,17 +4,10 @@ import { notFound } from 'next/navigation';
 import { Pencil, Users } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
 import { isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
 import { parseRouteId } from '@/lib/route-params';
@@ -145,30 +138,23 @@ export default async function AssignmentSubmissionsPage({
         </div>
 
         {rows.length === 0 ? (
-          <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-            <EmptyHeader>
-              <EmptyMedia>
-                <IconTile>
-                  <Users aria-hidden="true" />
-                </IconTile>
-              </EmptyMedia>
-              <EmptyDescription>
-                {filtering
-                  ? 'No students match the current search and filters.'
-                  : `No students are assigned to ${detail.name} yet, so there is nothing to mark. Students are added to classes in the internal AfiDu app.`}
-              </EmptyDescription>
-            </EmptyHeader>
-            {filtering ? (
-              <EmptyContent>
+          <EmptyState
+            icon={Users}
+            action={
+              filtering ? (
                 <Link
                   href={basePath}
                   className={buttonVariants({ variant: 'outline', size: 'lg' })}
                 >
                   Clear filters
                 </Link>
-              </EmptyContent>
-            ) : null}
-          </Empty>
+              ) : null
+            }
+          >
+            {filtering
+              ? 'No students match the current search and filters.'
+              : `No students are assigned to ${detail.name} yet, so there is nothing to mark.`}
+          </EmptyState>
         ) : (
           <ul className="flex flex-col gap-3 sm:gap-4">
             {rows.map((row) => (

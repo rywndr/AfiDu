@@ -2,16 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BookOpen, ChevronRight, Clock, Users } from 'lucide-react';
 
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { IconTile } from '@/components/ui/icon-tile';
 import { formatDays, formatTimeRange } from '@/lib/format';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
@@ -34,22 +28,10 @@ export default async function TeacherModulePage() {
       />
 
       {classes.length === 0 ? (
-        <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-          <EmptyHeader>
-            <EmptyMedia>
-              <IconTile>
-                <BookOpen aria-hidden="true" />
-              </IconTile>
-            </EmptyMedia>
-            <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-              No classes yet
-            </EmptyTitle>
-            <EmptyDescription>
-              Classes are created in the internal AfiDu app. Add one there and it will
-              show up here.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={BookOpen} title="No classes yet">
+          Classes are created in the internal AfiDu app. Add one there and it will show
+          up here.
+        </EmptyState>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           {classes.map((studentClass) => (

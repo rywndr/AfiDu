@@ -4,36 +4,45 @@ import type { LucideIcon } from 'lucide-react';
 
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
+import { IconTile, iconTileVariants } from '@/components/ui/icon-tile';
 
-/** The dashed panel a page shows in place of a list it has nothing to fill with. */
+type IconTone = NonNullable<Parameters<typeof iconTileVariants>[0]>['tone'];
+
 export function EmptyState({
   icon: Icon,
   title,
+  tone,
+  action,
   children,
 }: {
   icon: LucideIcon;
-  title: string;
+  title?: string;
+  tone?: IconTone;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
       <EmptyHeader>
         <EmptyMedia>
-          <IconTile>
+          <IconTile tone={tone}>
             <Icon aria-hidden="true" />
           </IconTile>
         </EmptyMedia>
-        <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-          {title}
-        </EmptyTitle>
+        {title ? (
+          <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
+            {title}
+          </EmptyTitle>
+        ) : null}
         <EmptyDescription>{children}</EmptyDescription>
       </EmptyHeader>
+      {action ? <EmptyContent>{action}</EmptyContent> : null}
     </Empty>
   );
 }

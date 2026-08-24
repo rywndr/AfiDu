@@ -4,17 +4,10 @@ import { notFound } from 'next/navigation';
 import { BookOpen } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@/components/ui/empty';
-import { IconTile } from '@/components/ui/icon-tile';
 import { isMaterialStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
 import { listViewClass, parseListView } from '@/lib/list-view';
@@ -111,30 +104,24 @@ export default async function ClassModulePage({
         </h2>
 
         {materials.length === 0 ? (
-          <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-            <EmptyHeader>
-              <EmptyMedia>
-                <IconTile tone="warm">
-                  <BookOpen aria-hidden="true" />
-                </IconTile>
-              </EmptyMedia>
-              <EmptyDescription>
-                {filtering
-                  ? 'No modules match the current search and filters.'
-                  : 'No modules for this class yet. Add the first one to get started.'}
-              </EmptyDescription>
-            </EmptyHeader>
-            {filtering ? (
-              <EmptyContent>
+          <EmptyState
+            icon={BookOpen}
+            tone="warm"
+            action={
+              filtering ? (
                 <Link
                   href={clearFiltersHref}
                   className={buttonVariants({ variant: 'outline', size: 'lg' })}
                 >
                   Clear filters
                 </Link>
-              </EmptyContent>
-            ) : null}
-          </Empty>
+              ) : null
+            }
+          >
+            {filtering
+              ? 'No modules match the current search and filters.'
+              : 'No modules for this class yet. Add the first one to get started.'}
+          </EmptyState>
         ) : (
           <ul className={listViewClass(view)}>
             {materials.map((material) => (

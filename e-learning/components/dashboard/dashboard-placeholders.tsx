@@ -5,19 +5,13 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+import { EmptyState } from '@/components/dashboard/empty-state';
 import {
   DashboardSection,
   SurfaceCard,
   surfaceCardBody,
 } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { IconTile, iconTileVariants } from '@/components/ui/icon-tile';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -111,25 +105,12 @@ export function PlaceholderSection({ title, kind }: PlaceholderSectionProps) {
 
 export function EmptyDashboardPage({ label }: { label: string }) {
   return (
-    <Empty className="rounded-3xl border border-dashed border-shell-outline bg-white/60 px-5 py-10 sm:px-10 sm:py-14">
-      <EmptyHeader>
-        <EmptyMedia>
-          <IconTile>
-            {label === 'Module' ? (
-              <BookOpen aria-hidden="true" />
-            ) : (
-              <ClipboardCheck aria-hidden="true" />
-            )}
-          </IconTile>
-        </EmptyMedia>
-        <EmptyTitle className="text-lg font-bold text-ink sm:text-xl">
-          {label} page placeholder
-        </EmptyTitle>
-        <EmptyDescription>
-          This page is ready for the {label.toLowerCase()} experience when its data and
-          workflows are implemented.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <EmptyState
+      icon={label === 'Module' ? BookOpen : ClipboardCheck}
+      title={`${label} page placeholder`}
+    >
+      This page is ready for the {label.toLowerCase()} experience when its data and
+      workflows are implemented.
+    </EmptyState>
   );
 }
