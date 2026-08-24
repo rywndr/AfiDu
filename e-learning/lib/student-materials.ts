@@ -10,10 +10,29 @@
  */
 import 'server-only';
 
-import { and, asc, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  type SQL,
+} from 'drizzle-orm';
 
 import { db } from '@/db';
 import { assignment, studyMaterial } from '@/db/schema';
+import type { MaterialType, SubjectCategory } from '@/lib/choices';
+import {
+  likePattern,
+  parseSearchQuery,
+  resolvePageWindow,
+  type ListQueryOptions,
+  type PageResult,
+} from '@/lib/list-query';
 
 const PUBLISHED = 'published';
 
@@ -35,6 +54,19 @@ export type StudentMaterial = {
   uploadedAt: Date;
   linkedAssignments: StudentMaterialAssignment[];
 };
+
+/** What a student may narrow their module list by. */
+export type StudentMaterialFilters = {
+  query?: string;
+  category?: SubjectCategory;
+  materialType?: MaterialType;
+};
+
+/** Everything `listStudentMaterials` needs, in one object like its sibling. */
+export type StudentMaterialQuery = StudentMaterialFilters &
+  ListQueryOptions & {
+    classId: number;
+  };
 
 const materialColumns = {
   id: studyMaterial.id,
@@ -76,27 +108,71 @@ export function canStudentReadMaterial(
 
 /**
  * Published modules for one class, in the order the teacher arranged them.
+ *
+ * The search and both filters go into the SQL, so `total` counts matching rows
+ * and one page of them comes back rather than the lot.
  */
 export async function listStudentMaterials(
-  classId: number,
-): Promise<StudentMaterial[]> {
+  options: StudentMaterialQuery,
+): Promise<PageResult<StudentMaterial>> {
+  const { classId } = options;
+  const readable = readableBy(classId);
+  const filters: (SQL | undefined)[] = [readable];
+  const query = parseSearchQuery(options.query);
+
+  if (query) {
+    const pattern = likePattern(query);
+    filters.push(
+      or(
+        ilike(studyMaterial.title, pattern),
+        ilike(studyMaterial.description, pattern),
+      ),
+    );
+  }
+  if (options.category) {
+    filters.push(eq(studyMaterial.category, options.category));
+  }
+  if (options.materialType) {
+    filters.push(eq(studyMaterial.materialType, options.materialType));
+  }
+
+  const where = and(...filters);
+  const [[filteredCount], [readableCount]] = await Promise.all([
+    db.select({ total: count() }).from(studyMaterial).where(where),
+    db.select({ total: count() }).from(studyMaterial).where(readable),
+  ]);
+  const total = filteredCount?.total ?? 0;
+  const allTotal = readableCount?.total ?? 0;
+  const { page, pageSize, totalPages, offset } = resolvePageWindow(total, options);
+
   const materials = await db
     .select(materialColumns)
     .from(studyMaterial)
-    .where(readableBy(classId))
-    .orderBy(asc(studyMaterial.position), desc(studyMaterial.uploadedAt));
+    .where(where)
+    .orderBy(asc(studyMaterial.position), desc(studyMaterial.uploadedAt))
+    .limit(pageSize)
+    .offset(offset);
 
-  if (materials.length === 0) return [];
+  if (materials.length === 0) {
+    return { items: [], total, allTotal, page, pageSize, totalPages };
+  }
 
   const links = await listMaterialAssignments(
     classId,
     materials.map((material) => material.id),
   );
 
-  return materials.map((material) => ({
-    ...material,
-    linkedAssignments: links.get(material.id) ?? [],
-  }));
+  return {
+    items: materials.map((material) => ({
+      ...material,
+      linkedAssignments: links.get(material.id) ?? [],
+    })),
+    total,
+    allTotal,
+    page,
+    pageSize,
+    totalPages,
+  };
 }
 
 /** One module, or null when it is not this student's to read. */

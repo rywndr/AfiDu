@@ -20,6 +20,7 @@ import {
   ne,
   or,
   sql,
+  type SQL,
 } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -40,6 +41,12 @@ import {
   type MaterialType,
   type SubjectCategory,
 } from '@/lib/choices';
+import {
+  likePattern,
+  parseSearchQuery,
+  resolvePageWindow,
+  type PageResult,
+} from '@/lib/list-query';
 
 export type ClassSummary = {
   id: number;
@@ -68,14 +75,7 @@ export type MaterialSummary = {
   linkedAssignments: LinkedAssignment[];
 };
 
-export type MaterialPage = {
-  items: MaterialSummary[];
-  total: number;
-  allTotal: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
+export type MaterialPage = PageResult<MaterialSummary>;
 
 export type EditableMaterial = {
   id: number;
@@ -183,20 +183,17 @@ export async function listClassMaterials(
     pageSize?: number;
   } = {},
 ): Promise<MaterialPage> {
-  const query = options.query?.trim().slice(0, 100) ?? '';
-  const pageSize = Math.min(Math.max(options.pageSize ?? 6, 1), 50);
-  const requestedPage = Math.max(options.page ?? 1, 1);
-  const filters = [eq(studyMaterial.studentClassId, classId)];
+  const query = parseSearchQuery(options.query);
+  const filters: (SQL | undefined)[] = [eq(studyMaterial.studentClassId, classId)];
 
   if (query) {
-    const escapedQuery = query.replace(/[\\%_]/g, '\\$&');
-    const pattern = `%${escapedQuery}%`;
+    const pattern = likePattern(query);
     filters.push(
       or(
         ilike(studyMaterial.title, pattern),
         ilike(studyMaterial.description, pattern),
         ilike(studyMaterial.originalFilename, pattern),
-      )!,
+      ),
     );
   }
   if (options.category) {
@@ -216,8 +213,7 @@ export async function listClassMaterials(
   ]);
   const total = filteredCount?.total ?? 0;
   const allTotal = classCount?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const page = Math.min(requestedPage, totalPages);
+  const { page, pageSize, totalPages, offset } = resolvePageWindow(total, options);
 
   const materials = await db
     .select({
@@ -242,7 +238,7 @@ export async function listClassMaterials(
     .where(where)
     .orderBy(asc(studyMaterial.position), desc(studyMaterial.uploadedAt))
     .limit(pageSize)
-    .offset((page - 1) * pageSize);
+    .offset(offset);
 
   if (materials.length === 0) {
     return { items: [], total, allTotal, page, pageSize, totalPages };

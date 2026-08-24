@@ -14,7 +14,19 @@ import {
   submission,
 } from '@/db/schema';
 import { isB2Configured, presignDownload } from '@/lib/b2';
-import { isQuestionKind, type QuestionKind } from '@/lib/choices';
+import {
+  SUBMISSION_NOT_STARTED,
+  isQuestionKind,
+  type QuestionKind,
+  type SubjectCategory,
+  type SubmissionRowStatus,
+} from '@/lib/choices';
+import {
+  paginate,
+  parseSearchQuery,
+  type ListQueryOptions,
+  type PageResult,
+} from '@/lib/list-query';
 
 const PUBLISHED = 'published';
 
@@ -52,6 +64,31 @@ export type StudentAssignment = {
   questionCount: number;
   attemptsUsed: number;
   latestAttempt: LatestAttempt | null;
+};
+
+/**
+ * What a student may narrow their assignment list by. `status` is the state of
+ * their newest attempt, so `not_started` is as real a value as the rest.
+ */
+export type StudentAssignmentFilters = {
+  query?: string;
+  category?: SubjectCategory;
+  status?: SubmissionRowStatus;
+};
+
+/**
+ * Everything `listStudentAssignments` needs. `studentId` and `classId` are both
+ * numbers, so the call names them instead of trusting the order.
+ */
+export type StudentAssignmentQuery = StudentAssignmentFilters &
+  ListQueryOptions & {
+    studentId: number;
+    classId: number;
+  };
+
+export type StudentAssignmentPage = PageResult<StudentAssignment> & {
+  /** Assignments still to do, counted across the class, not just this page. */
+  outstanding: number;
 };
 
 /** An option as the student sees it. */
@@ -95,11 +132,36 @@ const assignmentColumns = {
   materialTitle: studyMaterial.title,
 };
 
-/** Published assignments for one class, soonest due first. */
+/**
+ * The state a student's assignment is in, using the same values as the
+ * teacher's submission table so one set of labels covers both.
+ *
+ * The return type is `string`, not `SubmissionRowStatus`. The value comes from a
+ * Django column, and a status this app has not been taught about would make the
+ * narrower type a lie.
+ */
+export function studentAttemptStatus(
+  item: Pick<StudentAssignment, 'latestAttempt'>,
+): string {
+  return item.latestAttempt?.status ?? SUBMISSION_NOT_STARTED;
+}
+
+/** Never opened, or opened and not sent. Either way the student still owes it. */
+function isOutstanding(item: Pick<StudentAssignment, 'latestAttempt'>): boolean {
+  return item.latestAttempt === null || item.latestAttempt.status === 'in_progress';
+}
+
+/**
+ * Published assignments for one class, soonest due first.
+ *
+ * The `status` filter reads the newest attempt, which no column holds, so this
+ * reads the class's assignments in full and then filters and pages them in
+ * memory. A class holds tens of assignments, not thousands.
+ */
 export async function listStudentAssignments(
-  studentId: number,
-  classId: number,
-): Promise<StudentAssignment[]> {
+  options: StudentAssignmentQuery,
+): Promise<StudentAssignmentPage> {
+  const { studentId, classId } = options;
   const rows = await db
     .select(assignmentColumns)
     .from(assignment)
@@ -109,7 +171,9 @@ export async function listStudentAssignments(
     )
     .orderBy(sql`${assignment.dueAt} asc nulls last`, desc(assignment.createdAt));
 
-  if (rows.length === 0) return [];
+  if (rows.length === 0) {
+    return { ...paginate([], 0, options), outstanding: 0 };
+  }
 
   const ids = rows.map((row) => row.id);
   const [questionCounts, attempts] = await Promise.all([
@@ -123,12 +187,31 @@ export async function listStudentAssignments(
 
   const questions = new Map(questionCounts.map((row) => [row.assignmentId, row.total]));
 
-  return rows.map((row) => ({
+  const all: StudentAssignment[] = rows.map((row) => ({
     ...row,
     questionCount: questions.get(row.id) ?? 0,
     attemptsUsed: attempts.get(row.id)?.used ?? 0,
     latestAttempt: attempts.get(row.id)?.latest ?? null,
   }));
+
+  const needle = parseSearchQuery(options.query).toLowerCase();
+  const items = all.filter((item) => {
+    if (
+      needle &&
+      !item.title.toLowerCase().includes(needle) &&
+      !item.description.toLowerCase().includes(needle)
+    ) {
+      return false;
+    }
+    if (options.category && item.category !== options.category) return false;
+    if (options.status && studentAttemptStatus(item) !== options.status) return false;
+    return true;
+  });
+
+  return {
+    ...paginate(items, all.length, options),
+    outstanding: all.filter(isOutstanding).length,
+  };
 }
 
 /** One assignment, or null when it is not this student's to see. */
