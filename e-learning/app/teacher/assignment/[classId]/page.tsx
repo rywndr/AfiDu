@@ -1,26 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  BookOpen,
-  CalendarClock,
-  CircleCheck,
-  ClipboardCheck,
-  Hourglass,
-  ListChecks,
-  Pencil,
-  Repeat,
-  Timer,
-  Users,
-} from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
-import { SurfaceCard } from '@/components/dashboard/surfaces';
-import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
 import {
   Empty,
   EmptyContent,
@@ -29,24 +15,15 @@ import {
   EmptyMedia,
 } from '@/components/ui/empty';
 import { IconTile } from '@/components/ui/icon-tile';
-import {
-  isAssignmentStatus,
-  isSubjectCategory,
-  statusBadgeClass,
-} from '@/lib/choices';
-import {
-  formatClassSchedule,
-  formatDateTime,
-  formatScore,
-  pluralize,
-} from '@/lib/format';
+import { isAssignmentStatus, isSubjectCategory } from '@/lib/choices';
+import { formatClassSchedule, pluralize } from '@/lib/format';
+import { listViewClass, parseListView } from '@/lib/list-view';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
-import { listClassAssignments, type AssignmentSummary } from '@/lib/assignments';
+import { listClassAssignments } from '@/lib/assignments';
 import { getClassDetail } from '@/lib/study-materials';
-import { cn } from '@/lib/utils';
 
-import { AssignmentActionMenu } from './assignment-actions';
+import { AssignmentCard } from './assignment-card';
 import { AssignmentToolbar } from './assignment-toolbar';
 
 export async function generateMetadata({
@@ -63,151 +40,21 @@ export async function generateMetadata({
   };
 }
 
-function AssignmentBadges({ item }: { item: AssignmentSummary }) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <Badge className={cn('capitalize', statusBadgeClass(item.status))}>
-        {item.status}
-      </Badge>
-      <Badge className="bg-shell text-ink-soft capitalize">{item.category}</Badge>
-      <Badge className="bg-shell text-ink-soft capitalize">{item.level}</Badge>
-    </div>
-  );
-}
+/** The search, filter and view state. */
+function readSearchParams(
+  params: Awaited<PageProps<'/teacher/assignment/[classId]'>['searchParams']>,
+) {
+  const categoryValue = String(params.category ?? '');
+  const statusValue = String(params.status ?? '');
+  const requestedPage = Number(params.page ?? 1);
 
-function AssignmentMeta({ item }: { item: AssignmentSummary }) {
-  return (
-    <div className="mt-2 flex flex-col gap-1 text-xs text-ink-subtle">
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="flex items-center gap-1.5">
-          <CalendarClock aria-hidden="true" className="size-3.5 shrink-0" />
-          {item.dueAt ? `Due ${formatDateTime(item.dueAt)}` : 'No due date'}
-          {item.dueAt && item.allowLate ? ' · late allowed' : ''}
-        </span>
-        {item.openAt ? (
-          <span className="flex items-center gap-1.5">
-            <Timer aria-hidden="true" className="size-3.5 shrink-0" />
-            Opens {formatDateTime(item.openAt)}
-          </span>
-        ) : null}
-      </p>
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="flex items-center gap-1.5">
-          <ListChecks aria-hidden="true" className="size-3.5 shrink-0" />
-          {item.questionCount} question{item.questionCount === 1 ? '' : 's'} ·{' '}
-          {formatScore(item.maxPoints)} point
-          {formatScore(item.maxPoints) === '1' ? '' : 's'}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Repeat aria-hidden="true" className="size-3.5 shrink-0" />
-          {item.maxAttempts} attempt{item.maxAttempts === 1 ? '' : 's'}
-        </span>
-        {item.timeLimitMinutes ? (
-          <span className="flex items-center gap-1.5">
-            <Timer aria-hidden="true" className="size-3.5 shrink-0" />
-            {item.timeLimitMinutes} min limit
-          </span>
-        ) : null}
-      </p>
-      {item.materialId && item.materialTitle ? (
-        <p className="flex items-center gap-1.5">
-          <BookOpen aria-hidden="true" className="size-3.5 shrink-0" />
-          <span className="truncate">Reads {item.materialTitle}</span>
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function SubmissionCounts({ item }: { item: AssignmentSummary }) {
-  return (
-    <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-ink-soft">
-      <span className="flex items-center gap-1.5">
-        <Users aria-hidden="true" className="size-3.5" />
-        {item.submissionCount} submission{item.submissionCount === 1 ? '' : 's'}
-      </span>
-      {item.awaitingGradingCount > 0 ? (
-        <span className="flex items-center gap-1.5 text-accent-warm-strong">
-          <Hourglass aria-hidden="true" className="size-3.5" />
-          {item.awaitingGradingCount} to mark
-        </span>
-      ) : null}
-      {item.gradedCount > 0 ? (
-        <span className="flex items-center gap-1.5 text-accent-primary">
-          <CircleCheck aria-hidden="true" className="size-3.5" />
-          {item.gradedCount} marked
-        </span>
-      ) : null}
-    </p>
-  );
-}
-
-function AssignmentCard({
-  item,
-  classId,
-}: {
-  item: AssignmentSummary;
-  classId: number;
-}) {
-  return (
-    <SurfaceCard>
-      <CardContent className="p-4 sm:p-5">
-        <div className="flex items-start gap-3.5 sm:gap-4">
-          <IconTile tone={item.awaitingGradingCount > 0 ? 'warm' : 'cool'}>
-            <ClipboardCheck aria-hidden="true" strokeWidth={1.8} />
-          </IconTile>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/teacher/assignment/${classId}/${item.id}`}
-                  className="text-base font-semibold break-words text-ink-strong hover:underline"
-                >
-                  {item.title}
-                </Link>
-                {item.description ? (
-                  <p className="mt-1 line-clamp-2 text-sm text-ink-muted">
-                    {item.description}
-                  </p>
-                ) : null}
-
-                <div className="mt-2">
-                  <AssignmentBadges item={item} />
-                </div>
-
-                <AssignmentMeta item={item} />
-                <SubmissionCounts item={item} />
-              </div>
-
-              <div className="flex shrink-0 flex-wrap items-start gap-2 sm:justify-end">
-                <Link
-                  href={`/teacher/assignment/${classId}/${item.id}`}
-                  className={buttonVariants({ variant: 'secondary', size: 'sm' })}
-                >
-                  <Users aria-hidden="true" />
-                  Submissions
-                </Link>
-                <Link
-                  href={`/teacher/assignment/${classId}/${item.id}/edit`}
-                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                >
-                  <Pencil aria-hidden="true" />
-                  Edit
-                </Link>
-                <AssignmentActionMenu
-                  classId={classId}
-                  assignmentId={item.id}
-                  title={item.title}
-                  submissionCount={item.submissionCount}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </SurfaceCard>
-  );
+  return {
+    query: String(params.q ?? '').trim().slice(0, 100),
+    category: isSubjectCategory(categoryValue) ? categoryValue : undefined,
+    status: isAssignmentStatus(statusValue) ? statusValue : undefined,
+    view: parseListView(params.view),
+    page: Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+  };
 }
 
 export default async function ClassAssignmentPage({
@@ -222,15 +69,7 @@ export default async function ClassAssignmentPage({
   const detail = await getClassDetail(id);
   if (!detail) notFound();
 
-  const urlSearchParams = await searchParams;
-  const query = String(urlSearchParams.q ?? '').trim().slice(0, 100);
-  const categoryValue = String(urlSearchParams.category ?? '');
-  const category = isSubjectCategory(categoryValue) ? categoryValue : undefined;
-  const statusValue = String(urlSearchParams.status ?? '');
-  const status = isAssignmentStatus(statusValue) ? statusValue : undefined;
-  const requestedPage = Number(urlSearchParams.page ?? 1);
-  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-
+  const { query, category, status, view, page } = readSearchParams(await searchParams);
   const assignmentPage = await listClassAssignments(id, {
     query,
     category,
@@ -239,6 +78,8 @@ export default async function ClassAssignmentPage({
   });
   const assignments = assignmentPage.items;
   const filtering = Boolean(query || category || status);
+  const clearFiltersHref =
+    view === 'grid' ? `/teacher/assignment/${id}?view=grid` : `/teacher/assignment/${id}`;
 
   return (
     <>
@@ -258,6 +99,7 @@ export default async function ClassAssignmentPage({
             query={query}
             category={category}
             status={status}
+            view={view}
           />
         }
       />
@@ -286,11 +128,7 @@ export default async function ClassAssignmentPage({
             </EmptyHeader>
             <EmptyContent>
               <Link
-                href={
-                  filtering
-                    ? `/teacher/assignment/${id}`
-                    : `/teacher/assignment/${id}/new`
-                }
+                href={filtering ? clearFiltersHref : `/teacher/assignment/${id}/new`}
                 className={buttonVariants({
                   variant: filtering ? 'outline' : 'default',
                   size: 'lg',
@@ -301,10 +139,10 @@ export default async function ClassAssignmentPage({
             </EmptyContent>
           </Empty>
         ) : (
-          <ul className="flex flex-col gap-3 sm:gap-4">
+          <ul className={listViewClass(view)}>
             {assignments.map((item) => (
               <li key={item.id}>
-                <AssignmentCard item={item} classId={id} />
+                <AssignmentCard item={item} classId={id} view={view} />
               </li>
             ))}
           </ul>
@@ -314,7 +152,12 @@ export default async function ClassAssignmentPage({
           pathname={`/teacher/assignment/${id}`}
           page={assignmentPage.page}
           totalPages={assignmentPage.totalPages}
-          query={{ q: query || undefined, category, status }}
+          query={{
+            q: query || undefined,
+            category,
+            status,
+            view: view === 'grid' ? view : undefined,
+          }}
         />
       </section>
     </>

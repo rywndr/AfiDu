@@ -1,5 +1,6 @@
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
+import type { ListView } from '@/lib/list-view';
 import type { LinkableAssignment, MaterialSummary } from '@/lib/study-materials';
 
 import { AssignmentLinks, MaterialActionMenu } from './material-actions';
@@ -15,7 +16,7 @@ type MaterialCardProps = {
   material: MaterialSummary;
   classId: number;
   assignments: LinkableAssignment[];
-  view: 'rows' | 'grid';
+  view: ListView;
 };
 
 /** Wide layout: icon, details and actions on one line. */

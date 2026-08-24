@@ -178,6 +178,7 @@ export async function listClassMaterials(
   options: {
     query?: string;
     category?: SubjectCategory;
+    status?: MaterialStatus;
     page?: number;
     pageSize?: number;
   } = {},
@@ -200,6 +201,9 @@ export async function listClassMaterials(
   }
   if (options.category) {
     filters.push(eq(studyMaterial.category, options.category));
+  }
+  if (options.status) {
+    filters.push(eq(studyMaterial.status, options.status));
   }
 
   const where = and(...filters);

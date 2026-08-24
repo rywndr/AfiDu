@@ -15,8 +15,9 @@ import {
   EmptyMedia,
 } from '@/components/ui/empty';
 import { IconTile } from '@/components/ui/icon-tile';
-import { isSubjectCategory } from '@/lib/choices';
+import { isMaterialStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
+import { listViewClass, parseListView } from '@/lib/list-view';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import {
@@ -42,15 +43,17 @@ export async function generateMetadata({
   };
 }
 
-/** The search, category and view state the page is rendered for. */
+/** The search, filter and view state the page is rendered for. */
 function readSearchParams(params: Awaited<PageProps<'/teacher/module/[classId]'>['searchParams']>) {
   const categoryValue = String(params.category ?? '');
+  const statusValue = String(params.status ?? '');
   const requestedPage = Number(params.page ?? 1);
 
   return {
     query: String(params.q ?? '').trim().slice(0, 100),
     category: isSubjectCategory(categoryValue) ? categoryValue : undefined,
-    view: params.view === 'grid' ? ('grid' as const) : ('rows' as const),
+    status: isMaterialStatus(statusValue) ? statusValue : undefined,
+    view: parseListView(params.view),
     page: Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
   };
 }
@@ -67,13 +70,13 @@ export default async function ClassModulePage({
   const detail = await getClassDetail(id);
   if (!detail) notFound();
 
-  const { query, category, view, page } = readSearchParams(await searchParams);
+  const { query, category, status, view, page } = readSearchParams(await searchParams);
   const [materialPage, assignments] = await Promise.all([
-    listClassMaterials(id, { query, category, page }),
+    listClassMaterials(id, { query, category, status, page }),
     listLinkableAssignments(id),
   ]);
   const materials = materialPage.items;
-  const filtering = Boolean(query || category);
+  const filtering = Boolean(query || category || status);
   // clearing the filters keeps whichever layout the teacher is looking at
   const clearFiltersHref =
     view === 'grid' ? `/teacher/module/${id}?view=grid` : `/teacher/module/${id}`;
@@ -89,7 +92,13 @@ export default async function ClassModulePage({
           'module',
         )}`}
         actions={
-          <ModuleToolbar classId={id} query={query} category={category} view={view} />
+          <ModuleToolbar
+            classId={id}
+            query={query}
+            category={category}
+            status={status}
+            view={view}
+          />
         }
       />
 
@@ -111,7 +120,7 @@ export default async function ClassModulePage({
               </EmptyMedia>
               <EmptyDescription>
                 {filtering
-                  ? 'No modules match the current search and category filter.'
+                  ? 'No modules match the current search and filters.'
                   : 'No modules for this class yet. Add the first one to get started.'}
               </EmptyDescription>
             </EmptyHeader>
@@ -127,13 +136,7 @@ export default async function ClassModulePage({
             ) : null}
           </Empty>
         ) : (
-          <ul
-            className={
-              view === 'grid'
-                ? 'grid items-stretch gap-3 sm:gap-4 lg:grid-cols-2 2xl:grid-cols-3'
-                : 'flex flex-col gap-3 sm:gap-4'
-            }
-          >
+          <ul className={listViewClass(view)}>
             {materials.map((material) => (
               <li key={material.id}>
                 <MaterialCard
@@ -154,6 +157,7 @@ export default async function ClassModulePage({
           query={{
             q: query || undefined,
             category,
+            status,
             view: view === 'grid' ? view : undefined,
           }}
         />
