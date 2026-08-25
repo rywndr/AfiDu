@@ -165,7 +165,12 @@ export async function updateAssignment(
     return { error, status };
   };
   const [current] = await db
-    .select({ id: assignment.id, title: assignment.title, slug: assignment.slug })
+    .select({
+      id: assignment.id,
+      title: assignment.title,
+      slug: assignment.slug,
+      status: assignment.status,
+    })
     .from(assignment)
     .where(
       and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, input.classId)),
@@ -173,6 +178,9 @@ export async function updateAssignment(
     .limit(1);
 
   if (!current) return fail('That assignment no longer exists.', 404);
+  if (current.status === 'published') {
+    return fail('Published assignments cannot be edited.', 409);
+  }
   if (
     input.materialId !== null &&
     !(await materialBelongsToClass(input.materialId, input.classId))

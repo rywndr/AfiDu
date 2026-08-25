@@ -5,7 +5,6 @@ import { Paperclip } from 'lucide-react';
 
 import { questionPromptId } from '@/components/assignments/question-shell';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,7 +104,7 @@ function MultiChoiceAnswer({ form, disabled, question, index }: ControlProps) {
   );
 }
 
-/** Short text and essays. */
+/** Essays. */
 function WrittenAnswer({ form, disabled, question, index }: ControlProps) {
   const registration = form.register(`answers.${index}.textAnswer`);
   const error = form.formState.errors.answers?.[index]?.textAnswer?.message;
@@ -113,24 +112,14 @@ function WrittenAnswer({ form, disabled, question, index }: ControlProps) {
 
   return (
     <>
-      {question.kind === 'essay' ? (
-        <Textarea
-          id={id}
-          rows={6}
-          disabled={disabled}
-          placeholder="Write your answer here..."
-          aria-invalid={Boolean(error)}
-          {...registration}
-        />
-      ) : (
-        <Input
-          id={id}
-          disabled={disabled}
-          placeholder="Your answer"
-          aria-invalid={Boolean(error)}
-          {...registration}
-        />
-      )}
+      <Textarea
+        id={id}
+        rows={6}
+        disabled={disabled}
+        placeholder="Write your answer here..."
+        aria-invalid={Boolean(error)}
+        {...registration}
+      />
       {error ? (
         <p role="alert" className="mt-1.5 text-xs font-semibold text-destructive">
           {error}

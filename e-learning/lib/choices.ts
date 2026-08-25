@@ -52,18 +52,17 @@ export const MATERIAL_STATUSES = [
 
 export type MaterialStatus = (typeof MATERIAL_STATUSES)[number]['value'];
 
-/**
- * assignments.Assignment.STATUS_CHOICES -- same three values as materials.
- *
- * An assignment has no kind of its own; each question carries its own type.
- */
-export const ASSIGNMENT_STATUSES = MATERIAL_STATUSES;
+/** assignments.Assignment.STATUS_CHOICES */
+export const ASSIGNMENT_STATUSES = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+] as const;
 
 export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number]['value'];
 
 /**
- * Badge colours for the shared material/assignment status values. Kept here
- * because both the module and the assignment pages render the same three.
+ * Badge colours for material and assignment status values. Kept here because
+ * both the module and the assignment pages use the same badge helper.
  */
 const STATUS_BADGE_CLASS: Record<string, string> = {
   published: 'bg-accent-primary-soft text-accent-primary-strong',
@@ -80,7 +79,6 @@ export const QUESTION_KINDS = [
   { value: 'multiple_choice', label: 'Multiple choice' },
   { value: 'multi_select', label: 'Multi select' },
   { value: 'true_false', label: 'True / false' },
-  { value: 'short_text', label: 'Short text' },
   { value: 'essay', label: 'Essay' },
   { value: 'file_upload', label: 'File upload' },
   { value: 'audio_recording', label: 'Recorded audio' },

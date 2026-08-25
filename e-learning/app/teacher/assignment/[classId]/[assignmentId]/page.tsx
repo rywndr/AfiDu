@@ -103,13 +103,15 @@ export default async function AssignmentSubmissionsPage({
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/teacher/assignment/${classId}/${assignmentId}/edit`}
-              className={buttonVariants({ variant: 'secondary', size: 'lg' })}
-            >
-              <Pencil aria-hidden="true" />
-              Edit assignment
-            </Link>
+            {item.status !== 'published' ? (
+              <Link
+                href={`/teacher/assignment/${classId}/${assignmentId}/edit`}
+                className={buttonVariants({ variant: 'secondary', size: 'lg' })}
+              >
+                <Pencil aria-hidden="true" />
+                Edit assignment
+              </Link>
+            ) : null}
             <DeleteAssignmentButton
               classId={classId}
               assignmentId={assignmentId}

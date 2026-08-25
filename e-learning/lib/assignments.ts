@@ -564,7 +564,7 @@ export async function listQuestions(
   return Promise.all(
     rows.map(async ({ audio, ...row }) => ({
       ...row,
-      kind: isQuestionKind(row.kind) ? row.kind : 'short_text',
+      kind: isQuestionKind(row.kind) ? row.kind : 'essay',
       hasAudio: Boolean(audio),
       audioUrl:
         audio && storageReady ? await presignDownload(audio) : null,

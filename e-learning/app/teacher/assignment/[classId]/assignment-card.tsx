@@ -23,7 +23,7 @@ import { formatDateTime, formatScore } from '@/lib/format';
 import type { ListView } from '@/lib/list-view';
 import { cn } from '@/lib/utils';
 
-import { AssignmentActionMenu } from './assignment-actions';
+import { DeleteAssignmentMenu } from './assignment-actions';
 
 type AssignmentCardProps = {
   item: AssignmentSummary;
@@ -130,14 +130,16 @@ function AssignmentActions({ item, classId }: AssignmentLayoutProps) {
         <Users aria-hidden="true" />
         Submissions
       </Link>
-      <Link
-        href={`/teacher/assignment/${classId}/${item.id}/edit`}
-        className={buttonVariants({ variant: 'outline', size: 'sm' })}
-      >
-        <Pencil aria-hidden="true" />
-        Edit
-      </Link>
-      <AssignmentActionMenu
+      {item.status !== 'published' ? (
+        <Link
+          href={`/teacher/assignment/${classId}/${item.id}/edit`}
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        >
+          <Pencil aria-hidden="true" />
+          Edit
+        </Link>
+      ) : null}
+      <DeleteAssignmentMenu
         classId={classId}
         assignmentId={item.id}
         title={item.title}

@@ -6,6 +6,7 @@ import { Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
+import { ConfirmDialog } from '@/components/dashboard/confirm-dialog';
 import { FormAlert, FormSubmitRow } from '@/components/form/form-shell';
 import { apiRequest } from '@/lib/api-client';
 import {
@@ -40,16 +41,20 @@ export function AssignmentForm({
 }: AssignmentFormProps) {
   const router = useRouter();
   const isEditing = Boolean(initialAssignment);
+  const isPublished = initialAssignment?.status === 'published';
   const [saving, setSaving] = useState(false);
+  const disabled = saving || isPublished;
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [pendingPublication, setPendingPublication] =
+    useState<AssignmentFormValues | null>(null);
 
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentFormSchema),
     defaultValues: toAssignmentFormValues(initialAssignment, suggestedLevel),
   });
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    if (saving) return;
+  async function saveAssignment(values: AssignmentFormValues) {
+    if (disabled) return;
     setSaving(true);
     setRequestError(null);
 
@@ -84,29 +89,58 @@ export function AssignmentForm({
           : `Could not ${isEditing ? 'update' : 'create'} the assignment. Please try again.`,
       );
     }
+  }
+
+  const onSubmit = form.handleSubmit((values) => {
+    if (!isPublished && values.status === 'published') {
+      setPendingPublication(values);
+      return;
+    }
+
+    return saveAssignment(values);
   });
 
+  function confirmPublication() {
+    if (!pendingPublication) return;
+    const values = pendingPublication;
+    setPendingPublication(null);
+    void saveAssignment(values);
+  }
+
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 sm:gap-6">
-      <AssignmentDetailsSection
-        form={form}
-        disabled={saving}
-        suggestedLevel={suggestedLevel}
-        materials={materials}
-      />
-      <AssignmentScheduleSection form={form} disabled={saving} />
-      <AssignmentQuestionsSection
-        form={form}
-        disabled={saving}
-        storageReady={storageReady}
-      />
+    <>
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 sm:gap-6">
+        <AssignmentDetailsSection
+          form={form}
+          disabled={disabled}
+          suggestedLevel={suggestedLevel}
+          materials={materials}
+        />
+        <AssignmentScheduleSection form={form} disabled={disabled} />
+        <AssignmentQuestionsSection
+          form={form}
+          disabled={disabled}
+          storageReady={storageReady}
+        />
 
-      <FormAlert message={requestError} />
+        <FormAlert message={requestError} />
 
-      <FormSubmitRow busy={saving}>
-        <Save aria-hidden="true" />
-        {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Create assignment'}
-      </FormSubmitRow>
-    </form>
+        <FormSubmitRow busy={disabled}>
+          <Save aria-hidden="true" />
+          {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Create assignment'}
+        </FormSubmitRow>
+      </form>
+
+      <ConfirmDialog
+        open={pendingPublication !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingPublication(null);
+        }}
+        title="Publish this assignment?"
+        description="Once published, this assignment cannot be edited. Check the details and questions before continuing."
+        confirmLabel="Publish assignment"
+        onConfirm={confirmPublication}
+      />
+    </>
   );
 }

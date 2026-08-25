@@ -24,11 +24,9 @@ class Assignment(models.Model):
 
     STATUS_DRAFT = "draft"
     STATUS_PUBLISHED = "published"
-    STATUS_ARCHIVED = "archived"
     STATUS_CHOICES = [
         (STATUS_DRAFT, "Draft"),
         (STATUS_PUBLISHED, "Published"),
-        (STATUS_ARCHIVED, "Archived"),
     ]
 
     title = models.CharField(max_length=255)
@@ -183,7 +181,6 @@ class Question(models.Model):
     KIND_MULTIPLE_CHOICE = "multiple_choice"
     KIND_MULTI_SELECT = "multi_select"
     KIND_TRUE_FALSE = "true_false"
-    KIND_SHORT_TEXT = "short_text"
     KIND_ESSAY = "essay"
     KIND_FILE_UPLOAD = "file_upload"
     KIND_AUDIO_RECORDING = "audio_recording"
@@ -191,7 +188,6 @@ class Question(models.Model):
         (KIND_MULTIPLE_CHOICE, "Multiple choice"),
         (KIND_MULTI_SELECT, "Multi select"),
         (KIND_TRUE_FALSE, "True / false"),
-        (KIND_SHORT_TEXT, "Short text"),
         (KIND_ESSAY, "Essay"),
         (KIND_FILE_UPLOAD, "File upload"),
         (KIND_AUDIO_RECORDING, "Recorded audio"),
@@ -371,8 +367,8 @@ class Submission(models.Model):
         """
         Score every auto-gradable answer, then refresh ``auto_score``.
 
-        Answers to essay/short-text/file questions are left untouched for a
-        human to mark. Returns the computed ``auto_score``.
+        Answers to essay/file questions are left untouched for a human to mark.
+        Returns the computed ``auto_score``.
         """
         answers = self.answers.select_related("question", "selected_choice").prefetch_related(
             "question__choices", "selected_choices"

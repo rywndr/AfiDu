@@ -559,7 +559,7 @@ const attemptAnswerSchema = z.object({
   selectedChoiceId: z.number().int().positive().nullable(),
   /** Multi select. */
   selectedChoiceIds: z.array(z.number().int().positive()).max(20),
-  /** Short text and essay. */
+  /** Essay. */
   textAnswer: z.string().max(MAX_ANSWER_LENGTH, 'That answer is too long.'),
 });
 

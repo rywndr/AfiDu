@@ -316,8 +316,8 @@ export async function listStudentQuestions(
     rows.map(async ({ audio, ...row }) => ({
       ...row,
       // a kind only Django knows about would leave the student with no control to
-      // answer with, so it degrades to a text box
-      kind: isQuestionKind(row.kind) ? row.kind : 'short_text',
+      // answer with, so it degrades to an essay
+      kind: isQuestionKind(row.kind) ? row.kind : 'essay',
       explanation: revealKey ? row.explanation : '',
       audioUrl:
         audio && storageReady ? await presignDownload(audio) : null,

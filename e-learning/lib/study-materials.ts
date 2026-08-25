@@ -17,7 +17,6 @@ import {
   ilike,
   inArray,
   isNull,
-  ne,
   or,
   sql,
   type SQL,
@@ -322,11 +321,7 @@ export async function getEditableMaterial(
   return material as EditableMaterial;
 }
 
-/**
- * Assignments a material from this class may be attached to: the class's own
- * assignments plus the level-wide ones its students also see. Archived
- * assignments are left out.
- */
+/** Assignments a material from this class may be attached to. */
 export async function listLinkableAssignments(
   classId: number,
 ): Promise<LinkableAssignment[]> {
@@ -345,7 +340,6 @@ export async function listLinkableAssignments(
           eq(assignment.studentClassId, classId),
           isNull(assignment.studentClassId),
         ),
-        ne(assignment.status, 'archived'),
       ),
     )
     .orderBy(desc(assignment.createdAt));

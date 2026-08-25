@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Ellipsis, Eye, Loader2, Pencil, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { Ellipsis, Loader2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -94,8 +93,8 @@ export function DeleteAssignmentButton(props: AssignmentActionProps) {
   );
 }
 
-export function AssignmentActionMenu(props: AssignmentActionProps) {
-  const { classId, assignmentId, title } = props;
+export function DeleteAssignmentMenu(props: AssignmentActionProps) {
+  const { title } = props;
   const { pending, error, remove } = useDeleteAssignment(props);
 
   return (
@@ -120,22 +119,6 @@ export function AssignmentActionMenu(props: AssignmentActionProps) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem
-            render={
-              <Link href={`/teacher/assignment/${classId}/${assignmentId}`} />
-            }
-          >
-            <Eye aria-hidden="true" />
-            Submissions
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            render={
-              <Link href={`/teacher/assignment/${classId}/${assignmentId}/edit`} />
-            }
-          >
-            <Pencil aria-hidden="true" />
-            Edit
-          </DropdownMenuItem>
           <DropdownMenuItem
             nativeButton
             variant="destructive"
