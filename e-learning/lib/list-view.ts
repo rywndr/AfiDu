@@ -1,6 +1,6 @@
 /**
  * The rows/grid layout switch shared by the teacher module and assignment
- * lists. The layout lives in the `view` search param so it survives a reload
+ * lists. The layout lives in the `view` search param so it survives a reload.
  */
 export type ListView = 'rows' | 'grid';
 

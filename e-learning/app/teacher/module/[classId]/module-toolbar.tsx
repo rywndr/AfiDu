@@ -10,6 +10,7 @@ import {
   type SubjectCategory,
 } from '@/lib/choices';
 import type { ListView } from '@/lib/list-view';
+import { cn } from '@/lib/utils';
 
 type ModuleToolbarProps = {
   classId: number;
@@ -52,10 +53,10 @@ export function ModuleToolbar({
       action={
         <Link
           href={`/teacher/module/${classId}/upload`}
-          className={buttonVariants({
-            size: 'lg',
-            className: 'w-full shrink-0 lg:w-auto',
-          })}
+          className={cn(
+            buttonVariants({ size: 'lg' }),
+            'h-11 w-full shrink-0 lg:h-9 lg:w-auto',
+          )}
         >
           <Plus aria-hidden="true" />
           Add module

@@ -92,7 +92,7 @@ export function SearchBar({
           aria-label={label}
           placeholder={placeholder}
           maxLength={MAX_QUERY_LENGTH}
-          className="pr-9 pl-9 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          className="h-11 pr-10 pl-9 text-base lg:h-10 lg:pr-9 lg:text-sm [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           value={value}
           onChange={(event) => setValue(event.target.value)}
         />
@@ -100,10 +100,10 @@ export function SearchBar({
           <button
             type="button"
             aria-label="Clear search"
-            className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-ink-subtle hover:bg-shell hover:text-ink"
+            className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-ink-subtle hover:bg-shell hover:text-ink lg:right-2 lg:size-6"
             onClick={() => setValue('')}
           >
-            <X aria-hidden="true" className="size-3.5" />
+            <X aria-hidden="true" className="size-4 lg:size-3.5" />
           </button>
         ) : null}
       </div>

@@ -28,10 +28,10 @@ type FilterToolbarProps = {
 };
 
 const selectClass =
-  'h-10 w-full rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 lg:w-44';
+  'h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-base font-medium outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 lg:h-10 lg:w-44 lg:text-sm';
 
 /**
- * Search, dropdown filters, an optional rows/grid switch and a primary action,
+ * Search, dropdown filters, an optional rows/grid switch and a primary action.
  */
 export function FilterToolbar({
   idPrefix,
@@ -74,29 +74,35 @@ export function FilterToolbar({
           placeholder={searchPlaceholder}
         />
 
-        {filters.map((filter) => {
-          const id = `${idPrefix}-${filter.key}-filter`;
-          return (
-            <Fragment key={filter.key}>
-              <label className="sr-only" htmlFor={id}>
-                {filter.label}
-              </label>
-              <select
-                id={id}
-                value={filter.value ?? ''}
-                onChange={(event) => updateParams({ [filter.key]: event.target.value })}
-                className={selectClass}
-              >
-                <option value="">{filter.allLabel}</option>
-                {filter.options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </Fragment>
-          );
-        })}
+        <div
+          className={
+            filters.length > 1 ? 'grid grid-cols-2 gap-2 lg:contents' : 'lg:contents'
+          }
+        >
+          {filters.map((filter) => {
+            const id = `${idPrefix}-${filter.key}-filter`;
+            return (
+              <Fragment key={filter.key}>
+                <label className="sr-only" htmlFor={id}>
+                  {filter.label}
+                </label>
+                <select
+                  id={id}
+                  value={filter.value ?? ''}
+                  onChange={(event) => updateParams({ [filter.key]: event.target.value })}
+                  className={selectClass}
+                >
+                  <option value="">{filter.allLabel}</option>
+                  {filter.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Fragment>
+            );
+          })}
+        </div>
 
         {view ? (
           <ToggleGroup
@@ -112,7 +118,7 @@ export function FilterToolbar({
                 updateParams({ view: selected === 'grid' ? 'grid' : '' }, false);
               }
             }}
-            className="shrink-0 self-start"
+            className="hidden shrink-0 self-start lg:flex"
           >
             <ToggleGroupItem
               value="rows"
@@ -140,15 +146,19 @@ export function FilterToolbar({
             Filtered by
           </span>
           {chips.map((chip) => (
-            <Badge key={chip.key} variant="secondary" className="h-6 gap-1 pr-1 pl-2.5">
+            <Badge
+              key={chip.key}
+              variant="secondary"
+              className="h-7 gap-1 pr-1 pl-2.5 lg:h-6"
+            >
               <span className="max-w-40 truncate">{chip.label}</span>
               <button
                 type="button"
                 aria-label={`Clear the ${chip.label} filter`}
-                className="flex size-4 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-shell-outline hover:text-ink"
+                className="flex size-5 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-shell-outline hover:text-ink lg:size-4"
                 onClick={() => updateParams({ [chip.key]: '' })}
               >
-                <X aria-hidden="true" className="size-3" />
+                <X aria-hidden="true" className="size-3.5 lg:size-3" />
               </button>
             </Badge>
           ))}
