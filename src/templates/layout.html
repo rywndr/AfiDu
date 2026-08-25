@@ -24,7 +24,7 @@
   </head>
   <body
     class="relative min-h-screen flex bg-center bg-repeat"
-    style="background-image: url('{% static 'images/abstract_doodle.png' %}'); background-size: 400px;"
+    style="background-image: url('{% static 'images/abstract_doodle.webp' %}'); background-size: 400px;"
   >
     <!-- overlay -->
     <div class="absolute inset-0 bg-white/90 z-0"></div>
@@ -170,19 +170,19 @@
                   <i class="fas fa-user text-gray-500"></i>
                 {% endif %}
               </div>
-              
+
               <!-- show username on larger screens -->
               <span class="hidden sm:block text-sm font-medium truncate max-w-[100px] text-gray-700">
-                {% if request.user.first_name %} 
-                  {{ request.user.first_name }} 
-                {% else %} 
-                  {{ request.user.username|default:"user" }} 
+                {% if request.user.first_name %}
+                  {{ request.user.first_name }}
+                {% else %}
+                  {{ request.user.username|default:"user" }}
                 {% endif %}
               </span>
-              
+
               <i id="chevron-icon" class="fas fa-chevron-down text-gray-500 transition-transform"></i>
             </button>
-            
+
             <!-- dropdown menu -->
             <div
               id="dropdown-menu"
@@ -215,7 +215,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- admin section if superuser -->
               {% if user.is_superuser %}
               <div class="px-4 py-2">
@@ -228,7 +228,7 @@
                 </a>
               </div>
               {% endif %}
-              
+
               <!-- sign out -->
               <div class="px-4 py-1">
                 <form
@@ -250,8 +250,8 @@
           </div>
         </header>
 
-        {% block content %} 
-        
+        {% block content %}
+
         {% endblock %}
       </main>
     </div>

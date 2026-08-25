@@ -18,7 +18,7 @@ export function DashboardShell({ children, role, userName }: DashboardShellProps
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 bg-repeat opacity-10"
-        style={{ backgroundImage: "url('/abstract_doodle.png')", backgroundSize: '400px' }}
+        style={{ backgroundImage: "url('/abstract_doodle.webp')", backgroundSize: '400px' }}
       />
 
       <aside className="hidden border-r border-shell-border bg-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-14 lg:px-6 lg:py-8">
