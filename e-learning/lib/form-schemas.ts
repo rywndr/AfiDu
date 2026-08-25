@@ -41,6 +41,7 @@ const semesters = SEMESTERS.map(({ value }) => value) as [
 export const loginSchema = z.object({
   email: z.string().trim().pipe(z.email('Enter a valid email address.')),
   password: z.string().min(1, 'Enter your password.'),
+  rememberMe: z.boolean(),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;

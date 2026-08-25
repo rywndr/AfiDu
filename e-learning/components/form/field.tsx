@@ -60,6 +60,7 @@ export function Field({
 type FieldShellProps = {
   id: string;
   label: ReactNode;
+  labelAction?: ReactNode;
   hint?: ReactNode;
   error?: string;
   className?: string;
@@ -72,6 +73,7 @@ function errorId(id: string): string {
 function FieldShell({
   id,
   label,
+  labelAction,
   hint,
   error,
   className,
@@ -79,7 +81,14 @@ function FieldShell({
 }: FieldShellProps & { children: ReactNode }) {
   return (
     <Field className={className}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      {labelAction === undefined ? (
+        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          <FieldLabel htmlFor={id}>{label}</FieldLabel>
+          {labelAction}
+        </div>
+      )}
       {children}
       <FieldError id={errorId(id)} message={error} />
       {hint ? <FieldHint>{hint}</FieldHint> : null}
@@ -90,13 +99,21 @@ function FieldShell({
 export function TextField({
   id,
   label,
+  labelAction,
   hint,
   error,
   className,
   ...props
 }: React.ComponentProps<'input'> & FieldShellProps) {
   return (
-    <FieldShell id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldShell
+      id={id}
+      label={label}
+      labelAction={labelAction}
+      hint={hint}
+      error={error}
+      className={className}
+    >
       <Input
         id={id}
         aria-invalid={Boolean(error)}
@@ -110,6 +127,7 @@ export function TextField({
 export function TextareaField({
   id,
   label,
+  labelAction,
   hint,
   error,
   className,
@@ -117,7 +135,14 @@ export function TextareaField({
   ...props
 }: React.ComponentProps<'textarea'> & FieldShellProps) {
   return (
-    <FieldShell id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldShell
+      id={id}
+      label={label}
+      labelAction={labelAction}
+      hint={hint}
+      error={error}
+      className={className}
+    >
       <textarea
         id={id}
         rows={rows}
@@ -141,6 +166,7 @@ function optionValue(option: SelectOption): string {
 export function SelectField({
   id,
   label,
+  labelAction,
   hint,
   error,
   className,
@@ -153,7 +179,14 @@ export function SelectField({
     placeholder?: string;
   }) {
   return (
-    <FieldShell id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldShell
+      id={id}
+      label={label}
+      labelAction={labelAction}
+      hint={hint}
+      error={error}
+      className={className}
+    >
       <select
         id={id}
         className={controlClass}
@@ -183,7 +216,8 @@ export function CheckboxField({
   error,
   className,
   ...props
-}: React.ComponentProps<'input'> & Omit<FieldShellProps, 'label'> & { label: string }) {
+}: React.ComponentProps<'input'> &
+  Omit<FieldShellProps, 'label' | 'labelAction'> & { label: string }) {
   return (
     <div className={className}>
       <label

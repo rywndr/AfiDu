@@ -5,37 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
+import { InlineCheckbox, TextField } from '@/components/form/field';
+import { FormAlert } from '@/components/form/form-shell';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
 import { loginSchema, type LoginValues } from '@/lib/form-schemas';
-
-type FieldProps = React.ComponentProps<typeof Input> & {
-  id: string;
-  label: string;
-  error?: string;
-};
-
-function Field({ id, label, error, ...props }: FieldProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
-        {label}
-      </label>
-      <Input
-        id={id}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        {...props}
-      />
-      {error ? (
-        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
+import { dashboardPathFor } from '@/lib/roles';
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,7 +21,7 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '', password: '', rememberMe: true },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -59,7 +34,7 @@ export function LoginForm() {
       }
 
       const role = (result.data.user as { role?: string }).role;
-      router.replace(role === 'student' ? '/student' : '/teacher');
+      router.replace(dashboardPathFor(role));
       router.refresh();
     } catch (error) {
       console.error('sign-in failed', error);
@@ -68,38 +43,50 @@ export function LoginForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      <Field
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <TextField
         id="email"
         label="Email"
         type="email"
         autoComplete="email"
+        autoFocus
         disabled={isSubmitting}
         error={errors.email?.message}
         placeholder="you@example.com"
         {...register('email')}
       />
 
-      <Field
+      <TextField
         id="password"
         label="Password"
+        labelAction={
+          // placeholder
+          <a
+            href="#"
+            className="text-xs font-semibold text-accent-primary transition-colors hover:text-accent-primary-strong"
+          >
+            Forgot password?
+          </a>
+        }
         type="password"
         autoComplete="current-password"
+        placeholder="••••••••"
         disabled={isSubmitting}
         error={errors.password?.message}
         {...register('password')}
       />
 
-      {requestError ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {requestError}
-        </p>
-      ) : null}
+      <label
+        htmlFor="rememberMe"
+        className="flex w-fit cursor-pointer items-center gap-2 text-sm text-ink-soft"
+      >
+        <InlineCheckbox id="rememberMe" disabled={isSubmitting} {...register('rememberMe')} />
+        Remember me
+      </label>
 
-      <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
+      <FormAlert message={requestError} />
+
+      <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 h-11 w-full">
         {isSubmitting ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>

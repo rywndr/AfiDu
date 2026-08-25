@@ -14,24 +14,18 @@ import { cache } from 'react';
 import { db } from '@/db';
 import { student, studentClass } from '@/db/schema';
 import { auth } from '@/lib/auth';
+import { dashboardPathFor } from '@/lib/roles';
 
-export const ROLE_TEACHER = 'teacher';
-export const ROLE_SUPERUSER = 'superuser';
-export const ROLE_STUDENT = 'student';
-
-export type Role =
-  | typeof ROLE_TEACHER
-  | typeof ROLE_SUPERUSER
-  | typeof ROLE_STUDENT;
-
-/** Where each role lands after signing in. */
-export function dashboardPathFor(role: string | null | undefined): string {
-  return role === ROLE_STUDENT ? '/student' : '/teacher';
-}
-
-export function isStaffRole(role: string | null | undefined): boolean {
-  return role === ROLE_TEACHER || role === ROLE_SUPERUSER;
-}
+// re-exported so server code keeps getting roles and session helpers from one
+// import; the definitions live in `roles.ts` because the login form needs them
+export {
+  ROLE_STUDENT,
+  ROLE_SUPERUSER,
+  ROLE_TEACHER,
+  dashboardPathFor,
+  isStaffRole,
+  type Role,
+} from '@/lib/roles';
 
 /**
  * Memoised for the duration of one render pass, so a layout and its page do not

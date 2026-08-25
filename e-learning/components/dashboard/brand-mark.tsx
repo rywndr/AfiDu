@@ -1,29 +1,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import type { DashboardRole } from '@/components/dashboard/role-theme';
 import { cn } from '@/lib/utils';
 
 type BrandMarkProps = {
-  role: DashboardRole;
+  href?: string;
   size?: 'sm' | 'md';
   className?: string;
   onClick?: () => void;
 };
 
-export function BrandMark({ role, size = 'md', className, onClick }: BrandMarkProps) {
+export function BrandMark({ href, size = 'md', className, onClick }: BrandMarkProps) {
   const isSmall = size === 'sm';
 
-  return (
-    <Link
-      href={`/${role}`}
-      onClick={onClick}
-      aria-label="AfiDu E-Learning dashboard"
-      className={cn(
-        'flex w-fit items-start gap-1.5 rounded-lg outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent-primary',
-        className,
-      )}
-    >
+  const wordmark = (
+    <>
       <Image
         src="/afidu-logo.png"
         alt=""
@@ -50,6 +41,30 @@ export function BrandMark({ role, size = 'md', className, onClick }: BrandMarkPr
           E-Learning
         </span>
       </span>
+    </>
+  );
+
+  const markClass = cn(
+    'flex w-fit items-start gap-1.5 rounded-lg outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent-primary',
+    className,
+  );
+
+  if (href === undefined) {
+    return (
+      <span role="img" aria-label="AfiDu E-Learning" className={markClass}>
+        {wordmark}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-label="AfiDu E-Learning dashboard"
+      className={markClass}
+    >
+      {wordmark}
     </Link>
   );
 }

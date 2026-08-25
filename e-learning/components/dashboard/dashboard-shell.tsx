@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { BrandMark } from '@/components/dashboard/brand-mark';
+import { DoodleBackdrop } from '@/components/dashboard/doodle-backdrop';
 import { MobileNav } from '@/components/dashboard/mobile-nav';
 import { ProfileMenu } from '@/components/dashboard/profile-menu';
 import type { DashboardRole } from '@/components/dashboard/role-theme';
@@ -15,21 +16,17 @@ type DashboardShellProps = {
 export function DashboardShell({ children, role, userName }: DashboardShellProps) {
   return (
     <div className="isolate min-h-dvh bg-shell lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-repeat opacity-10"
-        style={{ backgroundImage: "url('/abstract_doodle.webp')", backgroundSize: '400px' }}
-      />
+      <DoodleBackdrop />
 
       <aside className="hidden border-r border-shell-border bg-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-14 lg:px-6 lg:py-8">
-        <BrandMark role={role} className="px-1" />
+        <BrandMark href={`/${role}`} className="px-1" />
         <SidebarNav role={role} />
       </aside>
 
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-shell-border bg-white/90 px-4 py-2.5 backdrop-blur-sm lg:static lg:justify-end lg:border-b-0 lg:bg-transparent lg:px-8 lg:pt-6 lg:pb-0 lg:backdrop-blur-none xl:px-12">
           <MobileNav role={role} />
-          <BrandMark role={role} size="sm" className="lg:hidden" />
+          <BrandMark href={`/${role}`} size="sm" className="lg:hidden" />
           <div className="ml-auto flex items-center lg:ml-0">
             <ProfileMenu userName={userName} accent={role} />
           </div>

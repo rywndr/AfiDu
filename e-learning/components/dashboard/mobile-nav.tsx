@@ -40,7 +40,7 @@ export function MobileNav({ role }: MobileNavProps) {
         className="max-w-[82vw] gap-8 bg-white px-4 py-5 data-[side=left]:w-64"
       >
         <SheetTitle className="sr-only">Navigation</SheetTitle>
-        <BrandMark role={role} onClick={close} className="px-1" />
+        <BrandMark href={`/${role}`} onClick={close} className="px-1" />
         <SidebarNav role={role} onNavigate={close} />
       </SheetContent>
     </Sheet>
