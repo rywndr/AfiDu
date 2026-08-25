@@ -56,18 +56,6 @@
       </a>
     </div>
 
-    <!-- study materials card -->
-    <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
-      <div class="flex items-center mb-4">
-        <i class="fas fa-book-open text-3xl text-purple-500 mr-3"></i>
-        <h4 class="text-2xl font-semibold text-[#5a5656]">Materials</h4>
-      </div>
-      <p class="text-gray-600">Upload and manage learning materials.</p>
-      <a href="{% url 'study_materials:list' %}" class="inline-block mt-4 text-purple-500 hover:text-purple-700 font-medium">
-        <i class="fas fa-chevron-right"></i> Manage Materials
-      </a>
-    </div>
-
     <!-- report card -->
     <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div class="flex items-center mb-4">
@@ -291,17 +279,11 @@
               <i class="fas fa-folder-open text-gray-500 mr-2"></i>
               <p class="text-sm text-gray-700 font-semibold">No materials uploaded yet</p>
             </div>
-            <p class="text-xs text-gray-600">Upload study materials to get started.</p>
+            <p class="text-xs text-gray-600">Study materials are managed in the e-learning app.</p>
           </div>
           {% endfor %}
         </div>
         
-        <div class="mt-6 pt-4 border-t border-gray-200">
-          <a href="{% url 'study_materials:list' %}" class="text-sm text-[#ff4f25] hover:text-[#cc3f1e] font-semibold flex items-center justify-center transition-colors duration-200">
-            <i class="fas fa-external-link-alt mr-2"></i>
-            View all study materials →
-          </a>
-        </div>
       </div>
 
       <!-- payment status section -->
