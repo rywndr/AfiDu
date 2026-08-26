@@ -122,7 +122,7 @@ export default async function AssignmentSubmissionsPage({
         }
       />
 
-      <AssignmentFacts item={item} />
+      <AssignmentFacts item={item} classId={classId} />
 
       <section aria-labelledby="submissions-heading">
         <div className="mb-3 flex flex-col gap-2 sm:mb-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4">

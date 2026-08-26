@@ -1,4 +1,5 @@
 import { BookOpen, CalendarClock, ListChecks, Repeat, Timer } from 'lucide-react';
+import Link from 'next/link';
 
 import { DueSoonWarning } from '@/components/assignments/due-soon-warning';
 import { Fact, FactGrid, FactNote, FactValue, MetaItem } from '@/components/dashboard/facts';
@@ -59,11 +60,18 @@ export function AssignmentBrief({ item }: { item: StudentAssignment }) {
             </FactValue>
           </Fact>
 
-          {item.materialTitle ? (
+          {item.materialId && item.materialTitle ? (
             <Fact label="Read first" className="sm:col-span-2 lg:col-span-4">
               <FactValue>
                 <MetaItem icon={BookOpen}>
-                  <span className="truncate">{item.materialTitle}</span>
+                  <span className="truncate">
+                    <Link
+                      href={`/student/module/${item.materialId}`}
+                      className="text-accent-primary hover:underline"
+                    >
+                      {item.materialTitle}
+                    </Link>
+                  </span>
                 </MetaItem>
               </FactValue>
             </Fact>

@@ -5,6 +5,7 @@ import {
   Repeat,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import { Fact, FactGrid, FactNote, FactValue, MetaItem } from '@/components/dashboard/facts';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
@@ -13,7 +14,13 @@ import { formatDateTime, formatScore, pluralize } from '@/lib/format';
 import type { AssignmentSummary } from '@/lib/assignments';
 
 /** The window, marks and progress of an assignment, above its submissions. */
-export function AssignmentFacts({ item }: { item: AssignmentSummary }) {
+export function AssignmentFacts({
+  item,
+  classId,
+}: {
+  item: AssignmentSummary;
+  classId: number;
+}) {
   const points = formatScore(item.maxPoints);
 
   return (
@@ -79,7 +86,14 @@ export function AssignmentFacts({ item }: { item: AssignmentSummary }) {
             <Fact label="Reference module" className="sm:col-span-2 lg:col-span-4">
               <FactValue>
                 <MetaItem icon={BookOpen}>
-                  <span className="truncate">{item.materialTitle}</span>
+                  <span className="truncate">
+                    <Link
+                      href={`/teacher/module/${classId}/${item.materialId}/edit`}
+                      className="text-accent-primary hover:underline"
+                    >
+                      {item.materialTitle}
+                    </Link>
+                  </span>
                 </MetaItem>
               </FactValue>
             </Fact>
