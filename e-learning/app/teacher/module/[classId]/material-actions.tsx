@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Ellipsis, Link2, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
+import { SearchablePicker } from '@/components/form/searchable-picker';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,9 +21,6 @@ import {
   type AssignmentLinkFormValues,
 } from '@/lib/form-schemas';
 import type { LinkableAssignment, LinkedAssignment } from '@/lib/study-materials';
-
-const selectClass =
-  'h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
 /**
  * The assignment side of a module.
@@ -46,7 +44,7 @@ export function AssignmentLinks({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -134,23 +132,34 @@ export function AssignmentLinks({
           noValidate
           className="mt-2.5 flex flex-col items-stretch gap-2 sm:flex-row sm:items-start"
         >
-          <select
-            id={`assignment-${materialId}`}
-            aria-label="Assignment to link"
-            className={selectClass}
-            disabled={pending}
-            aria-invalid={Boolean(errors.assignmentId)}
-            {...register('assignmentId', { valueAsNumber: true })}
-          >
-            <option value="0">Link to an assignment…</option>
-            {linkable.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.title}
-                {option.classScoped ? '' : ' (whole level)'}
-                {option.materialId !== null ? ' (replaces its module)' : ''}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name="assignmentId"
+            control={control}
+            render={({ field }) => (
+              <SearchablePicker
+                id={`assignment-${materialId}`}
+                aria-label="Assignment to link"
+                aria-invalid={Boolean(errors.assignmentId)}
+                aria-describedby={
+                  errors.assignmentId ? `assignment-${materialId}-error` : undefined
+                }
+                value={field.value}
+                onValueChange={field.onChange}
+                options={linkable.map((option) => ({
+                  value: option.id,
+                  label: `${option.title}${option.classScoped ? '' : ' (whole level)'}${
+                    option.materialId !== null ? ' (replaces its module)' : ''
+                  }`,
+                }))}
+                title="Link an assignment"
+                placeholder="Choose an assignment…"
+                searchPlaceholder="Search assignments…"
+                emptyMessage="No assignments match your search."
+                disabled={pending}
+                className="h-9 flex-1"
+              />
+            )}
+          />
           <Button
             type="submit"
             size="sm"
@@ -166,7 +175,11 @@ export function AssignmentLinks({
             Link
           </Button>
           {errors.assignmentId ? (
-            <p role="alert" className="text-xs font-semibold text-destructive sm:self-center">
+            <p
+              id={`assignment-${materialId}-error`}
+              role="alert"
+              className="text-xs font-semibold text-destructive sm:self-center"
+            >
               {errors.assignmentId.message}
             </p>
           ) : null}

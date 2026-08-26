@@ -1,7 +1,18 @@
 'use client';
 
-import { SelectField, TextField, TextareaField } from '@/components/form/field';
+import { Controller } from 'react-hook-form';
+
+import {
+  Field,
+  FieldError,
+  FieldHint,
+  FieldLabel,
+  SelectField,
+  TextField,
+  TextareaField,
+} from '@/components/form/field';
 import { FormGrid, FormSection } from '@/components/form/form-shell';
+import { SearchablePicker } from '@/components/form/searchable-picker';
 import { ASSIGNMENT_STATUSES, LEVELS, SUBJECT_CATEGORIES } from '@/lib/choices';
 import type { AssignmentSectionProps } from '@/lib/assignment-form';
 import type { MaterialOption } from '@/lib/assignments';
@@ -13,6 +24,7 @@ type DetailsSectionProps = AssignmentSectionProps & {
 
 export function AssignmentDetailsSection({
   form: {
+    control,
     register,
     formState: { errors },
   },
@@ -20,13 +32,16 @@ export function AssignmentDetailsSection({
   suggestedLevel,
   materials,
 }: DetailsSectionProps) {
-  const materialOptions = materials.map((material) => ({
-    value: String(material.id),
-    label:
-      material.status === 'published'
-        ? material.title
-        : `${material.title} (${material.status})`,
-  }));
+  const materialOptions = [
+    { value: '', label: 'No module' },
+    ...materials.map((material) => ({
+      value: String(material.id),
+      label:
+        material.status === 'published'
+          ? material.title
+          : `${material.title} (${material.status})`,
+    })),
+  ];
 
   return (
     <FormSection title="Details">
@@ -87,20 +102,38 @@ export function AssignmentDetailsSection({
           {...register('description')}
         />
 
-        <SelectField
-          id="materialId"
-          label="Reference module"
-          className="sm:col-span-2"
-          options={materialOptions}
-          placeholder="No module"
-          disabled={disabled}
-          error={errors.materialId?.message}
-          hint={
-            materials.length === 0
-              ? 'This class has no modules yet. Add one from the Module page to link it here.'
-              : 'The module students should read for this assignment.'
-          }
-          {...register('materialId')}
+        <Controller
+          name="materialId"
+          control={control}
+          render={({ field }) => (
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="materialId">Reference module</FieldLabel>
+              <SearchablePicker
+                id="materialId"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={materialOptions}
+                title="Choose a reference module"
+                placeholder="No module"
+                searchPlaceholder="Search modules…"
+                emptyMessage="No modules match your search."
+                disabled={disabled}
+                aria-invalid={Boolean(errors.materialId)}
+                aria-describedby={
+                  errors.materialId ? 'materialId-error' : undefined
+                }
+              />
+              <FieldError
+                id="materialId-error"
+                message={errors.materialId?.message}
+              />
+              <FieldHint>
+                {materials.length === 0
+                  ? 'This class has no modules yet. Add one from the Module page to link it here.'
+                  : 'The module students should read for this assignment.'}
+              </FieldHint>
+            </Field>
+          )}
         />
       </FormGrid>
     </FormSection>
