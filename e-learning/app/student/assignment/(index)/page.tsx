@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ClipboardCheck, GraduationCap } from 'lucide-react';
+import { Suspense } from 'react';
 
 import {
   ClientList,
@@ -9,6 +10,7 @@ import {
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { buttonVariants } from '@/components/ui/button';
 import { isSubjectCategory, isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
@@ -40,6 +42,95 @@ function readSearchParams(
   };
 }
 
+type AssignmentSearch = ReturnType<typeof readSearchParams>;
+type AssignmentPagePromise = ReturnType<typeof listStudentAssignments>;
+
+async function AssignmentDescription({
+  assignmentPage,
+  className,
+  filtering,
+}: {
+  assignmentPage: AssignmentPagePromise;
+  className: string | null;
+  filtering: boolean;
+}) {
+  const result = await assignmentPage;
+
+  return result.allTotal === 0
+    ? `Set for ${className}.`
+    : [
+        `${pluralize(result.allTotal, 'assignment')} for ${className}`,
+        result.outstanding > 0 ? `${result.outstanding} still to do` : 'all handed in',
+        ...(filtering ? [`${result.total} found`] : []),
+      ].join(' · ');
+}
+
+async function AssignmentResults({
+  assignmentPage,
+  className,
+  search,
+}: {
+  assignmentPage: AssignmentPagePromise;
+  className: string | null;
+  search: AssignmentSearch;
+}) {
+  const result = await assignmentPage;
+  const assignments = result.items;
+  const { query, category, status } = search;
+  const filtering = Boolean(query || category || status);
+
+  if (assignments.length === 0) {
+    return (
+      <EmptyState
+        icon={ClipboardCheck}
+        title={filtering ? 'No matches' : 'Nothing set yet'}
+        action={
+          filtering ? (
+            <ListViewLink
+              href="/student/assignment"
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
+              Clear filters
+            </ListViewLink>
+          ) : null
+        }
+      >
+        {filtering ? (
+          'No assignments match the current search and filters.'
+        ) : (
+          <>
+            When your teacher publishes an assignment for {className} it shows up
+            here.
+          </>
+        )}
+      </EmptyState>
+    );
+  }
+
+  return (
+    <>
+      <ClientList>
+        {assignments.map((item) => (
+          <li key={item.id}>
+            <StudentAssignmentCard item={item} />
+          </li>
+        ))}
+      </ClientList>
+
+      <QueryPagination
+        pathname="/student/assignment"
+        page={result.page}
+        totalPages={result.totalPages}
+        query={{
+          q: query || undefined,
+          category,
+          status,
+        }}
+      />
+    </>
+  );
+}
+
 export default async function StudentAssignmentPage({
   searchParams,
 }: PageProps<'/student/assignment'>) {
@@ -60,8 +151,9 @@ export default async function StudentAssignmentPage({
     );
   }
 
-  const { query, category, status, view, page } = readSearchParams(await searchParams);
-  const assignmentPage = await listStudentAssignments({
+  const search = readSearchParams(await searchParams);
+  const { query, category, status, view, page } = search;
+  const assignmentPage = listStudentAssignments({
     studentId: profile.id,
     classId: profile.classId,
     query,
@@ -69,81 +161,48 @@ export default async function StudentAssignmentPage({
     status,
     page,
   });
-  const assignments = assignmentPage.items;
   const filtering = Boolean(query || category || status);
-  const description =
-    assignmentPage.allTotal === 0
-      ? `Set for ${profile.className}.`
-      : [
-          `${pluralize(assignmentPage.allTotal, 'assignment')} for ${profile.className}`,
-          assignmentPage.outstanding > 0
-            ? `${assignmentPage.outstanding} still to do`
-            : 'all handed in',
-          ...(filtering ? [`${assignmentPage.total} found`] : []),
-        ].join(' · ');
+  const resultsKey = [query, category, status, page].join(':');
 
   return (
     <ListViewProvider initialView={view}>
       <PageHeader
         title="ASSESSMENTS"
-        description={description}
-        actions={
-          assignmentPage.allTotal > 0 ? (
-            <StudentAssignmentToolbar
-              query={query}
-              category={category}
-              status={status}
+        description={
+          <Suspense fallback={`Assignments for ${profile.className}.`}>
+            <AssignmentDescription
+              assignmentPage={assignmentPage}
+              className={profile.className}
+              filtering={filtering}
             />
-          ) : null
+          </Suspense>
+        }
+        actions={
+          <StudentAssignmentToolbar
+            query={query}
+            category={category}
+            status={status}
+          />
         }
       />
 
-      {assignments.length === 0 ? (
-        <EmptyState
-          icon={ClipboardCheck}
-          title={filtering ? 'No matches' : 'Nothing set yet'}
-          action={
-            filtering ? (
-              <ListViewLink
-                href="/student/assignment"
-                className={buttonVariants({ variant: 'outline', size: 'lg' })}
-              >
-                Clear filters
-              </ListViewLink>
-            ) : null
-          }
-        >
-          {filtering ? (
-            'No assignments match the current search and filters.'
-          ) : (
-            <>
-              When your teacher publishes an assignment for {profile.className} it
-              shows up here.
-            </>
-          )}
-        </EmptyState>
-      ) : (
-        <>
-          <ClientList>
-            {assignments.map((item) => (
-              <li key={item.id}>
-                <StudentAssignmentCard item={item} />
-              </li>
-            ))}
-          </ClientList>
-
-          <QueryPagination
-            pathname="/student/assignment"
-            page={assignmentPage.page}
-            totalPages={assignmentPage.totalPages}
-            query={{
-              q: query || undefined,
-              category,
-              status,
-            }}
-          />
-        </>
-      )}
+      <Suspense
+        key={resultsKey}
+        fallback={
+          <>
+            <span role="status" className="sr-only">
+              Loading assignments
+            </span>
+            <ListSkeleton kind="cards" view={view} count={4} />
+          </>
+        }
+      >
+        <AssignmentResults
+          assignmentPage={assignmentPage}
+          className={profile.className}
+          search={search}
+        />
+      </Suspense>
     </ListViewProvider>
   );
 }

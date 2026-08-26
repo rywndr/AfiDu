@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BookOpen, GraduationCap } from 'lucide-react';
+import { Suspense } from 'react';
 
 import {
   ClientList,
@@ -9,6 +10,7 @@ import {
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { buttonVariants } from '@/components/ui/button';
 import { isMaterialType, isSubjectCategory } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
@@ -40,6 +42,92 @@ function readSearchParams(
   };
 }
 
+type ModuleSearch = ReturnType<typeof readSearchParams>;
+type MaterialPagePromise = ReturnType<typeof listStudentMaterials>;
+
+async function ModuleDescription({
+  materialPage,
+  className,
+  filtering,
+}: {
+  materialPage: MaterialPagePromise;
+  className: string | null;
+  filtering: boolean;
+}) {
+  const result = await materialPage;
+
+  return result.allTotal === 0
+    ? `Shared with ${className}.`
+    : `${pluralize(result.allTotal, 'module')} for ${className}` +
+        (filtering ? ` · ${result.total} found` : '');
+}
+
+async function ModuleResults({
+  materialPage,
+  className,
+  search,
+}: {
+  materialPage: MaterialPagePromise;
+  className: string | null;
+  search: ModuleSearch;
+}) {
+  const result = await materialPage;
+  const materials = result.items;
+  const { query, category, materialType } = search;
+  const filtering = Boolean(query || category || materialType);
+
+  if (materials.length === 0) {
+    return (
+      <EmptyState
+        icon={BookOpen}
+        title={filtering ? 'No matches' : 'Nothing shared yet'}
+        action={
+          filtering ? (
+            <ListViewLink
+              href="/student/module"
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
+              Clear filters
+            </ListViewLink>
+          ) : null
+        }
+      >
+        {filtering ? (
+          'No modules match the current search and filters.'
+        ) : (
+          <>
+            When your teacher publishes a module for {className} it turns up here
+            to read, watch or download.
+          </>
+        )}
+      </EmptyState>
+    );
+  }
+
+  return (
+    <>
+      <ClientList>
+        {materials.map((material) => (
+          <li key={material.id}>
+            <StudentModuleCard material={material} />
+          </li>
+        ))}
+      </ClientList>
+
+      <QueryPagination
+        pathname="/student/module"
+        page={result.page}
+        totalPages={result.totalPages}
+        query={{
+          q: query || undefined,
+          category,
+          type: materialType,
+        }}
+      />
+    </>
+  );
+}
+
 export default async function StudentModulePage({
   searchParams,
 }: PageProps<'/student/module'>) {
@@ -59,86 +147,57 @@ export default async function StudentModulePage({
     );
   }
 
-  const { query, category, materialType, view, page } = readSearchParams(
-    await searchParams,
-  );
-  const materialPage = await listStudentMaterials({
+  const search = readSearchParams(await searchParams);
+  const { query, category, materialType, view, page } = search;
+  const materialPage = listStudentMaterials({
     classId: profile.classId,
     query,
     category,
     materialType,
     page,
   });
-  const materials = materialPage.items;
   const filtering = Boolean(query || category || materialType);
-  const description =
-    materialPage.allTotal === 0
-      ? `Shared with ${profile.className}.`
-      : `${pluralize(materialPage.allTotal, 'module')} for ${profile.className}` +
-        (filtering ? ` · ${materialPage.total} found` : '');
+  const resultsKey = [query, category, materialType, page].join(':');
 
   return (
     <ListViewProvider initialView={view}>
       <PageHeader
         title="MODULE"
-        description={description}
-        actions={
-          materialPage.allTotal > 0 ? (
-            <StudentModuleToolbar
-              query={query}
-              category={category}
-              materialType={materialType}
+        description={
+          <Suspense fallback={`Modules for ${profile.className}.`}>
+            <ModuleDescription
+              materialPage={materialPage}
+              className={profile.className}
+              filtering={filtering}
             />
-          ) : null
+          </Suspense>
+        }
+        actions={
+          <StudentModuleToolbar
+            query={query}
+            category={category}
+            materialType={materialType}
+          />
         }
       />
 
-      {materials.length === 0 ? (
-        <EmptyState
-          icon={BookOpen}
-          title={filtering ? 'No matches' : 'Nothing shared yet'}
-          action={
-            filtering ? (
-              <ListViewLink
-                href="/student/module"
-                className={buttonVariants({ variant: 'outline', size: 'lg' })}
-              >
-                Clear filters
-              </ListViewLink>
-            ) : null
-          }
-        >
-          {filtering ? (
-            'No modules match the current search and filters.'
-          ) : (
-            <>
-              When your teacher publishes a module for {profile.className} it turns
-              up here to read, watch or download.
-            </>
-          )}
-        </EmptyState>
-      ) : (
-        <>
-          <ClientList>
-            {materials.map((material) => (
-              <li key={material.id}>
-                <StudentModuleCard material={material} />
-              </li>
-            ))}
-          </ClientList>
-
-          <QueryPagination
-            pathname="/student/module"
-            page={materialPage.page}
-            totalPages={materialPage.totalPages}
-            query={{
-              q: query || undefined,
-              category,
-              type: materialType,
-            }}
-          />
-        </>
-      )}
+      <Suspense
+        key={resultsKey}
+        fallback={
+          <>
+            <span role="status" className="sr-only">
+              Loading modules
+            </span>
+            <ListSkeleton kind="cards" view={view} count={4} />
+          </>
+        }
+      >
+        <ModuleResults
+          materialPage={materialPage}
+          className={profile.className}
+          search={search}
+        />
+      </Suspense>
     </ListViewProvider>
   );
 }
