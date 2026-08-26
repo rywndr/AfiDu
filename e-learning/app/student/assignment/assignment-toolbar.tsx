@@ -5,13 +5,11 @@ import {
   type SubjectCategory,
   type SubmissionRowStatus,
 } from '@/lib/choices';
-import type { ListView } from '@/lib/list-view';
 
 type StudentAssignmentToolbarProps = {
   query: string;
   category?: SubjectCategory;
   status?: SubmissionRowStatus;
-  view: ListView;
 };
 
 /**
@@ -23,7 +21,6 @@ export function StudentAssignmentToolbar({
   query,
   category,
   status,
-  view,
 }: StudentAssignmentToolbarProps) {
   return (
     <FilterToolbar
@@ -47,7 +44,7 @@ export function StudentAssignmentToolbar({
           options: SUBMISSION_ROW_STATUSES,
         },
       ]}
-      view={{ value: view, noun: 'assignments' }}
+      view={{ noun: 'assignments' }}
     />
   );
 }

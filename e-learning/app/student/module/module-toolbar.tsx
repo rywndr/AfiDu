@@ -5,13 +5,11 @@ import {
   type MaterialType,
   type SubjectCategory,
 } from '@/lib/choices';
-import type { ListView } from '@/lib/list-view';
 
 type StudentModuleToolbarProps = {
   query: string;
   category?: SubjectCategory;
   materialType?: MaterialType;
-  view: ListView;
 };
 
 /** Search, the two filters and the layout switch above a student's modules. */
@@ -19,7 +17,6 @@ export function StudentModuleToolbar({
   query,
   category,
   materialType,
-  view,
 }: StudentModuleToolbarProps) {
   return (
     <FilterToolbar
@@ -43,7 +40,7 @@ export function StudentModuleToolbar({
           options: MATERIAL_TYPES,
         },
       ]}
-      view={{ value: view, noun: 'modules' }}
+      view={{ noun: 'modules' }}
     />
   );
 }

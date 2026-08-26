@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { BookOpen, GraduationCap } from 'lucide-react';
 
+import {
+  ClientList,
+  ListViewLink,
+  ListViewProvider,
+} from '@/components/dashboard/client-list-view';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
@@ -9,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { isMaterialType, isSubjectCategory } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
 import { parsePageNumber, parseSearchQuery } from '@/lib/list-query';
-import { listViewClass, parseListView } from '@/lib/list-view';
+import { parseListView } from '@/lib/list-view';
 import { requireStudentProfile } from '@/lib/student-access';
 import { listStudentMaterials } from '@/lib/student-materials';
 
@@ -67,9 +71,6 @@ export default async function StudentModulePage({
   });
   const materials = materialPage.items;
   const filtering = Boolean(query || category || materialType);
-  // clearing the filters keeps whichever layout the student is looking at
-  const clearFiltersHref =
-    view === 'grid' ? '/student/module?view=grid' : '/student/module';
   const description =
     materialPage.allTotal === 0
       ? `Shared with ${profile.className}.`
@@ -77,7 +78,7 @@ export default async function StudentModulePage({
         (filtering ? ` · ${materialPage.total} found` : '');
 
   return (
-    <>
+    <ListViewProvider initialView={view}>
       <PageHeader
         title="MODULE"
         description={description}
@@ -87,7 +88,6 @@ export default async function StudentModulePage({
               query={query}
               category={category}
               materialType={materialType}
-              view={view}
             />
           ) : null
         }
@@ -99,12 +99,12 @@ export default async function StudentModulePage({
           title={filtering ? 'No matches' : 'Nothing shared yet'}
           action={
             filtering ? (
-              <Link
-                href={clearFiltersHref}
+              <ListViewLink
+                href="/student/module"
                 className={buttonVariants({ variant: 'outline', size: 'lg' })}
               >
                 Clear filters
-              </Link>
+              </ListViewLink>
             ) : null
           }
         >
@@ -119,13 +119,13 @@ export default async function StudentModulePage({
         </EmptyState>
       ) : (
         <>
-          <ul className={listViewClass(view)}>
+          <ClientList>
             {materials.map((material) => (
               <li key={material.id}>
                 <StudentModuleCard material={material} />
               </li>
             ))}
-          </ul>
+          </ClientList>
 
           <QueryPagination
             pathname="/student/module"
@@ -135,11 +135,10 @@ export default async function StudentModulePage({
               q: query || undefined,
               category,
               type: materialType,
-              view: view === 'grid' ? view : undefined,
             }}
           />
         </>
       )}
-    </>
+    </ListViewProvider>
   );
 }

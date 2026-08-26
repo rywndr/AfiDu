@@ -9,7 +9,6 @@ import {
   type MaterialStatus,
   type SubjectCategory,
 } from '@/lib/choices';
-import type { ListView } from '@/lib/list-view';
 import { cn } from '@/lib/utils';
 
 type ModuleToolbarProps = {
@@ -17,7 +16,6 @@ type ModuleToolbarProps = {
   query: string;
   category?: SubjectCategory;
   status?: MaterialStatus;
-  view: ListView;
 };
 
 export function ModuleToolbar({
@@ -25,7 +23,6 @@ export function ModuleToolbar({
   query,
   category,
   status,
-  view,
 }: ModuleToolbarProps) {
   return (
     <FilterToolbar
@@ -49,7 +46,7 @@ export function ModuleToolbar({
           options: MATERIAL_STATUSES,
         },
       ]}
-      view={{ value: view, noun: 'modules' }}
+      view={{ noun: 'modules' }}
       action={
         <Link
           href={`/teacher/module/${classId}/upload`}

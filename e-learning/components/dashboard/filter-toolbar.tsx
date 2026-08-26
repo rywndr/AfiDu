@@ -5,9 +5,9 @@ import { LayoutGrid, Rows3, X } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { SearchBar } from '@/components/dashboard/search-bar';
+import { useListView } from '@/components/dashboard/client-list-view';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import type { ListView } from '@/lib/list-view';
 
 export type ToolbarFilter = {
   key: string;
@@ -23,12 +23,47 @@ type FilterToolbarProps = {
   searchPlaceholder: string;
   query: string;
   filters: ToolbarFilter[];
-  view?: { value: ListView; noun: string };
+  view?: { noun: string };
   action?: ReactNode;
 };
 
 const selectClass =
   'h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-base font-medium outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 lg:h-10 lg:w-44 lg:text-sm';
+
+function LayoutToggle({ noun }: { noun: string }) {
+  const { view, setView } = useListView();
+
+  return (
+    <ToggleGroup
+      aria-label="Layout"
+      variant="outline"
+      spacing={0}
+      value={[view]}
+      onValueChange={(next) => {
+        // Non-multiple groups also emit `[]` when the pressed item is
+        // clicked again; a layout must always be chosen, so ignore that.
+        const [selected] = next;
+        if (selected) setView(selected === 'grid' ? 'grid' : 'rows');
+      }}
+      className="hidden shrink-0 self-start lg:flex"
+    >
+      <ToggleGroupItem
+        value="rows"
+        aria-label={`Show ${noun} as rows`}
+        className="size-10"
+      >
+        <Rows3 aria-hidden="true" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="grid"
+        aria-label={`Show ${noun} as a grid`}
+        className="size-10"
+      >
+        <LayoutGrid aria-hidden="true" />
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
 
 /**
  * Search, dropdown filters, an optional rows/grid switch and a primary action.
@@ -104,38 +139,7 @@ export function FilterToolbar({
           })}
         </div>
 
-        {view ? (
-          <ToggleGroup
-            aria-label="Layout"
-            variant="outline"
-            spacing={0}
-            value={[view.value]}
-            onValueChange={(next) => {
-              // Non-multiple groups also emit `[]` when the pressed item is
-              // clicked again; a layout must always be chosen, so ignore that.
-              const [selected] = next;
-              if (selected) {
-                updateParams({ view: selected === 'grid' ? 'grid' : '' }, false);
-              }
-            }}
-            className="hidden shrink-0 self-start lg:flex"
-          >
-            <ToggleGroupItem
-              value="rows"
-              aria-label={`Show ${view.noun} as rows`}
-              className="size-10"
-            >
-              <Rows3 aria-hidden="true" />
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="grid"
-              aria-label={`Show ${view.noun} as a grid`}
-              className="size-10"
-            >
-              <LayoutGrid aria-hidden="true" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        ) : null}
+        {view ? <LayoutToggle noun={view.noun} /> : null}
 
         {action}
       </div>

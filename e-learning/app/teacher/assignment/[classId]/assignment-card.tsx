@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   BookOpen,
@@ -12,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { useListView } from '@/components/dashboard/client-list-view';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
@@ -20,7 +23,6 @@ import { IconTile } from '@/components/ui/icon-tile';
 import type { AssignmentSummary } from '@/lib/assignments';
 import { statusBadgeClass } from '@/lib/choices';
 import { formatDateTime, formatScore } from '@/lib/format';
-import type { ListView } from '@/lib/list-view';
 import { cn } from '@/lib/utils';
 
 import { DeleteAssignmentMenu } from './assignment-actions';
@@ -28,10 +30,9 @@ import { DeleteAssignmentMenu } from './assignment-actions';
 type AssignmentCardProps = {
   item: AssignmentSummary;
   classId: number;
-  view: ListView;
 };
 
-type AssignmentLayoutProps = Omit<AssignmentCardProps, 'view'>;
+type AssignmentLayoutProps = AssignmentCardProps;
 
 function AssignmentIcon({ item }: { item: AssignmentSummary }) {
   return (
@@ -227,6 +228,8 @@ function AssignmentTile({ item, classId }: AssignmentLayoutProps) {
   );
 }
 
-export function AssignmentCard({ view, ...props }: AssignmentCardProps) {
+export function AssignmentCard(props: AssignmentCardProps) {
+  const { view } = useListView();
+
   return view === 'grid' ? <AssignmentTile {...props} /> : <AssignmentRow {...props} />;
 }

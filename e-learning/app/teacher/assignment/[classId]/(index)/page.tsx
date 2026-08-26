@@ -4,13 +4,18 @@ import { notFound } from 'next/navigation';
 import { ClipboardCheck } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import {
+  ClientList,
+  ListViewLink,
+  ListViewProvider,
+} from '@/components/dashboard/client-list-view';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
 import { isAssignmentStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
-import { listViewClass, parseListView } from '@/lib/list-view';
+import { parseListView } from '@/lib/list-view';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listClassAssignments } from '@/lib/assignments';
@@ -71,11 +76,8 @@ export default async function ClassAssignmentPage({
   });
   const assignments = assignmentPage.items;
   const filtering = Boolean(query || category || status);
-  const clearFiltersHref =
-    view === 'grid' ? `/teacher/assignment/${id}?view=grid` : `/teacher/assignment/${id}`;
-
   return (
-    <>
+    <ListViewProvider initialView={view}>
       <BackLink href="/teacher/assignment">
         All classes
       </BackLink>
@@ -92,7 +94,6 @@ export default async function ClassAssignmentPage({
             query={query}
             category={category}
             status={status}
-            view={view}
           />
         }
       />
@@ -109,15 +110,21 @@ export default async function ClassAssignmentPage({
           <EmptyState
             icon={ClipboardCheck}
             action={
-              <Link
-                href={filtering ? clearFiltersHref : `/teacher/assignment/${id}/new`}
-                className={buttonVariants({
-                  variant: filtering ? 'outline' : 'default',
-                  size: 'lg',
-                })}
-              >
-                {filtering ? 'Clear filters' : 'New assignment'}
-              </Link>
+              filtering ? (
+                <ListViewLink
+                  href={`/teacher/assignment/${id}`}
+                  className={buttonVariants({ variant: 'outline', size: 'lg' })}
+                >
+                  Clear filters
+                </ListViewLink>
+              ) : (
+                <Link
+                  href={`/teacher/assignment/${id}/new`}
+                  className={buttonVariants({ size: 'lg' })}
+                >
+                  New assignment
+                </Link>
+              )
             }
           >
             {filtering
@@ -125,13 +132,13 @@ export default async function ClassAssignmentPage({
               : 'No assignments for this class yet.'}
           </EmptyState>
         ) : (
-          <ul className={listViewClass(view)}>
+          <ClientList>
             {assignments.map((item) => (
               <li key={item.id}>
-                <AssignmentCard item={item} classId={id} view={view} />
+                <AssignmentCard item={item} classId={id} />
               </li>
             ))}
-          </ul>
+          </ClientList>
         )}
 
         <QueryPagination
@@ -142,10 +149,9 @@ export default async function ClassAssignmentPage({
             q: query || undefined,
             category,
             status,
-            view: view === 'grid' ? view : undefined,
           }}
         />
       </section>
-    </>
+    </ListViewProvider>
   );
 }

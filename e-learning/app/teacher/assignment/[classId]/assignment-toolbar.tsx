@@ -9,7 +9,6 @@ import {
   type AssignmentStatus,
   type SubjectCategory,
 } from '@/lib/choices';
-import type { ListView } from '@/lib/list-view';
 import { cn } from '@/lib/utils';
 
 type AssignmentToolbarProps = {
@@ -17,7 +16,6 @@ type AssignmentToolbarProps = {
   query: string;
   category?: SubjectCategory;
   status?: AssignmentStatus;
-  view: ListView;
 };
 
 export function AssignmentToolbar({
@@ -25,7 +23,6 @@ export function AssignmentToolbar({
   query,
   category,
   status,
-  view,
 }: AssignmentToolbarProps) {
   return (
     <FilterToolbar
@@ -49,7 +46,7 @@ export function AssignmentToolbar({
           options: ASSIGNMENT_STATUSES,
         },
       ]}
-      view={{ value: view, noun: 'assignments' }}
+      view={{ noun: 'assignments' }}
       action={
         <Link
           href={`/teacher/assignment/${classId}/new`}

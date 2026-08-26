@@ -1,7 +1,9 @@
+'use client';
+
+import { useListView } from '@/components/dashboard/client-list-view';
 import { MaterialTypeIcon } from '@/components/dashboard/material-type-icon';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
-import type { ListView } from '@/lib/list-view';
 import type { LinkableAssignment, MaterialSummary } from '@/lib/study-materials';
 
 import { AssignmentLinks, MaterialActionMenu } from './material-actions';
@@ -16,10 +18,9 @@ type MaterialCardProps = {
   material: MaterialSummary;
   classId: number;
   assignments: LinkableAssignment[];
-  view: ListView;
 };
 
-function MaterialRow({ material, classId, assignments }: Omit<MaterialCardProps, 'view'>) {
+function MaterialRow({ material, classId, assignments }: MaterialCardProps) {
   return (
     <SurfaceCard>
       <CardContent className="p-4 sm:p-5">
@@ -73,7 +74,7 @@ function MaterialTile({
   material,
   classId,
   assignments,
-}: Omit<MaterialCardProps, 'view'>) {
+}: MaterialCardProps) {
   return (
     <SurfaceCard className="h-full">
       <CardContent className="flex h-full flex-col p-4 sm:p-5">
@@ -120,6 +121,8 @@ function MaterialTile({
   );
 }
 
-export function MaterialCard({ view, ...props }: MaterialCardProps) {
+export function MaterialCard(props: MaterialCardProps) {
+  const { view } = useListView();
+
   return view === 'grid' ? <MaterialTile {...props} /> : <MaterialRow {...props} />;
 }

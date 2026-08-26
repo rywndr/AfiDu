@@ -1,5 +1,8 @@
+'use client';
+
 import { Fragment } from 'react';
 
+import { useOptionalListView } from '@/components/dashboard/client-list-view';
 import {
   Pagination,
   PaginationContent,
@@ -34,6 +37,8 @@ export function QueryPagination({
   totalPages,
   query = {},
 }: QueryPaginationProps) {
+  const listView = useOptionalListView();
+
   // A single page still renders, with both arrows disabled, so the control does
   // not appear and disappear as the result count crosses the page size.
   if (totalPages < 1) return null;
@@ -43,6 +48,7 @@ export function QueryPagination({
     for (const [key, value] of Object.entries(query)) {
       if (value) params.set(key, value);
     }
+    if (listView?.view === 'grid') params.set('view', 'grid');
     if (targetPage > 1) params.set('page', String(targetPage));
     const suffix = params.toString();
     return suffix ? `${pathname}?${suffix}` : pathname;

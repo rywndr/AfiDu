@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { ClipboardCheck, GraduationCap } from 'lucide-react';
 
+import {
+  ClientList,
+  ListViewLink,
+  ListViewProvider,
+} from '@/components/dashboard/client-list-view';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
@@ -9,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { isSubjectCategory, isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
 import { parsePageNumber, parseSearchQuery } from '@/lib/list-query';
-import { listViewClass, parseListView } from '@/lib/list-view';
+import { parseListView } from '@/lib/list-view';
 import { requireStudentProfile } from '@/lib/student-access';
 import { listStudentAssignments } from '@/lib/student-assignments';
 
@@ -67,9 +71,6 @@ export default async function StudentAssignmentPage({
   });
   const assignments = assignmentPage.items;
   const filtering = Boolean(query || category || status);
-  // clearing the filters keeps whichever layout the student is looking at
-  const clearFiltersHref =
-    view === 'grid' ? '/student/assignment?view=grid' : '/student/assignment';
   const description =
     assignmentPage.allTotal === 0
       ? `Set for ${profile.className}.`
@@ -82,7 +83,7 @@ export default async function StudentAssignmentPage({
         ].join(' · ');
 
   return (
-    <>
+    <ListViewProvider initialView={view}>
       <PageHeader
         title="ASSESSMENTS"
         description={description}
@@ -92,7 +93,6 @@ export default async function StudentAssignmentPage({
               query={query}
               category={category}
               status={status}
-              view={view}
             />
           ) : null
         }
@@ -104,12 +104,12 @@ export default async function StudentAssignmentPage({
           title={filtering ? 'No matches' : 'Nothing set yet'}
           action={
             filtering ? (
-              <Link
-                href={clearFiltersHref}
+              <ListViewLink
+                href="/student/assignment"
                 className={buttonVariants({ variant: 'outline', size: 'lg' })}
               >
                 Clear filters
-              </Link>
+              </ListViewLink>
             ) : null
           }
         >
@@ -124,13 +124,13 @@ export default async function StudentAssignmentPage({
         </EmptyState>
       ) : (
         <>
-          <ul className={listViewClass(view)}>
+          <ClientList>
             {assignments.map((item) => (
               <li key={item.id}>
                 <StudentAssignmentCard item={item} />
               </li>
             ))}
-          </ul>
+          </ClientList>
 
           <QueryPagination
             pathname="/student/assignment"
@@ -140,11 +140,10 @@ export default async function StudentAssignmentPage({
               q: query || undefined,
               category,
               status,
-              view: view === 'grid' ? view : undefined,
             }}
           />
         </>
       )}
-    </>
+    </ListViewProvider>
   );
 }

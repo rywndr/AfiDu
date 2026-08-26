@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BookOpen } from 'lucide-react';
 
 import { BackLink } from '@/components/dashboard/back-link';
+import {
+  ClientList,
+  ListViewLink,
+  ListViewProvider,
+} from '@/components/dashboard/client-list-view';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
 import { isMaterialStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
-import { listViewClass, parseListView } from '@/lib/list-view';
+import { parseListView } from '@/lib/list-view';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import {
@@ -70,12 +74,8 @@ export default async function ClassModulePage({
   ]);
   const materials = materialPage.items;
   const filtering = Boolean(query || category || status);
-  // clearing the filters keeps whichever layout the teacher is looking at
-  const clearFiltersHref =
-    view === 'grid' ? `/teacher/module/${id}?view=grid` : `/teacher/module/${id}`;
-
   return (
-    <>
+    <ListViewProvider initialView={view}>
       <BackLink href="/teacher/module">All classes</BackLink>
 
       <PageHeader
@@ -90,7 +90,6 @@ export default async function ClassModulePage({
             query={query}
             category={category}
             status={status}
-            view={view}
           />
         }
       />
@@ -109,12 +108,12 @@ export default async function ClassModulePage({
             tone="warm"
             action={
               filtering ? (
-                <Link
-                  href={clearFiltersHref}
+                <ListViewLink
+                  href={`/teacher/module/${id}`}
                   className={buttonVariants({ variant: 'outline', size: 'lg' })}
                 >
                   Clear filters
-                </Link>
+                </ListViewLink>
               ) : null
             }
           >
@@ -123,18 +122,17 @@ export default async function ClassModulePage({
               : 'No modules for this class yet. Add the first one to get started.'}
           </EmptyState>
         ) : (
-          <ul className={listViewClass(view)}>
+          <ClientList>
             {materials.map((material) => (
               <li key={material.id}>
                 <MaterialCard
                   material={material}
                   classId={id}
                   assignments={assignments}
-                  view={view}
                 />
               </li>
             ))}
-          </ul>
+          </ClientList>
         )}
 
         <QueryPagination
@@ -145,10 +143,9 @@ export default async function ClassModulePage({
             q: query || undefined,
             category,
             status,
-            view: view === 'grid' ? view : undefined,
           }}
         />
       </section>
-    </>
+    </ListViewProvider>
   );
 }
