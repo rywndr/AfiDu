@@ -46,8 +46,10 @@ export function ProfileMenu({ userName, accent }: ProfileMenuProps) {
     }
   }
 
+  // modal={false} keeps the page scrollable — the default locks document scroll
+  // and strips the scrollbar while the menu is open
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         render={
           <Button
