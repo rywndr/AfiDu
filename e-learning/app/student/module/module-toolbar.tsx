@@ -40,7 +40,7 @@ export function StudentModuleToolbar({
           options: MATERIAL_TYPES,
         },
       ]}
-      view={{ noun: 'modules' }}
+      view={{ noun: 'modules', role: 'student' }}
     />
   );
 }

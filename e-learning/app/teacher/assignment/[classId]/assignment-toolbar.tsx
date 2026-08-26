@@ -46,7 +46,7 @@ export function AssignmentToolbar({
           options: ASSIGNMENT_STATUSES,
         },
       ]}
-      view={{ noun: 'assignments' }}
+      view={{ noun: 'assignments', role: 'teacher' }}
       action={
         <Link
           href={`/teacher/assignment/${classId}/new`}

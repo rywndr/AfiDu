@@ -9,7 +9,7 @@ import { formatBytes, formatDate } from '@/lib/format';
 import type { MaterialSummary } from '@/lib/study-materials';
 import { cn } from '@/lib/utils';
 
-import { DeleteMaterialButton } from './material-actions';
+import { MaterialActionMenu } from './material-actions';
 
 export function MaterialBadges({ material }: { material: MaterialSummary }) {
   return (
@@ -68,10 +68,11 @@ export function MaterialActions({
         <Pencil aria-hidden="true" />
         Edit
       </Link>
-      <DeleteMaterialButton
+      <MaterialActionMenu
         classId={classId}
         materialId={material.id}
         title={material.title}
+        showEdit={false}
       />
     </>
   );

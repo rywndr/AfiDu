@@ -259,10 +259,12 @@ export function MaterialActionMenu({
   classId,
   materialId,
   title,
+  showEdit = true,
 }: {
   classId: number;
   materialId: number;
   title: string;
+  showEdit?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -311,17 +313,20 @@ export function MaterialActionMenu({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuItem
-            render={
-              <Link href={`/teacher/module/${classId}/${materialId}/edit`} />
-            }
-          >
-            <Pencil aria-hidden="true" />
-            Edit
-          </DropdownMenuItem>
+          {showEdit ? (
+            <DropdownMenuItem
+              render={
+                <Link href={`/teacher/module/${classId}/${materialId}/edit`} />
+              }
+            >
+              <Pencil aria-hidden="true" />
+              Edit
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem
             nativeButton
             variant="destructive"
+            className="w-full"
             disabled={pending}
             render={<button type="button" onClick={handleDelete} />}
           >

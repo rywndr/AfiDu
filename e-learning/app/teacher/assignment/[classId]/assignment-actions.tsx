@@ -122,6 +122,7 @@ export function DeleteAssignmentMenu(props: AssignmentActionProps) {
           <DropdownMenuItem
             nativeButton
             variant="destructive"
+            className="w-full"
             disabled={pending}
             render={<button type="button" onClick={remove} />}
           >

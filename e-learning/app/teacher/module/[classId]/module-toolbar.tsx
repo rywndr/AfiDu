@@ -46,7 +46,7 @@ export function ModuleToolbar({
           options: MATERIAL_STATUSES,
         },
       ]}
-      view={{ noun: 'modules' }}
+      view={{ noun: 'modules', role: 'teacher' }}
       action={
         <Link
           href={`/teacher/module/${classId}/upload`}

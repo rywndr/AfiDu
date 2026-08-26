@@ -44,7 +44,7 @@ export function StudentAssignmentToolbar({
           options: SUBMISSION_ROW_STATUSES,
         },
       ]}
-      view={{ noun: 'assignments' }}
+      view={{ noun: 'assignments', role: 'student' }}
     />
   );
 }

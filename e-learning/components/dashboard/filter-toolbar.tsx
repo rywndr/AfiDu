@@ -8,6 +8,8 @@ import { SearchBar } from '@/components/dashboard/search-bar';
 import { useListView } from '@/components/dashboard/client-list-view';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { roleAccent, type DashboardRole } from '@/components/dashboard/role-theme';
+import { cn } from '@/lib/utils';
 
 export type ToolbarFilter = {
   key: string;
@@ -23,14 +25,14 @@ type FilterToolbarProps = {
   searchPlaceholder: string;
   query: string;
   filters: ToolbarFilter[];
-  view?: { noun: string };
+  view?: { noun: string; role: DashboardRole };
   action?: ReactNode;
 };
 
 const selectClass =
   'h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-base font-medium outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 lg:h-10 lg:w-44 lg:text-sm';
 
-function LayoutToggle({ noun }: { noun: string }) {
+function LayoutToggle({ noun, role }: { noun: string; role: DashboardRole }) {
   const { view, setView } = useListView();
 
   return (
@@ -50,14 +52,14 @@ function LayoutToggle({ noun }: { noun: string }) {
       <ToggleGroupItem
         value="rows"
         aria-label={`Show ${noun} as rows`}
-        className="size-10"
+        className={cn('size-10', roleAccent[role].active)}
       >
         <Rows3 aria-hidden="true" />
       </ToggleGroupItem>
       <ToggleGroupItem
         value="grid"
         aria-label={`Show ${noun} as a grid`}
-        className="size-10"
+        className={cn('size-10', roleAccent[role].active)}
       >
         <LayoutGrid aria-hidden="true" />
       </ToggleGroupItem>
@@ -139,7 +141,7 @@ export function FilterToolbar({
           })}
         </div>
 
-        {view ? <LayoutToggle noun={view.noun} /> : null}
+        {view ? <LayoutToggle noun={view.noun} role={view.role} /> : null}
 
         {action}
       </div>
