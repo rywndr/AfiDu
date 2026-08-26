@@ -30,6 +30,7 @@ import {
 } from '@/lib/list-query';
 
 const PUBLISHED = 'published';
+const DUE_SOON_WINDOW_MS = 24 * 60 * 60 * 1_000;
 
 /** The newest attempt a student has on an assignment. */
 export type LatestAttempt = {
@@ -67,6 +68,22 @@ export type StudentAssignment = {
   attemptsUsed: number;
   latestAttempt: LatestAttempt | null;
 };
+
+export function isStudentAssignmentDueSoon(
+  item: Pick<StudentAssignment, 'dueAt' | 'latestAttempt'>,
+  now: Date = new Date(),
+): boolean {
+  const timeLeft = item.dueAt ? item.dueAt.getTime() - now.getTime() : null;
+  const unfinished =
+    item.latestAttempt === null || item.latestAttempt.status === 'in_progress';
+
+  return (
+    unfinished &&
+    timeLeft !== null &&
+    timeLeft > 0 &&
+    timeLeft < DUE_SOON_WINDOW_MS
+  );
+}
 
 /**
  * What a student may narrow their assignment list by. `status` is the state of
@@ -218,6 +235,13 @@ export async function listStudentAssignments(
     if (options.status && studentAttemptStatus(item) !== options.status) return false;
     return true;
   });
+
+  const now = new Date();
+  items.sort(
+    (left, right) =>
+      Number(isStudentAssignmentDueSoon(right, now)) -
+      Number(isStudentAssignmentDueSoon(left, now)),
+  );
 
   return {
     ...paginate(items, all.length, options),

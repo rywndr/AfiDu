@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 import { SubmissionStatusPill } from '@/components/assignments/submission-status-pill';
+import { DueSoonWarning } from '@/components/assignments/due-soon-warning';
 import { MetaItem } from '@/components/dashboard/facts';
 import { LinkedNotice } from '@/components/dashboard/linked-notice';
 import { Pill } from '@/components/dashboard/pill';
@@ -84,6 +85,8 @@ export function StudentAssignmentCard({ item }: { item: StudentAssignment }) {
                 </MetaItem>
               </span>
             </div>
+
+            <DueSoonWarning assignment={item} />
 
             {linkedModules.length > 0 || gate.notice ? (
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">

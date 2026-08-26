@@ -7,6 +7,7 @@ import { DashboardSection } from '@/components/dashboard/surfaces';
 import { pluralize } from '@/lib/format';
 import { listViewClass } from '@/lib/list-view';
 import { ROLE_STUDENT, getStudentProfile, requireRole } from '@/lib/session';
+import { isStudentAssignmentDueSoon } from '@/lib/student-assignments';
 import { feedItemKey, listStudentFeed, type StudentFeedItem } from '@/lib/student-feed';
 
 import { StudentAssignmentCard } from '../assignment/assignment-card';
@@ -57,6 +58,19 @@ export default async function StudentDashboardPage() {
     studentId: profile.id,
     classId: profile.classId,
   });
+  const now = new Date();
+  const importantAssignments = feed.items
+    .flatMap((item) =>
+      item.kind === 'assignment' &&
+      isStudentAssignmentDueSoon(item.assignment, now)
+        ? [item.assignment]
+        : [],
+    )
+    .sort(
+      (left, right) =>
+        (left.dueAt?.getTime() ?? Number.POSITIVE_INFINITY) -
+        (right.dueAt?.getTime() ?? Number.POSITIVE_INFINITY),
+    );
   const summary = [
     pluralize(feed.moduleTotal, 'module'),
     pluralize(feed.assignmentTotal, 'assignment'),
@@ -66,6 +80,18 @@ export default async function StudentDashboardPage() {
   return (
     <>
       {greeting}
+
+      {importantAssignments.length > 0 ? (
+        <DashboardSection title="Important">
+          <ul className={listViewClass('rows')}>
+            {importantAssignments.map((item) => (
+              <li key={item.id}>
+                <StudentAssignmentCard item={item} />
+              </li>
+            ))}
+          </ul>
+        </DashboardSection>
+      ) : null}
 
       <DashboardSection
         title="Latest for your class"

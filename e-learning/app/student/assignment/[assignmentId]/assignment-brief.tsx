@@ -1,5 +1,6 @@
 import { BookOpen, CalendarClock, ListChecks, Repeat, Timer } from 'lucide-react';
 
+import { DueSoonWarning } from '@/components/assignments/due-soon-warning';
 import { Fact, FactGrid, FactNote, FactValue, MetaItem } from '@/components/dashboard/facts';
 import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
@@ -68,6 +69,8 @@ export function AssignmentBrief({ item }: { item: StudentAssignment }) {
             </Fact>
           ) : null}
         </FactGrid>
+
+        <DueSoonWarning assignment={item} />
 
         {item.description ? (
           <p className="mt-4 border-t border-shell-divider pt-4 text-sm whitespace-pre-line text-ink-muted">
