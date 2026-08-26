@@ -116,23 +116,23 @@
     </div>
 
     <!-- students table -->
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="min-w-full divide-y divide-gray-200" id="student-table">
-        <thead class="bg-gray-50">
+    <div class="w-full bg-white shadow-sm rounded-xl overflow-x-auto mb-6 border border-gray-200">
+      <table class="w-max min-w-full table-auto divide-y divide-gray-200" id="student-table">
+        <thead class="sticky top-0 z-20 bg-[#ff4f25]">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Number</th>
-            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Profile</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Name</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Gender</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Age</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Class</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Level</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Contact Number</th>
+            <th class="px-4 py-3 text-center text-sm font-semibold text-white">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="divide-y divide-gray-100 bg-white">
           {% for student in students %}
-          <tr class="hover:bg-gray-100">
+          <tr class="hover:bg-orange-50">
             <td class="px-6 py-4 whitespace-nowrap">
               {% if student.profile_photo %}
                 <img src="{{ student.profile_photo.url }}" alt="Profile" class="w-12 h-12 rounded-full object-cover">

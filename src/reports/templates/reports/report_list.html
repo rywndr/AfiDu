@@ -134,22 +134,22 @@
 
 
     <!-- table -->
-    <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="report-table">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-[#ff4f25]">
+    <div class="w-full bg-white shadow-sm rounded-xl overflow-x-auto mb-6 border border-gray-200" id="report-table">
+      <table class="w-max min-w-full table-auto divide-y divide-gray-200">
+        <thead class="sticky top-0 z-20 bg-[#ff4f25]">
           <tr>
-            <th class="px-4 py-3 text-left text-white font-semibold">Student Name</th>
-            <th class="px-4 py-3 text-left text-white font-semibold">Class</th>
-            <th class="px-4 py-3 text-left text-white font-semibold">Level</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Student Name</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Class</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-white">Level</th>
             {% for key, label in score_categories %}
-              <th class="px-4 py-3 text-center text-white font-semibold">{{ label }}</th>
+              <th class="px-4 py-3 text-center text-sm font-semibold text-white">{{ label }}</th>
             {% endfor %}
-            <th class="px-4 py-3 text-center text-white font-semibold">Action</th>
+            <th class="px-4 py-3 text-center text-sm font-semibold text-white">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100 bg-white">
           {% for item in students_data %}
-            <tr class="hover:bg-gray-100">
+            <tr class="hover:bg-orange-50">
               <td class="px-4 py-2 whitespace-nowrap">
                 <a href="{% url 'students:student-detail' item.student.id %}?next={% url 'reports:report-list' %}" class="text-[#ff4f25] hover:underline">
                   {{ item.student.name }}

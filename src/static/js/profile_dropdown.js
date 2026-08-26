@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     function toggleProfileDropdown() {
       isDropdownOpen = !isDropdownOpen;
+      userMenu.setAttribute('aria-expanded', String(isDropdownOpen));
       
       if (!isDropdownOpen) {
         // close dropdown with tailwind animation

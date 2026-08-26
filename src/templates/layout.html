@@ -33,53 +33,56 @@
     <div class="flex flex-1 z-10">
       <!-- Sidebar -->
       <aside
-        class="w-48 p-4 rounded-lg shadow-lg bg-white flex flex-col justify-between"
+        class="sticky top-0 h-dvh w-64 shrink-0 border-r border-gray-200 bg-white px-6 py-6 shadow-sm"
       >
-        <div>
+        <div class="flex h-full min-h-0 flex-col">
           <!-- sidebar brand -->
-            <div class="px-4 py-5 bg-white rounded-t-lg">
-              <a href="{% url 'dashboard:dashboard' %}" class="flex items-center">
-                <img src="{% static 'images/afidu.png' %}" alt="AfiDu Logo" class="w-8 h-8" />
-                <span class="text-2xl text-[#ff4f25] font-bold">fiDu</span>
-              </a>
-            </div>
+          <div class="px-1">
+            <a href="{% url 'dashboard:dashboard' %}" class="flex w-fit items-start gap-1.5">
+              <img src="{% static 'images/afidu.png' %}" alt="AfiDu Logo" class="mt-0.5 h-10 w-auto object-contain" />
+              <span class="flex flex-col leading-none">
+                <span class="text-3xl font-bold tracking-tight text-[#ff4f25]">fiDu</span>
+                <span class="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#c74124]">Management</span>
+              </span>
+            </a>
+          </div>
 
           <!-- sidebar nav -->
-          <nav class="mt-4">
-            <ul class="space-y-1">
+          <nav class="mt-10 flex-1" aria-label="Main navigation">
+            <ul class="space-y-2">
               <li>
                 <a
                   href="{% url 'dashboard:dashboard' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'dashboard' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'dashboard' %}"
                 >
-                  <i class="fas fa-tachometer-alt mr-2 w-6"></i>
+                  <i class="fas fa-tachometer-alt w-5 shrink-0 text-center"></i>
                   <span>Dashboard</span>
                 </a>
               </li>
               <li>
                 <a
                   href="{% url 'students:student-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'students' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'students' %}"
                 >
-                  <i class="fa-solid fa-user-graduate mr-2 w-6"></i>
+                  <i class="fa-solid fa-user-graduate w-5 shrink-0 text-center"></i>
                   <span>Students</span>
                 </a>
               </li>
               <li>
                 <a
                   href="{% url 'scores:score-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'scores' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'scores' %}"
                 >
-                  <i class="fas fa-chart-bar mr-2 w-6"></i>
+                  <i class="fas fa-chart-bar w-5 shrink-0 text-center"></i>
                   <span>Scores</span>
                 </a>
               </li>
               <li>
                 <a
                   href="{% url 'reports:report-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'reports' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'reports' %}"
                 >
-                  <i class="fas fa-file-alt mr-2 w-6"></i>
+                  <i class="fas fa-file-alt w-5 shrink-0 text-center"></i>
                   <span>Reports</span>
                 </a>
               </li>
@@ -87,18 +90,18 @@
               <li>
                 <a
                   href="{% url 'payments:payment_list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'payments' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'payments' %}"
                 >
-                  <i class="fas fa-money-bill-wave mr-2 w-6"></i>
+                  <i class="fas fa-money-bill-wave w-5 shrink-0 text-center"></i>
                   <span>Payments</span>
                 </a>
               </li>
               <li>
                 <a
                   href="{% url 'administrators:staff-list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'administrators' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'administrators' %}"
                 >
-                  <i class="fas fa-users-cog mr-2 w-6"></i>
+                  <i class="fas fa-users-cog w-5 shrink-0 text-center"></i>
                   <span>Staff</span>
                 </a>
               </li>
@@ -106,31 +109,31 @@
               <li>
                 <a
                   href="{% url 'documents:document_list' %}"
-                  class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'documents' %}"
+                  class="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-base font-medium tracking-tight transition-colors hover:bg-[#ffede9] hover:text-red-600 {% active_link 'documents' %}"
                 >
-                  <i class="fas fa-file-alt mr-2 w-6"></i>
+                  <i class="fas fa-file-alt w-5 shrink-0 text-center"></i>
                   <span>Documents</span>
                 </a>
               </li>
             </ul>
           </nav>
-        </div>
 
-        <!-- footer bottom of sidebar -->
-        <div class="py-4">
-          <a
-            href=""
-            class="flex items-center -ml-4 -mr-4 px-4 py-2 transition-colors hover:bg-[#ffede9] hover:text-red-600"
-          >
-            <i class="fas fa-external-link-alt mr-2 w-6"></i>
-            <span>AfiDu E-Learning</span>
-          </a>
-          {% include 'snippets/footer.html' with extra_classes="text-[0.55rem]" %}
+          <!-- footer bottom of sidebar -->
+          <div class="mt-auto flex flex-col gap-1 pt-8">
+            <a
+              href=""
+              class="flex min-h-10 items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-[#ffede9] hover:text-red-600"
+            >
+              <i class="fas fa-external-link-alt w-5 shrink-0 text-center"></i>
+              <span>AfiDu E-Learning</span>
+            </a>
+            {% include 'snippets/footer.html' with extra_classes="text-[0.7rem]" %}
+          </div>
         </div>
       </aside>
 
       <!-- topbar and content -->
-      <main class="flex-1 flex flex-col">
+      <main class="min-w-0 flex-1 flex flex-col">
         <!-- topbar -->
         <header
           class="mx-4 my-4 bg-white shadow rounded-lg px-6 py-4 flex justify-between items-center"
@@ -144,99 +147,72 @@
 
           <!-- user menu -->
           <div class="relative" id="user-dropdown-container">
-            <!-- profile button with avatar and name -->
+            <!-- profile button -->
             <button
               id="user-menu"
-              class="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 transition-all hover:bg-gray-50"
-              aria-label="user menu"
+              class="flex h-auto items-center gap-1 rounded-full p-1 pr-2 transition-colors hover:bg-gray-100"
+              aria-label="Open profile menu"
+              aria-controls="dropdown-menu"
+              aria-expanded="false"
             >
-              <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#ff4f25] text-lg font-semibold text-white">
                 {% if request.user.myprofile.photo %}
                   <img
                     src="{{ request.user.myprofile.photo.url }}"
-                    alt="Profile Picture"
-                    class="w-8 h-8 rounded-full object-cover"
+                    alt="Profile picture"
+                    class="h-10 w-10 rounded-full object-cover"
                   />
                 {% else %}
-                  <i class="fas fa-user text-gray-500"></i>
+                  {{ request.user.name|slice:":1"|upper }}
                 {% endif %}
               </div>
 
-              <!-- show username on larger screens -->
-              <span class="hidden sm:block text-sm font-medium truncate max-w-[100px] text-gray-700">
-                {% if request.user.first_name %}
-                  {{ request.user.first_name }}
-                {% else %}
-                  {{ request.user.username|default:"user" }}
-                {% endif %}
-              </span>
-
-              <i id="chevron-icon" class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+              <i id="chevron-icon" class="fas fa-chevron-down w-4 text-xs text-gray-500 transition-transform"></i>
             </button>
 
             <!-- dropdown menu -->
             <div
               id="dropdown-menu"
-              class="hidden absolute right-0 mt-2 w-64 py-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+              class="hidden absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] origin-top-right translate-y-[-10px] overflow-y-auto rounded-lg bg-white p-2 text-gray-700 opacity-0 shadow-md ring-1 ring-black/5 transition-all duration-200"
             >
               <!-- user profile section -->
-              <div class="px-4 py-3 border-b border-gray-100">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    {% if request.user.myprofile.photo %}
-                      <img
-                        src="{{ request.user.myprofile.photo.url }}"
-                        alt="Profile Picture"
-                        class="w-10 h-10 rounded-full object-cover"
-                      />
-                    {% else %}
-                      <i class="fas fa-user text-gray-500"></i>
-                    {% endif %}
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-gray-700">
-                      {{ request.user.email|default:"" }}
-                    </p>
-                    <a
-                      href="{% url 'myprofile:profile' %}"
-                      class="text-xs hover:underline text-gray-500"
-                    >
-                      My Profile
-                    </a>
-                  </div>
-                </div>
+              <div class="px-2 py-2">
+                <span class="block text-xs font-medium text-gray-500">Signed in as</span>
+                <span class="mt-1 block truncate text-sm font-semibold text-gray-900">
+                  {{ request.user.name }}
+                </span>
+                <a
+                  href="{% url 'myprofile:profile' %}"
+                  class="mt-1 inline-block text-xs text-gray-500 hover:text-[#ff4f25] hover:underline"
+                >
+                  My Profile
+                </a>
               </div>
 
               <!-- admin section if superuser -->
               {% if user.is_superuser %}
-              <div class="px-4 py-2">
+              <div class="my-1 h-px bg-gray-200"></div>
                 <a
                   href="{% url 'register:register' %}"
-                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                 >
-                  <i class="fas fa-user-plus text-gray-500"></i>
+                  <i class="fas fa-user-plus w-4 shrink-0 text-center text-gray-500"></i>
                   <span>Create Account</span>
                 </a>
-              </div>
               {% endif %}
 
               <!-- sign out -->
-              <div class="px-4 py-1">
-                <form
-                  action="{% url 'logout' %}"
-                  method="post"
-                  class="block"
+              <div class="my-1 h-px bg-gray-200"></div>
+              <form action="{% url 'logout' %}" method="post" class="block">
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                 >
-                  {% csrf_token %}
-                  <button
-                    type="submit"
-                    class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-red-50 hover:text-red-500"
-                  >
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign out</span>
-                  </button>
-                </form>
-              </div>
+                  <i class="fas fa-sign-out-alt w-4 shrink-0 text-center"></i>
+                  <span>Sign out</span>
+                </button>
+              </form>
             </div>
           </div>
         </header>
