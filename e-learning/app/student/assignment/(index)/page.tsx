@@ -45,8 +45,8 @@ export default async function StudentAssignmentPage({
     return (
       <>
         <PageHeader
-          title="ASSIGNMENT"
-          description="Your exercises and quizzes appear here."
+          title="ASSESSMENTS"
+          description="Your assignments and quizzes appear here."
         />
         <EmptyState icon={GraduationCap} title="No class yet">
           You are not in a class at the moment, so there is nothing set for you.
@@ -84,7 +84,7 @@ export default async function StudentAssignmentPage({
   return (
     <>
       <PageHeader
-        title="ASSIGNMENT"
+        title="ASSESSMENTS"
         description={description}
         actions={
           assignmentPage.allTotal > 0 ? (
