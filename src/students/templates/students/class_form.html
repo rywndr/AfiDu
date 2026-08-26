@@ -31,7 +31,7 @@
                 </label>
                 <div>
                     {% if field.name == 'start_time' or field.name == 'end_time' %}
-                        {% render_field field class="shadow-sm block w-1/2 sm:text-sm border border-gray-300 rounded-md p-2" type="time" %}
+                        {% render_field field class="shadow-sm block w-1/2 sm:text-sm border border-gray-300 rounded-md p-2" type="time" step="1" %}
                     {% elif field.name == 'description' %}
                         {% render_field field class="shadow-sm block w-3/4 sm:text-sm border border-gray-300 rounded-md p-2" rows="3" %}
                     {% elif field.name == 'max_students' %}
