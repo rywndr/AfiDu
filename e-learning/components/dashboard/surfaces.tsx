@@ -49,7 +49,7 @@ function DashboardSection({
 
   return (
     <section aria-labelledby={headingId}>
-      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+      <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <h2
             id={headingId}
