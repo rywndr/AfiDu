@@ -32,7 +32,7 @@ class ScoreAdmin(admin.ModelAdmin):
     )
     list_filter = ("year", "semester", "category")
     search_fields = ("student__name",)
-    raw_id_fields = ("student",)
+    raw_id_fields = ("student", "mid_term_assignment", "finals_assignment")
     readonly_fields = ("final_score",)
     exclude = ("legacy_exercise_scores",)
     inlines = [ScoreEntryInline]

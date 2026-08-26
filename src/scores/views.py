@@ -5,6 +5,7 @@ from django.contrib import messages
 from core.mixins import StaffRequiredMixin
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Prefetch
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, UpdateView
@@ -114,7 +115,13 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                 year=year,
                 semester=semester,
                 category=category,
-            ).prefetch_related('entries')
+            ).select_related(
+                "mid_term_assignment", "finals_assignment"
+            ).prefetch_related(
+                Prefetch(
+                    "entries", queryset=ScoreEntry.objects.select_related("assignment")
+                )
+            )
             
             for score in scores_qs:
                 # every score on the page shares this period's config
@@ -229,7 +236,13 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             year=year, 
             semester=semester, 
             category=category
-        ).prefetch_related('entries')
+        ).select_related(
+            "mid_term_assignment", "finals_assignment"
+        ).prefetch_related(
+            Prefetch(
+                "entries", queryset=ScoreEntry.objects.select_related("assignment")
+            )
+        )
         
         for score in scores_qs:
             score.set_config(config)
@@ -258,6 +271,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     score.category = category
                     score.set_config(config)
                     score.save()
+                    form.save_entry_notes(score)
 
         redirect_url = (
             f"{request.path}?year={year}"
@@ -444,12 +458,12 @@ class ScoreConfigView(StaffRequiredMixin, ScoreContextMixin, UpdateView):
             category=category,
             defaults={
                 "num_exercises": cd["num_exercises"],
-                "formula": cd["formula"],
+                "formula": form.instance.formula,
             },
         )
         if not created:
             config.num_exercises = cd["num_exercises"]
-            config.formula = cd["formula"]
+            config.formula = form.instance.formula
             config.save()
 
         # bring every score's exercise slots in line with the new configuration:

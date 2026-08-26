@@ -246,7 +246,21 @@ export const score = pgTable(
     category: varchar('category', { length: 10 }).notNull(),
     legacyExerciseScores: jsonb('legacy_exercise_scores').notNull().default([]),
     midTerm: numeric('mid_term', { precision: 5, scale: 2 }),
+    midTermSource: varchar('mid_term_source', { length: 20 })
+      .notNull()
+      .default('manual'),
+    midTermAssignmentId: bigint('mid_term_assignment_id', {
+      mode: 'number',
+    }).references(() => assignment.id, { onDelete: 'set null' }),
+    midTermNote: varchar('mid_term_note', { length: 255 }).notNull().default(''),
     finals: numeric('finals', { precision: 5, scale: 2 }),
+    finalsSource: varchar('finals_source', { length: 20 })
+      .notNull()
+      .default('manual'),
+    finalsAssignmentId: bigint('finals_assignment_id', {
+      mode: 'number',
+    }).references(() => assignment.id, { onDelete: 'set null' }),
+    finalsNote: varchar('finals_note', { length: 255 }).notNull().default(''),
   },
   (table) => [
     uniqueIndex('score_student_period_category_uniq').on(

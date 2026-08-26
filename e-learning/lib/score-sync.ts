@@ -17,7 +17,6 @@ import { listScoreConfigs } from '@/lib/score-config-data';
 
 type LinkedSubmission = {
   assignmentId: number;
-  assignmentTitle: string;
   studentId: number;
   year: number;
   semester: Semester;
@@ -33,7 +32,6 @@ async function linkedSubmission(
   const [row] = await db
     .select({
       assignmentId: assignment.id,
-      assignmentTitle: assignment.title,
       studentId: submission.studentId,
       year: assignment.year,
       semester: assignment.semester,
@@ -112,10 +110,24 @@ async function clearTarget(scoreId: number, item: LinkedSubmission): Promise<voi
   }
 
   if (item.target === 'mid_term') {
-    await db.update(score).set({ midTerm: null }).where(eq(score.id, scoreId));
+    await db
+      .update(score)
+      .set({
+        midTerm: null,
+        midTermSource: 'manual',
+        midTermAssignmentId: null,
+      })
+      .where(eq(score.id, scoreId));
     return;
   }
-  await db.update(score).set({ finals: null }).where(eq(score.id, scoreId));
+  await db
+    .update(score)
+    .set({
+      finals: null,
+      finalsSource: 'manual',
+      finalsAssignmentId: null,
+    })
+    .where(eq(score.id, scoreId));
 }
 
 export async function syncSubmissionScore(submissionId: number): Promise<void> {
@@ -154,7 +166,6 @@ export async function syncSubmissionScore(submissionId: number): Promise<void> {
         source: 'assignment',
         assignmentId: item.assignmentId,
         submissionId,
-        note: item.assignmentTitle.slice(0, 255),
         createdAt: now,
         updatedAt: now,
       })
@@ -165,7 +176,6 @@ export async function syncSubmissionScore(submissionId: number): Promise<void> {
           source: 'assignment',
           assignmentId: item.assignmentId,
           submissionId,
-          note: item.assignmentTitle.slice(0, 255),
           updatedAt: now,
         },
       });
@@ -173,8 +183,22 @@ export async function syncSubmissionScore(submissionId: number): Promise<void> {
   }
 
   if (item.target === 'mid_term') {
-    await db.update(score).set({ midTerm: points }).where(eq(score.id, scoreId));
+    await db
+      .update(score)
+      .set({
+        midTerm: points,
+        midTermSource: 'assignment',
+        midTermAssignmentId: item.assignmentId,
+      })
+      .where(eq(score.id, scoreId));
     return;
   }
-  await db.update(score).set({ finals: points }).where(eq(score.id, scoreId));
+  await db
+    .update(score)
+    .set({
+      finals: points,
+      finalsSource: 'assignment',
+      finalsAssignmentId: item.assignmentId,
+    })
+    .where(eq(score.id, scoreId));
 }

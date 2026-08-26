@@ -20,7 +20,7 @@
     if (!row) return;
 
     let ex_sum = 0;
-    const exerciseInputs = row.querySelectorAll(`input[id*="-exercise_"]`);
+    const exerciseInputs = row.querySelectorAll(`input[type="number"][id*="-exercise_"]`);
     exerciseInputs.forEach(function(input) {
       const value = parseFloat(input.value);
       if (!isNaN(value)) {
@@ -28,8 +28,8 @@
       }
     });
 
-    const midTermInput = row.querySelector(`input[id*="-mid_term"]`);
-    const finalsInput  = row.querySelector(`input[id*="-finals"]`);
+    const midTermInput = row.querySelector(`input[type="number"][id*="-mid_term"]`);
+    const finalsInput  = row.querySelector(`input[type="number"][id*="-finals"]`);
     const mid_term = midTermInput ? parseFloat(midTermInput.value) || 0 : 0;
     const finals = finalsInput ? parseFloat(finalsInput.value) || 0 : 0;
 

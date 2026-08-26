@@ -1,3 +1,5 @@
+import ast
+import operator
 from decimal import Decimal
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -9,6 +11,57 @@ from core.constants import SEMESTER_CHOICES, SUBJECT_CATEGORIES
 SCORE_CATEGORIES = SUBJECT_CATEGORIES
 
 ZERO = Decimal("0.00")
+HUNDRED = Decimal("100")
+
+SCORE_SOURCE_MANUAL = "manual"
+SCORE_SOURCE_ASSIGNMENT = "assignment"
+SCORE_SOURCE_QUIZ = "quiz"
+SCORE_SOURCE_CHOICES = [
+    (SCORE_SOURCE_MANUAL, "Manual"),
+    (SCORE_SOURCE_ASSIGNMENT, "Assignment"),
+    (SCORE_SOURCE_QUIZ, "Quiz"),
+]
+
+FORMULA_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+}
+
+
+def evaluate_score_formula(formula, values):
+    """Evaluate the small arithmetic language used by saved score formulas."""
+
+    def evaluate(node):
+        if isinstance(node, ast.Expression):
+            return evaluate(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return Decimal(str(node.value))
+        if isinstance(node, ast.Name) and node.id in values:
+            return Decimal(str(values[node.id]))
+        if isinstance(node, ast.BinOp) and type(node.op) in FORMULA_OPERATORS:
+            return FORMULA_OPERATORS[type(node.op)](
+                evaluate(node.left), evaluate(node.right)
+            )
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = evaluate(node.operand)
+            return value if isinstance(node.op, ast.UAdd) else -value
+        raise ValueError("Unsupported score formula")
+
+    return evaluate(ast.parse(formula, mode="eval"))
+
+
+def percentage_formula(exercises, mid_term, finals):
+    """Build the stored formula from teacher-facing percentage weights."""
+
+    def factor(percent):
+        return format(Decimal(percent) / HUNDRED, "f")
+
+    return (
+        f"{factor(exercises)} * (ex_sum / num_exercises) + "
+        f"{factor(mid_term)} * mid_term + {factor(finals)} * finals"
+    )
 
 
 class ScoreConfig(models.Model):
@@ -84,6 +137,37 @@ class ScoreConfig(models.Model):
         else:
             return f"Year {self.year} - {self.get_semester_display()} - {self.get_category_display()}"
 
+    def weight_percentages(self):
+        """Return exercise, midterm, and final contributions on a 0-100 scale."""
+        zeroes = {
+            "ex_sum": ZERO,
+            "mid_term": ZERO,
+            "finals": ZERO,
+            "num_exercises": self.num_exercises,
+        }
+        try:
+            baseline = evaluate_score_formula(self.formula, zeroes)
+            exercises = evaluate_score_formula(
+                self.formula,
+                {
+                    **zeroes,
+                    "ex_sum": HUNDRED * self.num_exercises,
+                },
+            ) - baseline
+            mid_term = evaluate_score_formula(
+                self.formula, {**zeroes, "mid_term": HUNDRED}
+            ) - baseline
+            finals = evaluate_score_formula(
+                self.formula, {**zeroes, "finals": HUNDRED}
+            ) - baseline
+            precision = Decimal("0.01")
+            total = (exercises + mid_term + finals).quantize(precision)
+            exercises = exercises.quantize(precision)
+            mid_term = mid_term.quantize(precision)
+            return exercises, mid_term, total - exercises - mid_term
+        except (ArithmeticError, SyntaxError, TypeError, ValueError):
+            return Decimal("30.00"), Decimal("30.00"), Decimal("40.00")
+
 
 class Score(models.Model):
     student = models.ForeignKey(
@@ -104,6 +188,17 @@ class Score(models.Model):
         blank=True,
         validators=[MaxValueValidator(100), MinValueValidator(0)],
     )
+    mid_term_source = models.CharField(
+        max_length=20, choices=SCORE_SOURCE_CHOICES, default=SCORE_SOURCE_MANUAL
+    )
+    mid_term_assignment = models.ForeignKey(
+        "assignments.Assignment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mid_term_scores",
+    )
+    mid_term_note = models.CharField(max_length=255, blank=True)
     finals = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -111,6 +206,17 @@ class Score(models.Model):
         blank=True,
         validators=[MaxValueValidator(100), MinValueValidator(0)],
     )
+    finals_source = models.CharField(
+        max_length=20, choices=SCORE_SOURCE_CHOICES, default=SCORE_SOURCE_MANUAL
+    )
+    finals_assignment = models.ForeignKey(
+        "assignments.Assignment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="final_scores",
+    )
+    finals_note = models.CharField(max_length=255, blank=True)
 
     class Meta:
         constraints = [
@@ -252,9 +358,9 @@ class Score(models.Model):
     def final_score(self):
         config = self.get_config()
         ex_scores = self.exercise_points(config.num_exercises)
-        ex_sum = float(sum(ex_scores, ZERO))
-        mid_term = float(self.mid_term) if self.mid_term is not None else 0.0
-        finals = float(self.finals) if self.finals is not None else 0.0
+        ex_sum = sum(ex_scores, ZERO)
+        mid_term = self.mid_term if self.mid_term is not None else ZERO
+        finals = self.finals if self.finals is not None else ZERO
 
         allowed_names = {
             "ex_sum": ex_sum,
@@ -263,10 +369,9 @@ class Score(models.Model):
             "num_exercises": config.num_exercises,
         }
         try:
-            result = eval(config.formula, {"__builtins__": {}}, allowed_names)
-            return result
-        except Exception:
-            return 0
+            return evaluate_score_formula(config.formula, allowed_names)
+        except (ArithmeticError, SyntaxError, TypeError, ValueError):
+            return ZERO
 
     def __str__(self):
         return f"{self.student.name} - {self.category} ({self.year} {self.semester})"
@@ -282,14 +387,10 @@ class ScoreEntry(models.Model):
     points at one.
     """
 
-    SOURCE_MANUAL = "manual"
-    SOURCE_ASSIGNMENT = "assignment"
-    SOURCE_QUIZ = "quiz"
-    SOURCE_CHOICES = [
-        (SOURCE_MANUAL, "Manual"),
-        (SOURCE_ASSIGNMENT, "Assignment"),
-        (SOURCE_QUIZ, "Quiz"),
-    ]
+    SOURCE_MANUAL = SCORE_SOURCE_MANUAL
+    SOURCE_ASSIGNMENT = SCORE_SOURCE_ASSIGNMENT
+    SOURCE_QUIZ = SCORE_SOURCE_QUIZ
+    SOURCE_CHOICES = SCORE_SOURCE_CHOICES
 
     score = models.ForeignKey(Score, on_delete=models.CASCADE, related_name="entries")
     slot = models.PositiveSmallIntegerField(help_text="1-indexed exercise position.")

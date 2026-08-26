@@ -10,7 +10,6 @@
 {% block content %}
   <div class="container mx-auto px-4 py-8">
 
-    <!-- guilty of using internal css just to remove those horrible arrows inside number inputs for every brwser-->
     <style>
       input[type=number]::-webkit-inner-spin-button,
       input[type=number]::-webkit-outer-spin-button {
@@ -19,6 +18,23 @@
       }
       input[type=number] {
         -moz-appearance: textfield;
+      }
+      #score-table {
+        scrollbar-color: #d1d5db transparent;
+        scrollbar-width: thin;
+      }
+      #score-table th,
+      #score-table td {
+        vertical-align: middle;
+      }
+      .score-row:nth-child(even) td {
+        background-color: rgba(249, 250, 251, 0.75);
+      }
+      .score-row:hover td {
+        background-color: rgba(255, 247, 237, 0.9);
+      }
+      .score-row td.final-score-cell {
+        background-color: rgba(255, 237, 213, 0.65);
       }
     </style>
 
@@ -163,54 +179,54 @@
     <!-- /table -->
     <form method="post">
       {% csrf_token %}
-      <div class="w-full bg-white shadow rounded-lg overflow-x-auto mb-6 border border-gray-200" id="score-table">
-          <table class="min-w-full table-fixed divide-y divide-gray-200">
-              <thead class="bg-[#ff4f25]">
+      <div class="w-full bg-white shadow-sm rounded-xl overflow-x-auto mb-6 border border-gray-200" id="score-table">
+          <table class="w-max min-w-full table-auto divide-y divide-gray-200">
+              <thead class="sticky top-0 z-20 bg-[#ff4f25]">
                 <tr>
-                  <th class="w-1/6 px-4 py-3 text-left text-white font-semibold">Student Name</th>
-                  <th class="w-1/12 px-4 py-3 text-left text-white font-semibold">Class</th>
-                  <th class="w-1/12 px-4 py-3 text-left text-white font-semibold">Level</th>
+                  <th class="sticky left-0 z-30 min-w-44 bg-[#ff4f25] px-4 py-3 text-left text-sm font-semibold text-white">Student</th>
+                  <th class="min-w-28 px-3 py-3 text-left text-sm font-semibold text-white">Class</th>
+                  <th class="min-w-28 px-3 py-3 text-left text-sm font-semibold text-white">Level</th>
                   {% for i in exercise_range %}
-                    <th class="w-8 px-2 py-3 text-center text-white font-semibold">E{{ i|add:"1" }}</th>
+                    <th class="w-28 min-w-28 px-2 py-3 text-center text-sm font-semibold text-white">E{{ i|add:"1" }}</th>
                   {% endfor %}
-                  <th class="w-16 px-2 py-3 text-center text-white font-semibold">Mid Term</th>
-                  <th class="w-16 px-2 py-3 text-center text-white font-semibold">Finals</th>
-                  <th class="w-16 px-2 py-3 text-center text-white font-semibold">Score Sum</th>
-                  <th class="w-16 px-2 py-3 text-center text-white font-semibold">Final Score</th>
+                  <th class="w-28 min-w-28 px-2 py-3 text-center text-sm font-semibold text-white">Midterm</th>
+                  <th class="w-28 min-w-28 px-2 py-3 text-center text-sm font-semibold text-white">Final exam</th>
+                  <th class="w-20 min-w-20 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">Total</th>
+                  <th class="w-20 min-w-20 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">Grade</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100">
+              <tbody class="divide-y divide-gray-100 bg-white">
                 {% for student, form in forms %}
-                  <tr class="score-row hover:bg-gray-100" data-prefix="student_{{ student.id }}">
-                    <td class="w-1/6 px-4 py-4 whitespace-nowrap">
+                  <tr class="score-row" data-prefix="student_{{ student.id }}">
+                    <td class="sticky left-0 z-10 min-w-44 whitespace-nowrap bg-white px-4 py-3">
                       <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}"
-                        class="text-[#ff4f25] hover:underline">
+                        class="text-sm font-medium text-[#e54320] hover:underline">
                         {{ student.name }}
                       </a>
                     </td>
-                    <td class="w-1/12 px-4 py-4 whitespace-nowrap text-gray-700">
+                    <td class="min-w-28 whitespace-nowrap px-3 py-3 text-sm text-gray-700">
                       {% if student.assigned_class %}
                         {{ student.assigned_class.name }}
                       {% else %}
                         <span class="text-gray-400 italic">Not assigned</span>
                       {% endif %}
                     </td>
-                    <td class="w-1/12 px-4 py-4 whitespace-nowrap text-gray-700">{{ student.level }}</td>
-                    {% for field in form.exercise_fields %}
-                      <td class="w-8 px-2 py-4 whitespace-nowrap text-center">
-                        {% render_field field %}
+                    <td class="min-w-28 whitespace-nowrap px-3 py-3 text-sm text-gray-700">{{ student.level }}</td>
+                    {% for item in form.exercise_items %}
+                      <td class="w-28 min-w-28 px-2 py-2.5 text-center">
+                        {% include "scores/_score_cell.html" with item=item %}
                       </td>
                     {% endfor %}
-                    <td class="w-16 px-2 py-4 whitespace-nowrap text-center">
-                      {% render_field form.mid_term %}
+                    <td class="w-28 min-w-28 px-2 py-2.5 text-center">
+                      {% include "scores/_score_cell.html" with item=form.mid_term_item %}
                     </td>
-                    <td class="w-16 px-2 py-4 whitespace-nowrap text-center">
-                      {% render_field form.finals %}
+                    <td class="w-28 min-w-28 px-2 py-2.5 text-center">
+                      {% include "scores/_score_cell.html" with item=form.finals_item %}
                     </td>
-                    <td class="w-16 px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_score_sum">
+                    <td class="w-20 min-w-20 whitespace-nowrap px-2 py-3 text-center text-sm font-medium text-gray-600" id="student_{{ student.id }}_score_sum">
                       {{ student.score.score_sum|floatformat:2 }}
                     </td>
-                    <td class="w-16 px-2 py-4 whitespace-nowrap text-center" id="student_{{ student.id }}_final_score">
+                    <td class="final-score-cell w-20 min-w-20 whitespace-nowrap px-2 py-3 text-center text-sm font-bold text-[#b93818]" id="student_{{ student.id }}_final_score">
                       {{ student.score.final_score|floatformat:2 }}
                     </td>
                   </tr>
@@ -321,9 +337,74 @@
   <!-- div for passing score formula -->
   <div id="score-config" data-formula="{{ score_formula|escapejs }}"></div>
 
+  <div id="score-note-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 px-4" role="dialog" aria-modal="true" aria-labelledby="score-note-title">
+    <div class="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="score-note-title" class="text-base font-semibold text-gray-900">Score note</h2>
+          <p class="mt-1 text-sm text-gray-500">Add context for this score.</p>
+        </div>
+        <button type="button" class="score-note-close flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Close note">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <input id="score-note-editor" type="text" maxlength="255" class="mt-4 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#ff4f25] focus:ring-1 focus:ring-[#ff4f25]" placeholder="Type a note...">
+      <div class="mt-4 flex justify-end">
+        <button type="button" class="score-note-close rounded-lg bg-[#ff4f25] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94320]">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- JS -->
   <!-- score value validation -->
   <script src="{% static 'js/scores/only_digits.js' %}"></script>
   <!-- score calc -->
   <script src="{% static 'js/scores/calc_score.js' %}"></script>
+  <script>
+    let activeNoteInput = null;
+    const noteModal = document.getElementById('score-note-modal');
+    const noteEditor = document.getElementById('score-note-editor');
+
+    function closeNoteModal() {
+      document.querySelectorAll('.score-note-button[aria-expanded="true"]').forEach(function(button) {
+        button.setAttribute('aria-expanded', 'false');
+      });
+      noteModal.classList.add('hidden');
+      noteModal.classList.remove('flex');
+      activeNoteInput = null;
+    }
+
+    document.addEventListener('click', function(event) {
+      const button = event.target.closest('.score-note-button');
+      if (button) {
+        activeNoteInput = button.closest('.score-note').querySelector('.score-note-input');
+        noteEditor.value = activeNoteInput.value;
+        noteModal.classList.remove('hidden');
+        noteModal.classList.add('flex');
+        noteEditor.focus();
+        button.setAttribute('aria-expanded', 'true');
+        return;
+      }
+      if (event.target === noteModal || event.target.closest('.score-note-close')) {
+        closeNoteModal();
+      }
+    });
+
+    noteEditor.addEventListener('input', function() {
+      if (!activeNoteInput) return;
+      activeNoteInput.value = noteEditor.value;
+      const note = activeNoteInput.closest('.score-note');
+      note.querySelector('.score-note-dot').classList.toggle('hidden', noteEditor.value.trim() === '');
+      const button = note.querySelector('.score-note-button');
+      const label = noteEditor.value.trim() ? 'Edit note' : 'Add note';
+      button.title = label;
+      button.setAttribute('aria-label', label);
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && !noteModal.classList.contains('hidden')) {
+        closeNoteModal();
+      }
+    });
+  </script>
 {% endblock %}
