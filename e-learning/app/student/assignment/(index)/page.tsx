@@ -1,102 +1,107 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookOpen, GraduationCap } from 'lucide-react';
+import { ClipboardCheck, GraduationCap } from 'lucide-react';
 
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
-import { isMaterialType, isSubjectCategory } from '@/lib/choices';
+import { isSubjectCategory, isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
 import { parsePageNumber, parseSearchQuery } from '@/lib/list-query';
 import { listViewClass, parseListView } from '@/lib/list-view';
 import { requireStudentProfile } from '@/lib/student-access';
-import { listStudentMaterials } from '@/lib/student-materials';
+import { listStudentAssignments } from '@/lib/student-assignments';
 
-import { StudentModuleCard } from './module-card';
-import { StudentModuleToolbar } from './module-toolbar';
+import { StudentAssignmentCard } from '../assignment-card';
+import { StudentAssignmentToolbar } from '../assignment-toolbar';
 
 export const metadata: Metadata = {
-  title: 'Modules | AfiDu E-Learning',
+  title: 'Assignments | AfiDu E-Learning',
 };
 
 /** Reads the search, filter and view state out of the URL. */
 function readSearchParams(
-  params: Awaited<PageProps<'/student/module'>['searchParams']>,
+  params: Awaited<PageProps<'/student/assignment'>['searchParams']>,
 ) {
   const categoryValue = String(params.category ?? '');
-  const typeValue = String(params.type ?? '');
+  const statusValue = String(params.status ?? '');
 
   return {
     query: parseSearchQuery(params.q),
     category: isSubjectCategory(categoryValue) ? categoryValue : undefined,
-    materialType: isMaterialType(typeValue) ? typeValue : undefined,
+    status: isSubmissionRowStatus(statusValue) ? statusValue : undefined,
     view: parseListView(params.view),
     page: parsePageNumber(params.page),
   };
 }
 
-export default async function StudentModulePage({
+export default async function StudentAssignmentPage({
   searchParams,
-}: PageProps<'/student/module'>) {
+}: PageProps<'/student/assignment'>) {
   const profile = await requireStudentProfile();
 
   if (!profile || profile.classId === null) {
     return (
       <>
         <PageHeader
-          title="MODULE"
-          description="Your learning materials appear here."
+          title="ASSIGNMENT"
+          description="Your exercises and quizzes appear here."
         />
         <EmptyState icon={GraduationCap} title="No class yet">
-          You are not in a class at the moment, so no modules are shared with you.
+          You are not in a class at the moment, so there is nothing set for you.
+          Your teacher assigns classes in the AfiDu office app.
         </EmptyState>
       </>
     );
   }
 
-  const { query, category, materialType, view, page } = readSearchParams(
-    await searchParams,
-  );
-  const materialPage = await listStudentMaterials({
+  const { query, category, status, view, page } = readSearchParams(await searchParams);
+  const assignmentPage = await listStudentAssignments({
+    studentId: profile.id,
     classId: profile.classId,
     query,
     category,
-    materialType,
+    status,
     page,
   });
-  const materials = materialPage.items;
-  const filtering = Boolean(query || category || materialType);
+  const assignments = assignmentPage.items;
+  const filtering = Boolean(query || category || status);
   // clearing the filters keeps whichever layout the student is looking at
   const clearFiltersHref =
-    view === 'grid' ? '/student/module?view=grid' : '/student/module';
+    view === 'grid' ? '/student/assignment?view=grid' : '/student/assignment';
   const description =
-    materialPage.allTotal === 0
-      ? `Shared with ${profile.className}.`
-      : `${pluralize(materialPage.allTotal, 'module')} for ${profile.className}` +
-        (filtering ? ` · ${materialPage.total} found` : '');
+    assignmentPage.allTotal === 0
+      ? `Set for ${profile.className}.`
+      : [
+          `${pluralize(assignmentPage.allTotal, 'assignment')} for ${profile.className}`,
+          assignmentPage.outstanding > 0
+            ? `${assignmentPage.outstanding} still to do`
+            : 'all handed in',
+          ...(filtering ? [`${assignmentPage.total} found`] : []),
+        ].join(' · ');
 
   return (
     <>
       <PageHeader
-        title="MODULE"
+        title="ASSIGNMENT"
         description={description}
         actions={
-          materialPage.allTotal > 0 ? (
-            <StudentModuleToolbar
+          assignmentPage.allTotal > 0 ? (
+            <StudentAssignmentToolbar
               query={query}
               category={category}
-              materialType={materialType}
+              status={status}
               view={view}
             />
           ) : null
         }
       />
 
-      {materials.length === 0 ? (
+      {assignments.length === 0 ? (
         <EmptyState
-          icon={BookOpen}
-          title={filtering ? 'No matches' : 'Nothing shared yet'}
+          icon={ClipboardCheck}
+          title={filtering ? 'No matches' : 'Nothing set yet'}
           action={
             filtering ? (
               <Link
@@ -109,32 +114,32 @@ export default async function StudentModulePage({
           }
         >
           {filtering ? (
-            'No modules match the current search and filters.'
+            'No assignments match the current search and filters.'
           ) : (
             <>
-              When your teacher publishes a module for {profile.className} it turns
-              up here to read, watch or download.
+              When your teacher publishes an assignment for {profile.className} it
+              shows up here.
             </>
           )}
         </EmptyState>
       ) : (
         <>
           <ul className={listViewClass(view)}>
-            {materials.map((material) => (
-              <li key={material.id}>
-                <StudentModuleCard material={material} />
+            {assignments.map((item) => (
+              <li key={item.id}>
+                <StudentAssignmentCard item={item} />
               </li>
             ))}
           </ul>
 
           <QueryPagination
-            pathname="/student/module"
-            page={materialPage.page}
-            totalPages={materialPage.totalPages}
+            pathname="/student/assignment"
+            page={assignmentPage.page}
+            totalPages={assignmentPage.totalPages}
             query={{
               q: query || undefined,
               category,
-              type: materialType,
+              status,
               view: view === 'grid' ? view : undefined,
             }}
           />

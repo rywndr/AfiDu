@@ -9,14 +9,13 @@ import { listViewClass } from '@/lib/list-view';
 import { ROLE_STUDENT, getStudentProfile, requireRole } from '@/lib/session';
 import { feedItemKey, listStudentFeed, type StudentFeedItem } from '@/lib/student-feed';
 
-import { StudentAssignmentCard } from './assignment/assignment-card';
-import { StudentModuleCard } from './module/module-card';
+import { StudentAssignmentCard } from '../assignment/assignment-card';
+import { StudentModuleCard } from '../module/module-card';
 
 export const metadata: Metadata = {
   title: 'Student dashboard | Afidu',
 };
 
-/** A feed row renders as the same card its own list page uses. */
 function FeedCard({ item }: { item: StudentFeedItem }) {
   switch (item.kind) {
     case 'module':

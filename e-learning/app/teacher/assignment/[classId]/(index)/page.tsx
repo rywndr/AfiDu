@@ -16,8 +16,8 @@ import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listClassAssignments } from '@/lib/assignments';
 import { getClassDetail } from '@/lib/study-materials';
 
-import { AssignmentCard } from './assignment-card';
-import { AssignmentToolbar } from './assignment-toolbar';
+import { AssignmentCard } from '../assignment-card';
+import { AssignmentToolbar } from '../assignment-toolbar';
 
 export async function generateMetadata({
   params,

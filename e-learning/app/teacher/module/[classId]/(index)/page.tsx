@@ -19,8 +19,8 @@ import {
   listLinkableAssignments,
 } from '@/lib/study-materials';
 
-import { MaterialCard } from './material-card';
-import { ModuleToolbar } from './module-toolbar';
+import { MaterialCard } from '../material-card';
+import { ModuleToolbar } from '../module-toolbar';
 
 export async function generateMetadata({
   params,
