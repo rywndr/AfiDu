@@ -216,14 +216,14 @@ export type AssignmentLinkFormValues = z.infer<typeof assignmentLinkFormSchema>;
 const MAX_DECIMAL = 9999.99;
 
 /** A required non-negative decimal typed into a text input. */
-function decimalString(error: string) {
+function decimalString(error: string, max = MAX_DECIMAL) {
   return z
     .string()
     .trim()
     .refine((value) => {
       if (!value) return false;
       const parsed = Number(value);
-      return Number.isFinite(parsed) && parsed >= 0 && parsed <= MAX_DECIMAL;
+      return Number.isFinite(parsed) && parsed >= 0 && parsed <= max;
     }, { error });
 }
 
@@ -434,7 +434,7 @@ export const assignmentFormSchema = assignmentSharedSchema
       max: 100,
       error: 'Allow between 1 and 100 attempts.',
     }),
-    maxPoints: decimalString('Enter the total points as a number, 0 or more.'),
+    maxPoints: decimalString('Enter total points from 0 to 100.', 100),
     questions: z.array(questionFormSchema).max(100, 'An assignment may have 100 questions.'),
   })
   .superRefine((values, context) => {
@@ -488,7 +488,7 @@ const assignmentInputSchema = assignmentSharedSchema
     scoreTarget: z.enum(SCORE_TARGET_VALUES).nullable(),
     timeLimitMinutes: z.number().int().min(1).max(1440).nullable(),
     maxAttempts: z.number().int().min(1).max(100),
-    maxPoints: z.number().min(0).max(MAX_DECIMAL),
+    maxPoints: z.number().min(0).max(100),
     questions: z.array(questionInputSchema).max(100),
   })
   .superRefine((values, context) => {

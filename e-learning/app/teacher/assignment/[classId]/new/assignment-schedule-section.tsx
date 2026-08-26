@@ -117,21 +117,25 @@ export function AssignmentScheduleSection({
           id="maxPoints"
           label="Total points"
           inputMode="decimal"
+          max={100}
           disabled={disabled}
           error={errors.maxPoints?.message}
           hint={
-            watchedQuestions.length > 0 ? (
-              <span className="flex flex-wrap items-center gap-2">
-                <span>The questions add up to {questionTotal}.</span>
-                <button
-                  type="button"
-                  className="font-semibold text-accent-primary hover:underline"
-                  onClick={() => setValue('maxPoints', String(questionTotal))}
-                >
-                  Use that
-                </button>
-              </span>
-            ) : undefined
+            <span className="flex flex-wrap items-center gap-2">
+              <span>Maximum points: 100.</span>
+              {watchedQuestions.length > 0 ? (
+                <>
+                  <span>The questions add up to {questionTotal}.</span>
+                  <button
+                    type="button"
+                    className="font-semibold text-accent-primary hover:underline"
+                    onClick={() => setValue('maxPoints', String(questionTotal))}
+                  >
+                    Use that
+                  </button>
+                </>
+              ) : null}
+            </span>
           }
           {...register('maxPoints')}
         />

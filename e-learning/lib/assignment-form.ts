@@ -128,7 +128,7 @@ export function toAssignmentInput(
     dueAt: dateTimeLocalToIso(values.dueAt) ?? '',
     timeLimitMinutes: values.timeLimitMinutes ? Number(values.timeLimitMinutes) : null,
     maxAttempts: Number(values.maxAttempts),
-    maxPoints: Number(values.maxPoints),
+    maxPoints: Math.min(Number(values.maxPoints), 100),
     allowLate: values.allowLate,
     allowFileUpload: values.allowFileUpload,
     autoGrade: values.autoGrade,
