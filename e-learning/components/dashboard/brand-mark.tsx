@@ -34,7 +34,7 @@ export function BrandMark({ href, size = 'md', className, onClick }: BrandMarkPr
         </span>
         <span
           className={cn(
-            'mt-1 font-semibold tracking-[0.12em] text-brand-muted uppercase',
+            'mt-1 font-semibold tracking-[0.12em] text-black uppercase',
             isSmall ? 'text-[0.625rem]' : 'text-xs',
           )}
         >
