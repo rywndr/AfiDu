@@ -46,7 +46,10 @@ class AssignmentAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("title", "slug", "description")}),
         ("Targeting", {"fields": ("category", "level", "student_class", "material")}),
-        ("Score linkage", {"fields": ("year", "semester", "max_points")}),
+        (
+            "Score linkage",
+            {"fields": ("year", "semester", "score_target", "max_points")},
+        ),
         (
             "Availability",
             {"fields": ("status", "open_at", "due_at", "allow_late", "max_attempts")},

@@ -124,6 +124,58 @@ export const SEMESTERS = [
 
 export type Semester = (typeof SEMESTERS)[number]['value'];
 
+/** scores.views.ScoreContextMixin years, shown by the Django score list. */
+export const SCORE_YEARS = [
+  '2025',
+  '2026',
+  '2027',
+  '2028',
+  '2029',
+  '2030',
+  '2031',
+  '2032',
+] as const;
+
+export type ScoreYear = (typeof SCORE_YEARS)[number];
+
+/** assignments.Assignment.score_target */
+export const SCORE_TARGET_VALUES = [
+  'exercise_1',
+  'exercise_2',
+  'exercise_3',
+  'exercise_4',
+  'exercise_5',
+  'exercise_6',
+  'exercise_7',
+  'exercise_8',
+  'exercise_9',
+  'exercise_10',
+  'mid_term',
+  'finals',
+] as const;
+
+export type ScoreTarget = (typeof SCORE_TARGET_VALUES)[number];
+
+const SCORE_TARGET_LABELS: Record<ScoreTarget, string> = {
+  exercise_1: 'Exercise 1',
+  exercise_2: 'Exercise 2',
+  exercise_3: 'Exercise 3',
+  exercise_4: 'Exercise 4',
+  exercise_5: 'Exercise 5',
+  exercise_6: 'Exercise 6',
+  exercise_7: 'Exercise 7',
+  exercise_8: 'Exercise 8',
+  exercise_9: 'Exercise 9',
+  exercise_10: 'Exercise 10',
+  mid_term: 'Mid Term',
+  finals: 'Finals',
+};
+
+export const SCORE_TARGETS = SCORE_TARGET_VALUES.map((value) => ({
+  value,
+  label: SCORE_TARGET_LABELS[value],
+}));
+
 /** StudyMaterial.PDF_EXTENSIONS / VIDEO_EXTENSIONS */
 export const PDF_EXTENSIONS = ['pdf'] as const;
 export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'm4v'] as const;
@@ -172,6 +224,18 @@ export function isSubmissionRowStatus(value: string): value is SubmissionRowStat
 
 export function isSemester(value: string): value is Semester {
   return SEMESTERS.some((semester) => semester.value === value);
+}
+
+export function isScoreYear(value: string): value is ScoreYear {
+  return SCORE_YEARS.some((year) => year === value);
+}
+
+export function isScoreTarget(value: string): value is ScoreTarget {
+  return SCORE_TARGET_VALUES.some((target) => target === value);
+}
+
+export function scoreTargetLabel(value: ScoreTarget): string {
+  return SCORE_TARGET_LABELS[value];
 }
 
 /** Mirrors `Question.has_choices` / `Question.is_auto_gradable`. */

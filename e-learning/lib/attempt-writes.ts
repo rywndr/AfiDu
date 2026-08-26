@@ -19,6 +19,7 @@ import { deleteObject } from '@/lib/b2';
 import { questionHasChoices } from '@/lib/choices';
 import type { AttemptAnswerInput, SaveAttemptInput } from '@/lib/form-schemas';
 import { scoreObjectiveAnswers } from '@/lib/objective-grading';
+import { syncSubmissionScore } from '@/lib/score-sync';
 
 type BatchItem = Parameters<typeof db.batch>[0][number];
 
@@ -301,4 +302,13 @@ async function autoGradeAttempt(submissionId: number, now: Date): Promise<void> 
   );
 
   await runBatch(statements);
+
+  try {
+    await syncSubmissionScore(submissionId);
+  } catch (error) {
+    console.error('could not update score list after automatic grading', {
+      submissionId,
+      error,
+    });
+  }
 }

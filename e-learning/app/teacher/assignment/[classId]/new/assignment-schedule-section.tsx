@@ -1,5 +1,6 @@
 'use client';
 
+import { ExternalLink } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 
 import {
@@ -8,8 +9,15 @@ import {
   TextField,
 } from '@/components/form/field';
 import { FormGrid, FormSection } from '@/components/form/form-shell';
-import { SEMESTERS } from '@/lib/choices';
+import { SCORE_YEARS, SEMESTERS, scoreTargetLabel } from '@/lib/choices';
 import type { AssignmentSectionProps } from '@/lib/assignment-form';
+import { scoreListUrl } from '@/lib/management-links';
+import {
+  resolvedExerciseCount,
+  scoreTargetFitsConfig,
+  scoreTargetOptions,
+  type ScoreConfigSnapshot,
+} from '@/lib/score-config';
 
 /** The booleans of the form, which are all the same shape of control. */
 const TOGGLES = [
@@ -47,8 +55,35 @@ export function AssignmentScheduleSection({
     formState: { errors },
   },
   disabled,
-}: AssignmentSectionProps) {
+  scoreConfigs,
+}: AssignmentSectionProps & { scoreConfigs: ScoreConfigSnapshot[] }) {
   const watchedQuestions = useWatch({ control, name: 'questions' }) ?? [];
+  const scoreYear = useWatch({ control, name: 'year' });
+  const scoreSemester = useWatch({ control, name: 'semester' });
+  const scoreCategory = useWatch({ control, name: 'category' });
+  const scoreTarget = useWatch({ control, name: 'scoreTarget' });
+  const exerciseCount = resolvedExerciseCount(scoreConfigs, {
+    year: scoreYear ? Number(scoreYear) : null,
+    semester: scoreSemester || null,
+    category: scoreCategory,
+  });
+  const configuredTargets = scoreTargetOptions(exerciseCount);
+  const targetOptions =
+    scoreTarget && !scoreTargetFitsConfig(scoreTarget, exerciseCount)
+      ? [
+          ...configuredTargets,
+          {
+            value: scoreTarget,
+            label: `${scoreTargetLabel(scoreTarget)} (not configured)`,
+            disabled: true,
+          },
+        ]
+      : configuredTargets;
+  const scoreHref = scoreListUrl({
+    year: scoreYear,
+    semester: scoreSemester,
+    category: scoreCategory,
+  });
 
   /** What the questions add up to, which is not necessarily `maxPoints`. */
   const questionTotal = watchedQuestions.reduce(
@@ -120,13 +155,13 @@ export function AssignmentScheduleSection({
           {...register('timeLimitMinutes')}
         />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
+        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+          <SelectField
             id="year"
             label="Score year"
-            inputMode="numeric"
+            options={SCORE_YEARS}
+            placeholder="None"
             disabled={disabled}
-            placeholder="Optional"
             error={errors.year?.message}
             {...register('year')}
           />
@@ -134,11 +169,36 @@ export function AssignmentScheduleSection({
           <SelectField
             id="semester"
             label="Semester"
+            labelAction={
+              scoreHref ? (
+                <a
+                  href={scoreHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline"
+                >
+                  Open score list
+                  <ExternalLink aria-hidden="true" className="size-3.5" />
+                </a>
+              ) : undefined
+            }
             options={SEMESTERS}
             placeholder="None"
             disabled={disabled}
             error={errors.semester?.message}
+            hint="Choose a year and semester to connect this assignment to the matching score period."
             {...register('semester')}
+          />
+
+          <SelectField
+            id="scoreTarget"
+            label="Score field"
+            options={targetOptions}
+            placeholder="Not linked"
+            disabled={disabled}
+            error={errors.scoreTarget?.message}
+            hint={`This score period has ${exerciseCount} exercise ${exerciseCount === 1 ? 'field' : 'fields'}. Marked results are converted to a percentage.`}
+            {...register('scoreTarget')}
           />
         </div>
       </FormGrid>

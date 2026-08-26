@@ -19,6 +19,7 @@ import {
 } from '@/lib/form-schemas';
 import type { EditableAssignment, MaterialOption } from '@/lib/assignments';
 import { uploadQuestionAudio } from '@/lib/question-audio-upload';
+import type { ScoreConfigSnapshot } from '@/lib/score-config';
 
 import { AssignmentDetailsSection } from './assignment-details-section';
 import { AssignmentQuestionsSection } from './assignment-questions-section';
@@ -29,6 +30,7 @@ type AssignmentFormProps = {
   suggestedLevel: string | null;
   materials: MaterialOption[];
   storageReady: boolean;
+  scoreConfigs: ScoreConfigSnapshot[];
   initialAssignment?: EditableAssignment;
 };
 
@@ -37,6 +39,7 @@ export function AssignmentForm({
   suggestedLevel,
   materials,
   storageReady,
+  scoreConfigs,
   initialAssignment,
 }: AssignmentFormProps) {
   const router = useRouter();
@@ -116,7 +119,11 @@ export function AssignmentForm({
           suggestedLevel={suggestedLevel}
           materials={materials}
         />
-        <AssignmentScheduleSection form={form} disabled={disabled} />
+        <AssignmentScheduleSection
+          form={form}
+          disabled={disabled}
+          scoreConfigs={scoreConfigs}
+        />
         <AssignmentQuestionsSection
           form={form}
           disabled={disabled}

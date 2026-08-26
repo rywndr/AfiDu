@@ -22,6 +22,7 @@ import {
   assignment,
   question,
   questionChoice,
+  scoreEntry,
   studentClass,
   studyMaterial,
   submission,
@@ -34,6 +35,12 @@ import { deleteObject } from '@/lib/b2';
 import type { AssignmentInput, GradeSubmissionInput } from '@/lib/form-schemas';
 import { scoreObjectiveAnswers } from '@/lib/objective-grading';
 import { buildAssignmentSlug } from '@/lib/assignments';
+import { listScoreConfigs } from '@/lib/score-config-data';
+import {
+  resolvedExerciseCount,
+  scoreTargetFitsConfig,
+} from '@/lib/score-config';
+import { syncSubmissionScore } from '@/lib/score-sync';
 
 export type MutationResult = { error?: string; status?: number };
 
@@ -89,6 +96,7 @@ function assignmentValues(input: AssignmentInput) {
     materialId: input.materialId,
     year: input.year,
     semester: input.semester,
+    scoreTarget: input.scoreTarget,
     status: input.status,
     openAt: toDate(input.openAt),
     dueAt: toDate(input.dueAt),
@@ -101,6 +109,18 @@ function assignmentValues(input: AssignmentInput) {
     revealAnswersAfterSubmit: input.revealAnswersAfterSubmit,
     maxPoints: decimal(input.maxPoints),
   };
+}
+
+async function scoreTargetIsAvailable(input: AssignmentInput): Promise<boolean> {
+  if (input.scoreTarget === null) return true;
+  if (input.year === null || input.semester === null) return false;
+
+  const exerciseCount = resolvedExerciseCount(await listScoreConfigs(), {
+    year: input.year,
+    semester: input.semester,
+    category: input.category,
+  });
+  return scoreTargetFitsConfig(input.scoreTarget, exerciseCount);
 }
 
 export async function createAssignment(
@@ -123,6 +143,9 @@ export async function createAssignment(
     !(await materialBelongsToClass(input.materialId, input.classId))
   ) {
     return fail('That module is not available to this class.');
+  }
+  if (!(await scoreTargetIsAvailable(input))) {
+    return fail('That exercise field is not available in the score configuration.');
   }
 
   const now = new Date();
@@ -187,6 +210,9 @@ export async function updateAssignment(
   ) {
     return fail('That module is not available to this class.');
   }
+  if (!(await scoreTargetIsAvailable(input))) {
+    return fail('That exercise field is not available in the score configuration.');
+  }
 
   try {
     await db
@@ -242,6 +268,7 @@ export async function deleteAssignment(
 
   try {
     await db.batch([
+      db.delete(scoreEntry).where(eq(scoreEntry.assignmentId, assignmentId)),
       db
         .delete(submissionAnswerChoice)
         .where(
@@ -316,6 +343,9 @@ export async function resetStudentSubmissions(
 
   try {
     await db.batch([
+      db
+        .delete(scoreEntry)
+        .where(inArray(scoreEntry.submissionId, submissionIds())),
       db
         .delete(submissionAnswerChoice)
         .where(
@@ -674,9 +704,13 @@ export async function gradeSubmission(
 
   try {
     await runBatch(statements);
+    await syncSubmissionScore(submissionId);
   } catch (error) {
-    console.error('could not grade submission', error);
-    return { error: 'Could not save the marks. Please try again.', status: 500 };
+    console.error('could not grade submission', { submissionId, error });
+    return {
+      error: 'Could not save the marks or update the score list. Please try again.',
+      status: 500,
+    };
   }
 
   return {};

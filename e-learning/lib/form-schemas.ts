@@ -6,6 +6,8 @@ import {
   MATERIAL_STATUSES,
   MATERIAL_TYPES,
   QUESTION_KINDS,
+  SCORE_TARGET_VALUES,
+  SCORE_YEARS,
   SEMESTERS,
   SUBJECT_CATEGORIES,
   questionHasChoices,
@@ -367,6 +369,9 @@ function refineAssignment(
   values: {
     openAt: string;
     dueAt: string;
+    year: string | number | null;
+    semester: string | null;
+    scoreTarget: string | null;
   },
   context: z.RefinementCtx,
 ) {
@@ -379,19 +384,45 @@ function refineAssignment(
       });
     }
   }
+
+  const hasYear = values.year !== '' && values.year !== null;
+  const hasSemester = values.semester !== '' && values.semester !== null;
+  const hasTarget = values.scoreTarget !== '' && values.scoreTarget !== null;
+  if (hasYear || hasSemester || hasTarget) {
+    if (!hasYear) {
+      context.addIssue({
+        code: 'custom',
+        path: ['year'],
+        message: 'Choose a score year.',
+      });
+    }
+    if (!hasSemester) {
+      context.addIssue({
+        code: 'custom',
+        path: ['semester'],
+        message: 'Choose a semester.',
+      });
+    }
+    if (!hasTarget) {
+      context.addIssue({
+        code: 'custom',
+        path: ['scoreTarget'],
+        message: 'Choose the score field this assignment updates.',
+      });
+    }
+  }
 }
 
 /** Browser form schema. Re-validated by the API in its converted form. */
 export const assignmentFormSchema = assignmentSharedSchema
   .extend({
     materialId: z.string(),
-    year: integerString({
-      min: 2000,
-      max: 2100,
-      optional: true,
-      error: 'Enter a year between 2000 and 2100.',
-    }),
+    year: z.union([
+      z.literal(''),
+      z.enum(SCORE_YEARS, { error: 'Choose a score year.' }),
+    ]),
     semester: z.union([z.literal(''), z.enum(semesters)]),
+    scoreTarget: z.union([z.literal(''), z.enum(SCORE_TARGET_VALUES)]),
     timeLimitMinutes: integerString({
       min: 1,
       max: 1440,
@@ -454,6 +485,7 @@ const assignmentInputSchema = assignmentSharedSchema
     materialId: z.number().int().positive().nullable(),
     year: z.number().int().min(2000).max(2100).nullable(),
     semester: z.enum(semesters).nullable(),
+    scoreTarget: z.enum(SCORE_TARGET_VALUES).nullable(),
     timeLimitMinutes: z.number().int().min(1).max(1440).nullable(),
     maxAttempts: z.number().int().min(1).max(100),
     maxPoints: z.number().min(0).max(MAX_DECIMAL),

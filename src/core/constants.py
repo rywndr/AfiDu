@@ -61,6 +61,16 @@ SEMESTER_CHOICES = [
     ("final", "FINAL"),
 ]
 
+MAX_SCORE_EXERCISES = 10
+SCORE_TARGET_CHOICES = [
+    *[
+        (f"exercise_{slot}", f"Exercise {slot}")
+        for slot in range(1, MAX_SCORE_EXERCISES + 1)
+    ],
+    ("mid_term", "Mid Term"),
+    ("finals", "Finals"),
+]
+
 phone_validator = RegexValidator(
     regex=r"^\+62\d{9,13}$",
     message="Phone number must start with +62 and contain 9-13 digits.",

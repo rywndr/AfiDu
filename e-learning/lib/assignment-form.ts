@@ -6,7 +6,12 @@
  */
 import type { UseFormReturn } from 'react-hook-form';
 
-import { LEVELS, SUBJECT_CATEGORIES, questionHasChoices } from '@/lib/choices';
+import {
+  LEVELS,
+  SUBJECT_CATEGORIES,
+  isScoreYear,
+  questionHasChoices,
+} from '@/lib/choices';
 import { dateTimeLocalToIso, formatScore, toDateTimeLocalValue } from '@/lib/format';
 import type {
   AssignmentFormValues,
@@ -61,6 +66,7 @@ export function toAssignmentFormValues(
   const fallbackLevel = LEVELS.includes(suggestedLevel as (typeof LEVELS)[number])
     ? (suggestedLevel as (typeof LEVELS)[number])
     : LEVELS[0];
+  const initialYear = initial?.year ? String(initial.year) : '';
 
   return {
     title: initial?.title ?? '',
@@ -69,8 +75,9 @@ export function toAssignmentFormValues(
     status: initial?.status ?? 'draft',
     description: initial?.description ?? '',
     materialId: initial?.materialId ? String(initial.materialId) : '',
-    year: initial?.year ? String(initial.year) : '',
+    year: isScoreYear(initialYear) ? initialYear : '',
     semester: initial?.semester ?? '',
+    scoreTarget: initial?.scoreTarget ?? '',
     openAt: toDateTimeLocalValue(initial?.openAt),
     dueAt: toDateTimeLocalValue(initial?.dueAt),
     timeLimitMinutes: initial?.timeLimitMinutes ? String(initial.timeLimitMinutes) : '',
@@ -115,6 +122,7 @@ export function toAssignmentInput(
     materialId: values.materialId ? Number(values.materialId) : null,
     year: values.year ? Number(values.year) : null,
     semester: values.semester || null,
+    scoreTarget: values.scoreTarget || null,
     // the inputs hold wall clock time; the API stores instants
     openAt: dateTimeLocalToIso(values.openAt) ?? '',
     dueAt: dateTimeLocalToIso(values.dueAt) ?? '',

@@ -5,6 +5,7 @@ import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
+import { listScoreConfigs } from '@/lib/score-config-data';
 import { getEditableAssignment, listClassMaterialOptions } from '@/lib/assignments';
 import { isB2Configured } from '@/lib/b2';
 import { getClassDetail } from '@/lib/study-materials';
@@ -46,10 +47,11 @@ export default async function EditAssignmentPage({
   const assignmentIdNumber = parseRouteId(assignmentId);
   if (Number.isNaN(classIdNumber) || Number.isNaN(assignmentIdNumber)) notFound();
 
-  const [detail, item, materials] = await Promise.all([
+  const [detail, item, materials, scoreConfigs] = await Promise.all([
     getClassDetail(classIdNumber),
     getEditableAssignment(classIdNumber, assignmentIdNumber),
     listClassMaterialOptions(classIdNumber),
+    listScoreConfigs(),
   ]);
   if (!detail || !item) notFound();
 
@@ -68,6 +70,7 @@ export default async function EditAssignmentPage({
         classId={classIdNumber}
         suggestedLevel={detail.suggestedLevel}
         materials={materials}
+        scoreConfigs={scoreConfigs}
         storageReady={isB2Configured()}
         initialAssignment={item}
       />

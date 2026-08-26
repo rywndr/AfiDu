@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { roleAccent, type DashboardRole } from '@/components/dashboard/role-theme';
+import { managementUrl } from '@/lib/management-links';
 import { cn } from '@/lib/utils';
 
 type SidebarNavProps = {
@@ -17,8 +18,6 @@ const navigation = [
   { label: 'Module', segment: 'module', icon: BookOpen },
   { label: 'Assignment', segment: 'assignment', icon: ClipboardCheck },
 ] as const;
-
-const MANAGEMENT_URL = 'http://127.0.0.1:8000/';
 
 export function SidebarNav({ role, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
@@ -57,7 +56,7 @@ export function SidebarNav({ role, onNavigate }: SidebarNavProps) {
         {/* staff-only shortcut: students have no access to the Django app */}
         {role === 'teacher' && (
           <a
-            href={MANAGEMENT_URL}
+            href={managementUrl()}
             onClick={onNavigate}
             className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-ink-muted transition-colors hover:bg-shell hover:text-ink-soft"
           >

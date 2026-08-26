@@ -24,6 +24,7 @@ import {
   text,
   time,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
 
@@ -193,6 +194,7 @@ export const assignment = pgTable(
     ),
     year: integer('year'),
     semester: varchar('semester', { length: 5 }),
+    scoreTarget: varchar('score_target', { length: 11 }),
     createdById: bigint('created_by_id', { mode: 'number' }).references(
       () => user.id,
       { onDelete: 'set null' },
@@ -218,6 +220,42 @@ export const assignment = pgTable(
   (table) => [
     index('assignment_visible_idx').on(table.status, table.level, table.category),
     index('assignment_due_idx').on(table.dueAt),
+  ],
+);
+
+/** Django: scores.ScoreConfig */
+export const scoreConfig = pgTable('scores_scoreconfig', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  year: integer('year'),
+  semester: varchar('semester', { length: 5 }),
+  category: varchar('category', { length: 10 }),
+  numExercises: integer('num_exercises').notNull().default(5),
+  formula: text('formula').notNull(),
+});
+
+/** Django: scores.Score */
+export const score = pgTable(
+  'scores_score',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    studentId: bigint('student_id', { mode: 'number' })
+      .notNull()
+      .references(() => student.id),
+    year: integer('year').notNull(),
+    semester: varchar('semester', { length: 5 }).notNull(),
+    category: varchar('category', { length: 10 }).notNull(),
+    legacyExerciseScores: jsonb('legacy_exercise_scores').notNull().default([]),
+    midTerm: numeric('mid_term', { precision: 5, scale: 2 }),
+    finals: numeric('finals', { precision: 5, scale: 2 }),
+  },
+  (table) => [
+    uniqueIndex('score_student_period_category_uniq').on(
+      table.studentId,
+      table.year,
+      table.semester,
+      table.category,
+    ),
+    index('score_period_idx').on(table.year, table.semester, table.category),
   ],
 );
 
@@ -291,6 +329,32 @@ export const submission = pgTable(
   (table) => [
     index('submission_asg_status_idx').on(table.assignmentId, table.status),
     index('submission_stu_status_idx').on(table.studentId, table.status),
+  ],
+);
+
+/** Django: scores.ScoreEntry */
+export const scoreEntry = pgTable(
+  'scores_scoreentry',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    scoreId: bigint('score_id', { mode: 'number' })
+      .notNull()
+      .references(() => score.id),
+    slot: smallint('slot').notNull(),
+    points: numeric('points', { precision: 5, scale: 2 }),
+    source: varchar('source', { length: 20 }).notNull().default('manual'),
+    assignmentId: bigint('assignment_id', { mode: 'number' }).references(
+      () => assignment.id,
+    ),
+    submissionId: bigint('submission_id', { mode: 'number' }).references(
+      () => submission.id,
+    ),
+    note: varchar('note', { length: 255 }).notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('score_entry_slot_uniq').on(table.scoreId, table.slot),
   ],
 );
 

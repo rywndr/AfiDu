@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { formatDays, formatTimeRange } from '@/lib/format';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
+import { listScoreConfigs } from '@/lib/score-config-data';
 import { listClassMaterialOptions } from '@/lib/assignments';
 import { isB2Configured } from '@/lib/b2';
 import { getClassDetail } from '@/lib/study-materials';
@@ -32,9 +33,10 @@ export default async function NewAssignmentPage({
   const id = parseRouteId((await params).classId);
   if (Number.isNaN(id)) notFound();
 
-  const [detail, materials] = await Promise.all([
+  const [detail, materials, scoreConfigs] = await Promise.all([
     getClassDetail(id),
     listClassMaterialOptions(id),
+    listScoreConfigs(),
   ]);
   if (!detail) notFound();
 
@@ -56,6 +58,7 @@ export default async function NewAssignmentPage({
         classId={id}
         suggestedLevel={detail.suggestedLevel}
         materials={materials}
+        scoreConfigs={scoreConfigs}
         storageReady={isB2Configured()}
       />
     </>

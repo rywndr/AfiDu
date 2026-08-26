@@ -42,6 +42,7 @@ import {
   isAssignmentStatus,
   isLevel,
   isQuestionKind,
+  isScoreTarget,
   isSemester,
   isSubjectCategory,
   questionHasChoices,
@@ -49,6 +50,7 @@ import {
   type AssignmentStatus,
   type Level,
   type QuestionKind,
+  type ScoreTarget,
   type Semester,
   type SubjectCategory,
   type SubmissionRowStatus,
@@ -127,6 +129,7 @@ export type EditableAssignment = {
   materialId: number | null;
   year: number | null;
   semester: Semester | null;
+  scoreTarget: ScoreTarget | null;
   openAt: Date | null;
   dueAt: Date | null;
   timeLimitMinutes: number | null;
@@ -477,6 +480,7 @@ export async function getEditableAssignment(
       materialId: assignment.materialId,
       year: assignment.year,
       semester: assignment.semester,
+      scoreTarget: assignment.scoreTarget,
       openAt: assignment.openAt,
       dueAt: assignment.dueAt,
       timeLimitMinutes: assignment.timeLimitMinutes,
@@ -509,6 +513,8 @@ export async function getEditableAssignment(
     level: row.level,
     status: row.status,
     semester: row.semester && isSemester(row.semester) ? row.semester : null,
+    scoreTarget:
+      row.scoreTarget && isScoreTarget(row.scoreTarget) ? row.scoreTarget : null,
     questions: await listQuestions(assignmentId),
   };
 }

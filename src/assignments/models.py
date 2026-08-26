@@ -10,7 +10,12 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.text import slugify
 
-from core.constants import LEVELS, SEMESTER_CHOICES, SUBJECT_CATEGORIES
+from core.constants import (
+    LEVELS,
+    SCORE_TARGET_CHOICES,
+    SEMESTER_CHOICES,
+    SUBJECT_CATEGORIES,
+)
 
 
 class Assignment(models.Model):
@@ -56,6 +61,13 @@ class Assignment(models.Model):
     year = models.PositiveIntegerField(null=True, blank=True)
     semester = models.CharField(
         max_length=5, choices=SEMESTER_CHOICES, null=True, blank=True
+    )
+    score_target = models.CharField(
+        max_length=11,
+        choices=SCORE_TARGET_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Score field updated when a submission is marked.",
     )
 
     created_by = models.ForeignKey(
@@ -157,6 +169,11 @@ class Assignment(models.Model):
 
         if self.max_attempts is not None and self.max_attempts < 1:
             errors["max_attempts"] = "At least one attempt must be allowed."
+
+        if self.score_target and (self.year is None or not self.semester):
+            errors["score_target"] = (
+                "Choose a score year and semester before choosing a score field."
+            )
 
         if errors:
             raise ValidationError(errors)
