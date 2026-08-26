@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { UnsavedChangesProvider } from '@/components/form/unsaved-changes';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listScoreConfigs } from '@/lib/score-config-data';
@@ -56,7 +57,7 @@ export default async function EditAssignmentPage({
   if (!detail || !item) notFound();
 
   return (
-    <>
+    <UnsavedChangesProvider>
       <BackLink href={`/teacher/assignment/${classIdNumber}/${assignmentIdNumber}`}>
         Back to submissions
       </BackLink>
@@ -74,6 +75,6 @@ export default async function EditAssignmentPage({
         storageReady={isB2Configured()}
         initialAssignment={item}
       />
-    </>
+    </UnsavedChangesProvider>
   );
 }

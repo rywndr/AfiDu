@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
+import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { UnsavedChangesProvider } from '@/components/form/unsaved-changes';
 import { isB2Configured } from '@/lib/b2';
 import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
@@ -50,14 +50,10 @@ export default async function EditModulePage({
   if (!detail || !material) notFound();
 
   return (
-    <>
-      <Link
-        href={`/teacher/module/${classIdNumber}`}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink-strong"
-      >
-        <ArrowLeft aria-hidden="true" className="size-4" />
+    <UnsavedChangesProvider>
+      <BackLink href={`/teacher/module/${classIdNumber}`}>
         Back to modules
-      </Link>
+      </BackLink>
 
       <PageHeader
         title="EDIT MODULE"
@@ -72,6 +68,6 @@ export default async function EditModulePage({
           initialMaterial={material}
         />
       </div>
-    </>
+    </UnsavedChangesProvider>
   );
 }

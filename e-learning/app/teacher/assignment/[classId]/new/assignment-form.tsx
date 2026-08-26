@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/dashboard/confirm-dialog';
 import { FormAlert, FormSubmitRow } from '@/components/form/form-shell';
+import { useUnsavedChanges } from '@/components/form/unsaved-changes';
 import { apiRequest } from '@/lib/api-client';
 import {
   toAssignmentFormValues,
@@ -44,6 +45,7 @@ export function AssignmentForm({
 }: AssignmentFormProps) {
   const router = useRouter();
   const isEditing = Boolean(initialAssignment);
+  const { setIsDirty } = useUnsavedChanges();
   const isPublished = initialAssignment?.status === 'published';
   const [saving, setSaving] = useState(false);
   const disabled = saving || isPublished;
@@ -55,6 +57,11 @@ export function AssignmentForm({
     resolver: zodResolver(assignmentFormSchema),
     defaultValues: toAssignmentFormValues(initialAssignment, suggestedLevel),
   });
+  const { isDirty } = form.formState;
+
+  useEffect(() => {
+    setIsDirty(isEditing && isDirty);
+  }, [isDirty, isEditing, setIsDirty]);
 
   async function saveAssignment(values: AssignmentFormValues) {
     if (disabled) return;
@@ -82,6 +89,7 @@ export function AssignmentForm({
         },
       );
 
+      form.reset();
       router.push(`/teacher/assignment/${classId}`);
       router.refresh();
     } catch (error) {

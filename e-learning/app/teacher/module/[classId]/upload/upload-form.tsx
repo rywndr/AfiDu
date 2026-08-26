@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import {
   FormNotice,
   FormSubmitRow,
 } from '@/components/form/form-shell';
+import { useUnsavedChanges } from '@/components/form/unsaved-changes';
 import { apiRequest } from '@/lib/api-client';
 import {
   materialFormSchema,
@@ -44,6 +45,7 @@ export function ModuleForm({
 }: ModuleFormProps) {
   const router = useRouter();
   const isEditing = Boolean(initialMaterial);
+  const { setIsDirty } = useUnsavedChanges();
   const [abortController, setAbortController] = useState<AbortController | null>(
     null,
   );
@@ -55,6 +57,11 @@ export function ModuleForm({
     resolver: zodResolver(materialFormSchema),
     defaultValues: toMaterialFormValues(initialMaterial, suggestedLevel, storageReady),
   });
+  const { isDirty } = form.formState;
+
+  useEffect(() => {
+    setIsDirty(isEditing && isDirty);
+  }, [isDirty, isEditing, setIsDirty]);
 
   const busy = phase !== 'idle';
 
@@ -95,6 +102,7 @@ export function ModuleForm({
         },
       );
 
+      form.reset();
       router.push(`/teacher/module/${classId}`);
       router.refresh();
     } catch (error) {
