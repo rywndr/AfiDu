@@ -16,7 +16,7 @@ type SidebarNavProps = {
 const navigation = [
   { label: 'Dashboard', segment: '', icon: LayoutDashboard },
   { label: 'Module', segment: 'module', icon: BookOpen },
-  { label: 'Assessments', segment: 'assignment', icon: ClipboardCheck },
+  { label: 'Assignment', segment: 'assignment', icon: ClipboardCheck },
 ] as const;
 
 export function SidebarNav({ role, onNavigate }: SidebarNavProps) {

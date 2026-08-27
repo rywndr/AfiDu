@@ -23,8 +23,8 @@ export default async function TeacherAssignmentPage() {
   return (
     <>
       <PageHeader
-        title="ASSESSMENTS"
-        description="Pick a class to manage its assignments and quizzes, and mark what its students hand in."
+        title="ASSIGNMENT"
+        description="Pick a class to set its assignments and mark what its students hand in."
       />
 
       {classes.length === 0 ? (

@@ -140,8 +140,8 @@ export default async function StudentAssignmentPage({
     return (
       <>
         <PageHeader
-          title="ASSESSMENTS"
-          description="Your assignments and quizzes appear here."
+          title="ASSIGNMENT"
+          description="Your exercises and quizzes appear here."
         />
         <EmptyState icon={GraduationCap} title="No class yet">
           You are not in a class at the moment, so there is nothing set for you.
@@ -167,7 +167,7 @@ export default async function StudentAssignmentPage({
   return (
     <ListViewProvider initialView={view}>
       <PageHeader
-        title="ASSESSMENTS"
+        title="ASSIGNMENT"
         description={
           <Suspense fallback={`Assignments for ${profile.className}.`}>
             <AssignmentDescription
