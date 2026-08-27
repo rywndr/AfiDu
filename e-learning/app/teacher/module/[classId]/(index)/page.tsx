@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BookOpen } from 'lucide-react';
 import { Suspense } from 'react';
@@ -113,12 +114,19 @@ async function ModuleResults({
               >
                 Clear filters
               </ListViewLink>
-            ) : null
+            ) : (
+              <Link
+                href={`/teacher/module/${classId}/upload`}
+                className={buttonVariants({ size: 'lg' })}
+              >
+                Add module
+              </Link>
+            )
           }
         >
           {filtering
             ? 'No modules match the current search and filters.'
-            : 'No modules for this class yet. Add the first one to get started.'}
+            : 'No modules for this class yet.'}
         </EmptyState>
       ) : (
         <ClientList>
