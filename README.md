@@ -1,213 +1,100 @@
-# AfiDu - student management system for an english learning center
+# AfiDu - An internal management system and a simple E-Learning app
 
-<p align="center">
-  <img src="./src/static/images/afidu.png" alt="AfiDu Logo" width="101" height="154" />
-</p>
+AfiDu started as a college Practical Work (Kerja Praktek) project. The goal was to design and
+develop a system or basically Systems Development Project for a private English learning center called **Bimbel Arifiana**. The project was later expanded with an e-learning app as part of @[Miizzuuu](https://github.com/Miizzuuu)'s undergrad work. Since most of the development was originally carried out by the two of us, I'm mainly helping with dev work and integration for the e-learning app.
 
-## 📋 overview
+The system was designed to simplify the handling of management work for the learning center, mainly because 100% of the workflow of the learning center were handled manually, i.e., student management, score tracking, payment processing, study modules, and student report cards. Which furthermore is supported by the E-Learning app by enabling students to view study modules and work on their assignments from home, not bound to attend class.
 
-AfiDu is a student data management system designed for an English tutorial center (known as "BIMBEL" in Indonesia). This app simplifies student management, score tracking, payment processing, and study material organization for English learning center.
+## The tech used
 
-## ✨ stuff you can do
+AfiDu's internal management system was originally made fully with **Django**, for the backend and frontend work, it is supposed to only be locally hosted by the learning center, because its intended users are only the teachers. While the E-Learning app is made with **Next.js** and is intended to be hosted.
 
-### 👨‍🎓 student management
+Both apps use **Tailwind** as the CSS framework and both share the same **PostgreSQL** database that is hosted on **NeonDB**. The two apps never communicate with each other through HTTP or API whatsoever. They operate independently by their framework and indirectly communicate via reading and writing to the same db instance. 
 
-- add, edit, and delete student records
-- assign students to specific levels or classes
-- configure classes and levels
-- advanced filtering options for quick student lookup
+The Next app also uses **Drizzle** as the ORM of choice, **shadcn** as the component library, **better-auth** for RBAC, **Backblaze B2** for object storage, and **RHF + Zod** for form and validation handling. That's about it.
 
-### 📊 score tracking
+## Setting up the Django app
 
-- record student scores by year, semester, and category
-- configure unique scoring systems based on your needs
-- customize formulas for calculating final scores
-- real-time score calculation
-- filtering options for easy data access
+To run the Django app, you need to have these programs installed:
 
-### 📚 study materials
+1. Python 3.8+
+2. Node.js (or any other JavaScript runtime of choice)
 
-- upload pdf study materials
-- view and edit material names and categories
-- filter materials by category
-- document preview functionality
-
-### 📝 reports
-
-- generate individual student reports
-- export all reports as zip based on applied filters
-- comprehensive score reporting from the score tracking system
-
-### 💰 payment management
-
-- configure monthly fees
-- set mid-semester and final semester payment periods
-- detailed payment summaries showing:
-  - total due amount
-  - total paid amount
-  - remaining balance
-  - monthly payment status
-- configure payment settings by year
-- install payments in multiple transactions
-
-### 📝 reports
-
-- generate individual student reports
-- export all reports as zip based on applied filters
-- comprehensive score reporting from the score tracking system
-- download various document types:
-  - student registration forms
-  - payment cards
-  - configurable student lists (PDF/Excel)
-  - detailed payment reports with filtering options
-  - comprehensive student summaries with academic and payment information
-
-### 👥 user roles
-
-- **teacher**: access to the app
-- **superuser**: full access including admin page and ability to create new accounts
-
-## 🛠️ tech used
-
-- **framework**: django
-- **frontend**:
-  - tailwind - utility first css framework
-  - fontAwesome - icon library
-- **database**: postgresql (cloud based/local)/sqlite (optional)
-- **email**: custom email backend for password reset link (optimized for use locally)
-
-## 🖼️ ui
-
-![AfiDu Dashboard](./docs/images/dashboard.png)
-
-## 🎬 demo
-
-<sub><sup>video demo coming soon<sub><sup>
-
-## ⚙️ installation & setup
-
-### prerequisites
-
-1.  python 3.8+
-2.  node.js and npm
-3.  poppler (for generating study materials thumbnail)
-4.  git
-
-### installing poppler
-
-#### windows
-
+Then, clone the repo
 ```bash
-# using chocolatey
-choco install poppler
-
-# or download the latest build from from: https://github.com/oschwartz10612/poppler-windows/releases
-# add the bin directory to your path environment variable
-
+git clone https://github.com/rywndr/afidu.git
 ```
 
-#### macOS
-
+Create a Python venv inside said repo
 ```bash
-# using homebrew
-brew install poppler
+python -m venv .venv
 
+# on Windows
+.venv\Scripts\activate
+
+# on Windows but Git Bash
+source .venv/Scripts/activate
+
+# on macOS/linux
+source .venv/bin/activate
 ```
 
-#### linux (ubuntu/debian)
-
+Install Python dependencies
 ```bash
-sudo apt-get update
-sudo apt-get install poppler-utils
+pip install -r requirements.txt
 ```
 
-### setting up the Project
+Install Node dependencies (for the Django app, because we're using tailwind)
+```bash
+npm install
+```
 
-1.  **clone the repository**
+Set up environment variables and edit them accordingly
+```bash
+cp .env.example .env
+```
 
-    ```bash
-    git clone https://github.com/rywndr/afidu.git
-    cd afidu
-    ```
+Run the migrate command inside `src`
+```bash
+python manage.py migrate
+```
 
-2.  **create and activate a virtual environment**
+And finally, create a superuser for the Django app
+```bash
+python manage.py createsuperuser
+```
 
-    ```bash
-    python -m venv .venv
+Now to run the actual Django app, you'd need two terminal windows open. One for the Tailwind compiler and the other for the dev server.
 
-    # on windows
-    .venv\Scripts\activate
-
-    # on macos/linux
-    source .venv/bin/activate
-    ```
-
-3.  **install python dependencies**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **install node.js dependencies**
-
-    ```bash
-    npm install
-    ```
-
-5.  **set up environment variables**
-
-    ```bash
-    # copy .env.example to .env
-
-    cp .env.example .env
-
-    # edit the .env file with your database credentials and other settings
-    ```
-
-6.  **run database migrations**
-
-    ```bash
-    python manage.py migrate
-    ```
-
-7.  **create a superuser**
-
-    ```bash
-    python manage.py createsuperuser
-    ```
-
-### run the app
-
-you need to run both the django development server and the tailwind css compiler in separate terminal windows:
-
-**terminal 1 - run tailwind css compiler:**
-
+Terminal 1 (Tailwind compiler)
 ```bash
 npx tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
 ```
 
-**terminal 2 - run django server:**
-
+Terminal 2 (dev server)
 ```bash
 python manage.py runserver
 ```
 
-then visit `http://127.0.0.1:8000` in your browser to access the app.
+The app should be ready at `http://127.0.0.1:8000` to be accessed from the browser.
 
-## 🎨 color palette
+## Setting up the Next app
 
-| color   | hex code  | preview                                                                               |
-| ------- | --------- | ------------------------------------------------------------------------------------- |
-| primary | `#ff4f25` | ![](https://img.shields.io/badge/-_-ff4f25?style=flat&labelColor=ff4f25&color=ff4f25) |
-| shade1  | `#cc3f1e` | ![](https://img.shields.io/badge/-_-cc3f1e?style=flat&labelColor=cc3f1e&color=cc3f1e) |
-| shade2  | `#b3371a` | ![](https://img.shields.io/badge/-_-b3371a?style=flat&labelColor=b3371a&color=b3371a) |
-| grey    | `#5a5656` | ![](https://img.shields.io/badge/-_-5a5656?style=flat&labelColor=5a5656&color=5a5656) |
+cd into the e-learning directory from the root directory `cd e-learning` and the process is pretty similar as setting up the Django app
 
-## 📄 license
+First, install the Node dependencies
+```bash
+npm install
+```
 
-[mit license](./LICENSE)
+Then, set up your environment variables
+```bash
+cp .env.example .env
+```
 
-## 👨‍💻 contributors
+And finally, start the dev server
+```bash
+npm run dev
+```
 
-- [sudo](https://github.com/rywndr)
-- [mizu](https://github.com/Miizzuuu)
+We're done!
