@@ -11,7 +11,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.text import slugify
 from core.constants import LEVELS, SUBJECT_CATEGORIES
-from core.storage import study_material_storage
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +81,11 @@ class StudyMaterial(models.Model):
 
     file = models.FileField(
         upload_to=study_material_upload_to,
-        storage=study_material_storage,
         blank=True,
         validators=[FileExtensionValidator(allowed_extensions=FILE_EXTENSIONS)],
     )
-    thumbnail = models.ImageField(
+    thumbnail = models.FileField(
         upload_to=study_material_thumbnail_upload_to,
-        storage=study_material_storage,
         blank=True,
         null=True,
     )

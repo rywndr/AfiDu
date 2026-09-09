@@ -1,0 +1,13 @@
+[project]
+name = "afidu"
+version = "0.1.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "django>=5.1.7",
+    "django-compressor>=4.5.1",
+    "django-widget-tweaks>=1.5.0",
+    "psycopg2-binary>=2.9.10",
+    "python-dotenv>=1.1.0",
+    "reportlab>=4.3.1",
+    "xlsxwriter>=3.2.3",
+]

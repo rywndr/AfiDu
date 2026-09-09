@@ -93,9 +93,6 @@ class StudentClass(models.Model):
 
 
 class Student(models.Model):
-    profile_photo = models.ImageField(
-        upload_to="profile_photos/", blank=True, null=True
-    )
     name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=GENDER)
     age = models.PositiveIntegerField()

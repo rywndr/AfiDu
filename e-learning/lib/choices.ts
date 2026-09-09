@@ -266,7 +266,7 @@ export function allowedExtensions(type: MaterialType): readonly string[] {
   return [];
 }
 
-/** Mirrors `StudyMaterialForm.MAX_PDF_SIZE_MB` / `MAX_VIDEO_SIZE_MB`. */
+/** Upload limits enforced by the e-learning study-material workflow. */
 export const MAX_PDF_SIZE_MB = 25;
 export const MAX_VIDEO_SIZE_MB = 500;
 

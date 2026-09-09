@@ -10,7 +10,6 @@ class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
         fields = [
-            "profile_photo",
             "name",
             "gender",
             "age",
@@ -35,7 +34,6 @@ class StudentForm(forms.ModelForm):
                     "data-country-code": "+62",
                 }
             ),
-            "profile_photo": forms.ClearableFileInput(),
             "gender": Select(),
             "email": forms.EmailInput(
                 attrs={"placeholder": "Leave blank to generate automatically"}

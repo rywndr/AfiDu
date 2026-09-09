@@ -122,8 +122,8 @@ export const studentClass = pgTable('students_studentclass', {
 /**
  * Django: study_materials.StudyMaterial.
  *
- * `file` and `thumbnail` contain Django storage object names, not permanent
- * public URLs. Private B2 URLs must be signed when they are rendered.
+ * `file` and `thumbnail` contain B2 object names, not permanent public URLs.
+ * Private B2 URLs must be signed when they are rendered.
  */
 export const studyMaterial = pgTable(
   'study_materials_studymaterial',

@@ -24,13 +24,9 @@
     
       <div class="p-8 md:w-1/3 flex flex-col items-center justify-center">
         <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4">
-          {% if student.profile_photo %}
-            <img src="{{ student.profile_photo.url }}" alt="{{ student.name }}" class="w-full h-full object-cover">
-          {% else %}
-            <div class="w-full h-full bg-[#ff4f25] flex items-center justify-center text-white text-5xl font-bold">
-              {{ student.name|make_list|slice:":1"|join:"" }}
-            </div>
-          {% endif %}
+          <div class="w-full h-full bg-[#ff4f25] flex items-center justify-center text-white text-5xl font-bold">
+            {{ student.name|make_list|slice:":1"|join:"" }}
+          </div>
         </div>
         <h1 class="text-2xl font-semibold text-gray-800 text-center">{{ student.name }}</h1>
       </div>

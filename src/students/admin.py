@@ -26,7 +26,7 @@ class StudentAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             "Basic Info",
-            {"fields": ("profile_photo", "name", "gender", "age", "date_of_birth")},
+            {"fields": ("name", "gender", "age", "date_of_birth")},
         ),
         (
             "Contact & Class",

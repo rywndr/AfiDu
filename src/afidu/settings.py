@@ -14,7 +14,6 @@ import os
 from urllib.parse import urlparse
 from pathlib import Path
 
-from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
 
@@ -161,86 +160,12 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Media storage. Backblaze B2 exposes an S3-compatible endpoint, so uploads can
-# use django-storages. With no B2 settings development continues to use MEDIA_ROOT.
-_b2_endpoint = os.getenv("B2_ENDPOINT_URL", "").rstrip("/")
-B2_ENDPOINT_URL = (
-    f"https://{_b2_endpoint}"
-    if _b2_endpoint and "://" not in _b2_endpoint
-    else _b2_endpoint
-)
-B2_REGION_NAME = os.getenv("B2_REGION_NAME", "")
-B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME", "")
-B2_KEY_ID = os.getenv("B2_KEY_ID", "")
-B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY", "")
-B2_PUBLIC_URL = os.getenv("B2_PUBLIC_URL", "").rstrip("/")
-
-_b2_required = {
-    "B2_ENDPOINT_URL": B2_ENDPOINT_URL,
-    "B2_REGION_NAME": B2_REGION_NAME,
-    "B2_BUCKET_NAME": B2_BUCKET_NAME,
-    "B2_KEY_ID": B2_KEY_ID,
-    "B2_APPLICATION_KEY": B2_APPLICATION_KEY,
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+    },
 }
-USE_B2 = all(_b2_required.values())
-
-if any(_b2_required.values()) and not USE_B2:
-    missing = ", ".join(name for name, value in _b2_required.items() if not value)
-    raise ImproperlyConfigured(
-        f"Backblaze B2 is only partially configured. Missing: {missing}."
-    )
-
-if USE_B2:
-    if not B2_ENDPOINT_URL.startswith("https://"):
-        raise ImproperlyConfigured("B2_ENDPOINT_URL must be an HTTPS URL.")
-
-    public_domain = None
-    if B2_PUBLIC_URL:
-        parsed_public_url = urlparse(B2_PUBLIC_URL)
-        public_domain = parsed_public_url.netloc or parsed_public_url.path
-
-    b2_storage_options = {
-        "access_key": B2_KEY_ID,
-        "secret_key": B2_APPLICATION_KEY,
-        "bucket_name": B2_BUCKET_NAME,
-        "endpoint_url": B2_ENDPOINT_URL,
-        "region_name": B2_REGION_NAME,
-        "signature_version": "s3v4",
-        "addressing_style": "virtual",
-        # B2 applies ACLs at bucket level; do not send per-object ACLs.
-        "default_acl": None,
-        "object_parameters": {"CacheControl": "max-age=86400"},
-        "querystring_auth": public_domain is None,
-        "querystring_expire": int(os.getenv("B2_URL_EXPIRE_SECONDS", "3600")),
-        "custom_domain": public_domain,
-        "url_protocol": "https:",
-    }
-
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3.S3Storage",
-            "OPTIONS": {**b2_storage_options, "file_overwrite": False},
-        },
-        # Study-material object names contain UUIDs. Skipping overwrite checks
-        # avoids an unnecessary HeadObject request before every upload.
-        "study_materials": {
-            "BACKEND": "storages.backends.s3.S3Storage",
-            "OPTIONS": {**b2_storage_options, "file_overwrite": True},
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
-        },
-    }
-else:
-    STORAGES = {
-        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "study_materials": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage"
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
-        },
-    }
 
 LOGIN_URL = reverse_lazy("login:login")
 LOGIN_REDIRECT_URL = reverse_lazy("dashboard:dashboard")

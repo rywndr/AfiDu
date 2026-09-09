@@ -38,11 +38,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 | `DATABASE_URL` | The same Neon database the Django app in `../src` owns. |
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | better-auth session signing and callback base. |
 | `NEXT_PUBLIC_MANAGEMENT_URL` | Public base URL of the Django management app. Defaults to `http://127.0.0.1:8000`. |
-| `B2_ENDPOINT_URL`, `B2_REGION_NAME`, `B2_BUCKET_NAME`, `B2_KEY_ID`, `B2_APPLICATION_KEY` | Backblaze B2, copied from the Django `.env`. All five, or none. |
+| `B2_ENDPOINT_URL`, `B2_REGION_NAME`, `B2_BUCKET_NAME`, `B2_KEY_ID`, `B2_APPLICATION_KEY` | Backblaze B2 credentials for study-material uploads. All five, or none. |
 
 Without the `B2_*` values the module upload form still loads but only accepts
-write-up materials: there is nowhere to put a file, and the local `MEDIA_ROOT`
-Django falls back to is not reachable from here.
+write-up materials because file uploads require B2.
 
 ## Study material uploads need a bucket CORS rule
 

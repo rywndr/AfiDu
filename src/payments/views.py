@@ -2,8 +2,8 @@ import calendar
 import datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
-import pytz
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -569,7 +569,7 @@ class UpdatePaymentView(StaffRequiredMixin, View):
             if is_installment:
                 for inst in payment.installments.all().order_by("installment_number"):
                     # Convert to Jakarta timezone (Asia/Jakarta)
-                    jakarta_time = timezone.localtime(inst.payment_date, pytz.timezone('Asia/Jakarta'))
+                    jakarta_time = timezone.localtime(inst.payment_date, ZoneInfo("Asia/Jakarta"))
                     installment_records.append({
                         "number": inst.installment_number,
                         "amount": float(inst.amount),
@@ -646,7 +646,9 @@ class GetInstallmentDataView(StaffRequiredMixin, View):
         installment_records = []
         for installment in payment.installments.all().order_by('installment_number'):
             # Convert to Jakarta timezone (Asia/Jakarta)
-            jakarta_time = timezone.localtime(installment.payment_date, pytz.timezone('Asia/Jakarta'))
+            jakarta_time = timezone.localtime(
+                installment.payment_date, ZoneInfo("Asia/Jakarta")
+            )
             installment_records.append({
                 "number": installment.installment_number,
                 "amount": float(installment.amount),

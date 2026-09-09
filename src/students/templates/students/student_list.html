@@ -134,13 +134,9 @@
           {% for student in students %}
           <tr class="hover:bg-orange-50">
             <td class="px-6 py-4 whitespace-nowrap">
-              {% if student.profile_photo %}
-                <img src="{{ student.profile_photo.url }}" alt="Profile" class="w-12 h-12 rounded-full object-cover">
-              {% else %}
-                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  {{ student.name|make_list|slice:":1"|join:"" }}
-                </div>
-              {% endif %}
+              <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                {{ student.name|make_list|slice:":1"|join:"" }}
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <a href="{% url 'students:student-detail' student.pk %}" class="text-[#ff4f25] hover:underline font-medium">

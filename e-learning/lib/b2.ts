@@ -1,9 +1,8 @@
 /**
  * Backblaze B2 access for study material objects.
  *
- * The Django app writes these objects through django-storages; this app talks
- * to the same bucket over the same S3-compatible endpoint, using the same
- * `B2_*` environment variables so a single set of credentials serves both.
+ * The e-learning app exclusively owns these objects and talks to B2 over its
+ * S3-compatible endpoint using the `B2_*` environment variables.
  *
  * Uploads do **not** pass through the server: `presignUpload` hands the browser
  * a short-lived signed PUT so a 500MB video never touches the function (Vercel
