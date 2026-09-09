@@ -74,6 +74,7 @@
         <input type="hidden" name="class_filter" value="{{ class_filter }}">
         <input type="hidden" name="level_filter" value="{{ current_level_filter }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
+        <input type="hidden" name="sort_by" value="{{ current_sort_by }}">
       </form>
     </div>
 
@@ -248,6 +249,10 @@
       <input type="hidden" name="category" value="{{ category }}">
       <input type="hidden" name="q" value="{{ search_query }}">
       <input type="hidden" name="class_filter" value="{{ class_filter }}">
+      <input type="hidden" name="level_filter" value="{{ current_level_filter }}">
+      <input type="hidden" name="sort_by" value="{{ current_sort_by }}">
+      <input type="hidden" name="per_page" value="{{ current_per_page }}">
+      <input type="hidden" name="page" value="{{ page_obj.number }}">
     </form>
 
     <!-- item per_page, pagination -->
@@ -261,6 +266,7 @@
           <input type="hidden" name="year" value="{{ year }}">
           <input type="hidden" name="semester" value="{{ semester }}">
           <input type="hidden" name="category" value="{{ category }}">
+          <input type="hidden" name="sort_by" value="{{ current_sort_by }}">
           <label for="per_page_select" class="text-gray-700">Items per page:</label>
           <select name="per_page" id="per_page_select" onchange="this.form.submit()"
                   class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">

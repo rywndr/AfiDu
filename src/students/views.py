@@ -11,7 +11,7 @@ from django.views.generic import (
 )
 
 from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
-from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
+from core.pagination import normalize_page_size
 
 from .forms import StudentForm, StudentClassForm
 from .models import Student, StudentClass
@@ -54,38 +54,10 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset().select_related("assigned_class")
 
-        # get filters from request or session
-        query = self.request.GET.get("q")
-        class_filter = self.request.GET.get("class_filter")
-        level_filter = self.request.GET.get("level_filter")
-        per_page = self.request.GET.get("per_page")
-        sort_by = self.request.GET.get("sort_by")
-
-        # store filters in session if provided in request
-        if query is not None:
-            self.request.session["student_search_query"] = query
-        elif "student_search_query" in self.request.session:
-            query = self.request.session["student_search_query"]
-
-        if class_filter is not None:
-            self.request.session["student_class_filter"] = class_filter
-        elif "student_class_filter" in self.request.session:
-            class_filter = self.request.session["student_class_filter"]
-
-        if level_filter is not None:
-            self.request.session["student_level_filter"] = level_filter
-        elif "student_level_filter" in self.request.session:
-            level_filter = self.request.session["student_level_filter"]
-
-        if per_page is not None:
-            self.request.session["student_per_page"] = per_page
-        elif "student_per_page" in self.request.session:
-            per_page = self.request.session["student_per_page"]
-            
-        if sort_by is not None:
-            self.request.session["student_sort_by"] = sort_by
-        elif "student_sort_by" in self.request.session:
-            sort_by = self.request.session["student_sort_by"]
+        query = self.request.GET.get("q", "")
+        class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
+        sort_by = self.request.GET.get("sort_by", "")
 
         # apply filters to queryset
         if query:
@@ -105,36 +77,16 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
         return queryset
 
     def get_paginate_by(self, queryset):
-        per_page = self.request.GET.get(
-            "per_page", self.request.session.get("student_per_page")
-        )
-        page_size = normalize_page_size(per_page)
-        self.request.session["student_per_page"] = str(page_size)
-        return page_size
+        return normalize_page_size(self.request.GET.get("per_page"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # cet filters from request or session
-        query = self.request.GET.get(
-            "q", self.request.session.get("student_search_query", "")
-        )
-        class_filter = self.request.GET.get(
-            "class_filter", self.request.session.get("student_class_filter", "")
-        )
-        level_filter = self.request.GET.get(
-            "level_filter", self.request.session.get("student_level_filter", "")
-        )
-        per_page = str(
-            normalize_page_size(
-                self.request.GET.get(
-                    "per_page", self.request.session.get("student_per_page")
-                )
-            )
-        )
-        sort_by = self.request.GET.get(
-            "sort_by", self.request.session.get("student_sort_by", "")
-        )
+        query = self.request.GET.get("q", "")
+        class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
+        per_page = str(normalize_page_size(self.request.GET.get("per_page")))
+        sort_by = self.request.GET.get("sort_by", "")
 
         # pass student count context to list view; the paginator already counted
         paginator = context.get("paginator")
@@ -163,32 +115,6 @@ class StudentDetailView(StaffRequiredMixin, StudentContextMixin, DetailView):
         next_url = self.request.GET.get("next") or self.request.META.get(
             "HTTP_REFERER", ""
         )
-
-        # if it's pointing at score‑list, re‑attach all session filters
-        if next_url and "scores:score-list" in next_url:
-            params = {
-                "year": self.request.session.get("scores_year", ""),
-                "semester": self.request.session.get("scores_semester", ""),
-                "category": self.request.session.get("scores_category", ""),
-                "q": self.request.session.get("scores_search_query", ""),
-                "class_filter": self.request.session.get("scores_class_filter", ""),
-                "level_filter": self.request.session.get("scores_level_filter", ""),
-                "per_page": self.request.session.get(
-                    "scores_per_page", str(DEFAULT_PAGE_SIZE)
-                ),
-            }
-            # re‑serialize into a querystring
-            query_string = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
-            next_url = f"{next_url.split('?')[0]}?{query_string}"
-
-        # If coming from payment list, use stored payment_list_url
-        elif next_url and "payments:payment_list" in next_url:
-            stored_url = self.request.session.get("payment_list_url")
-            if stored_url:
-                next_url = stored_url
-
-        elif next_url and "reports:report-list" in next_url:
-            next_url = f"{next_url.split('?')[0]}?anchor_redirected=true"
 
         context["next"] = next_url
 

@@ -25,6 +25,7 @@
         <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
         <input type="hidden" name="level_filter" value="{{ request.GET.level_filter }}">
         <input type="hidden" name="current_month_filter" value="{{ request.GET.current_month_filter }}">
+        <input type="hidden" name="sort_by" value="{{ request.GET.sort_by }}">
         <input type="hidden" name="per_page" value="{{ current_per_page }}">
       </form>
     </div>
@@ -220,6 +221,7 @@
           <input type="hidden" name="class_filter" value="{{ request.GET.class_filter }}">
           <input type="hidden" name="level_filter" value="{{ request.GET.level_filter }}">
           <input type="hidden" name="current_month_filter" value="{{ request.GET.current_month_filter }}">
+          <input type="hidden" name="sort_by" value="{{ request.GET.sort_by }}">
           <input type="hidden" name="year" value="{{ year }}">
           <label for="per_page_select" class="text-gray-700">Items per page:</label>
           <select name="per_page" id="per_page_select" onchange="this.form.submit()" class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">

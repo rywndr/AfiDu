@@ -1,9 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from core.mixins import StaffRequiredMixin
-from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
+from core.pagination import normalize_page_size
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Prefetch
@@ -52,42 +53,18 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
         sort_by = self.request.GET.get("sort_by", "")
         current_year = str(datetime.now().year)
 
-        if self.request.GET:
-            year = self.request.GET.get("year", current_year)
-            semester = self.request.GET.get("semester", "mid")
-            category = self.request.GET.get("category", "reading")
-            per_page_str = self.request.GET.get("per_page", str(DEFAULT_PAGE_SIZE))
+        year = self.request.GET.get("year", current_year)
+        semester = self.request.GET.get("semester", "mid")
+        category = self.request.GET.get("category", "reading")
 
-            if year in ("", "None"):
-                year = current_year
-            if semester in ("", "None"):
-                semester = "mid"
-            if category in ("", "None"):
-                category = "reading"
+        if year in ("", "None"):
+            year = current_year
+        if semester in ("", "None"):
+            semester = "mid"
+        if category in ("", "None"):
+            category = "reading"
 
-            self.request.session["scores_year"] = year
-            self.request.session["scores_semester"] = semester
-            self.request.session["scores_category"] = category
-            self.request.session["scores_search_query"] = search_query
-            self.request.session["scores_class_filter"] = class_filter
-            self.request.session["scores_level_filter"] = level_filter
-            self.request.session["scores_per_page"] = per_page_str
-            self.request.session["scores_sort_by"] = sort_by
-        else:
-            year = self.request.session.get("scores_year", current_year)
-            semester = self.request.session.get("scores_semester", "mid")
-            category = self.request.session.get("scores_category", "reading")
-            search_query = self.request.session.get("scores_search_query", "")
-            class_filter = self.request.session.get("scores_class_filter", "")
-            level_filter = self.request.session.get("scores_level_filter", "")
-            per_page_str = self.request.session.get(
-                "scores_per_page", str(DEFAULT_PAGE_SIZE)
-            )
-            sort_by = self.request.session.get("scores_sort_by", "")
-
-        per_page = normalize_page_size(per_page_str)
-        per_page_str = str(per_page)
-        self.request.session["scores_per_page"] = per_page_str
+        per_page = normalize_page_size(self.request.GET.get("per_page"))
 
         config = ScoreConfig.resolve(year, semester, category)
 
@@ -181,33 +158,15 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         current_year = str(datetime.now().year)
-        year = request.POST.get(
-            "year", request.session.get("scores_year", current_year)
-        )
-        semester = request.POST.get(
-            "semester", request.session.get("scores_semester", "mid")
-        )
-        category = request.POST.get(
-            "category", request.session.get("scores_category", "reading")
-        )
-        search_query = request.POST.get(
-            "q", request.session.get("scores_search_query", "")
-        )
-        class_filter = request.POST.get(
-            "class_filter", request.session.get("scores_class_filter", "")
-        )
-        level_filter = request.POST.get(
-            "level_filter", request.session.get("scores_level_filter", "")
-        )
-        per_page = normalize_page_size(request.session.get("scores_per_page"))
-        page = self.request.GET.get("page", "")
-
-        request.session["scores_year"] = year
-        request.session["scores_semester"] = semester
-        request.session["scores_category"] = category
-        request.session["scores_search_query"] = search_query
-        request.session["scores_class_filter"] = class_filter
-        request.session["scores_level_filter"] = level_filter
+        year = request.POST.get("year", current_year)
+        semester = request.POST.get("semester", "mid")
+        category = request.POST.get("category", "reading")
+        search_query = request.POST.get("q", "")
+        class_filter = request.POST.get("class_filter", "")
+        level_filter = request.POST.get("level_filter", "")
+        sort_by = request.POST.get("sort_by", "")
+        per_page = normalize_page_size(request.POST.get("per_page"))
+        page = request.POST.get("page", "")
 
         students = Student.objects.select_related('assigned_class')
         if search_query:
@@ -217,7 +176,6 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
         if level_filter:
             students = students.filter(level=level_filter)
             
-        sort_by = request.session.get("scores_sort_by", "")
         if sort_by == "name_asc":
             students = students.order_by("name", "pk")
         elif sort_by == "name_desc":
@@ -275,18 +233,19 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
                     score.save()
                     form.save_entry_notes(score)
 
-        redirect_url = (
-            f"{request.path}?year={year}"
-            f"&semester={semester}"
-            f"&category={category}"
-            f"&q={search_query}"
-            f"&class_filter={class_filter}"
-            f"&level_filter={level_filter}"
-            f"&per_page={per_page}"
-        )
+        params = {
+            "year": year,
+            "semester": semester,
+            "category": category,
+            "q": search_query,
+            "class_filter": class_filter,
+            "level_filter": level_filter,
+            "sort_by": sort_by,
+            "per_page": per_page,
+        }
         if page:
-            redirect_url += f"&page={page}"
-        return redirect(redirect_url)
+            params["page"] = page
+        return redirect(f"{request.path}?{urlencode(params)}")
 
 
 class ScoreConfigView(StaffRequiredMixin, ScoreContextMixin, UpdateView):
@@ -516,26 +475,6 @@ class ScoreConfigView(StaffRequiredMixin, ScoreContextMixin, UpdateView):
         return super().form_invalid(form)
 
     def get_success_url(self):
-        year = self.request.session.get("scores_year")
-        semester = self.request.session.get("scores_semester")
-        category = self.request.session.get("scores_category")
-        search_query = self.request.session.get("scores_search_query", "")
-        class_filter = self.request.session.get("scores_class_filter", "")
-        level_filter = self.request.session.get("scores_level_filter", "")
-        per_page = self.request.session.get(
-            "scores_per_page", str(DEFAULT_PAGE_SIZE)
-        )
-
         if self.request.GET.get("action") == "delete":
-            return (
-                f"{reverse_lazy('scores:score-list')}"
-                f"?year={year}"
-                f"&semester={semester}"
-                f"&category={category}"
-                f"&q={search_query}"
-                f"&class_filter={class_filter}"
-                f"&level_filter={level_filter}"
-                f"&per_page={per_page}"
-            )
-
+            return reverse_lazy("scores:score-list")
         return self.request.path

@@ -1,7 +1,6 @@
 import calendar
 import datetime
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from django.contrib import messages
@@ -64,48 +63,16 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
     paginate_by = DEFAULT_PAGE_SIZE
 
     def get_paginate_by(self, queryset):
-        per_page = self.request.GET.get(
-            "per_page", self.request.session.get("payments_per_page")
-        )
-        page_size = normalize_page_size(per_page)
-        self.request.session["payments_per_page"] = str(page_size)
-        return page_size
+        return normalize_page_size(self.request.GET.get("per_page"))
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("assigned_class")
         
-        # Get filters from request or session
-        q = self.request.GET.get("q")
-        class_filter = self.request.GET.get("class_filter")
-        level_filter = self.request.GET.get("level_filter")
-        sort_by = self.request.GET.get("sort_by")
-        current_month_filter = self.request.GET.get("current_month_filter")
-        
-        # store filters in session if provided in request
-        if q is not None:
-            self.request.session["payments_q"] = q
-        elif "payments_q" in self.request.session:
-            q = self.request.session["payments_q"]
-            
-        if class_filter is not None:
-            self.request.session["payments_class_filter"] = class_filter
-        elif "payments_class_filter" in self.request.session:
-            class_filter = self.request.session["payments_class_filter"]
-            
-        if level_filter is not None:
-            self.request.session["payments_level_filter"] = level_filter
-        elif "payments_level_filter" in self.request.session:
-            level_filter = self.request.session["payments_level_filter"]
-            
-        if sort_by is not None:
-            self.request.session["payments_sort_by"] = sort_by
-        elif "payments_sort_by" in self.request.session:
-            sort_by = self.request.session["payments_sort_by"]
-            
-        if current_month_filter is not None:
-            self.request.session["payments_current_month_filter"] = current_month_filter
-        elif "payments_current_month_filter" in self.request.session:
-            current_month_filter = self.request.session["payments_current_month_filter"]
+        q = self.request.GET.get("q", "")
+        class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
+        sort_by = self.request.GET.get("sort_by", "")
+        current_month_filter = self.request.GET.get("current_month_filter", "")
         
         # filter by search q
         if q:
@@ -150,11 +117,6 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
 
     def get_year(self):
         year = self.request.GET.get("year")
-        if year is not None:
-            self.request.session["payments_year"] = year
-        elif "payments_year" in self.request.session:
-            year = self.request.session["payments_year"]
-        
         if not (year and year.isdigit()):
             return datetime.date.today().year
         return int(year)
@@ -253,56 +215,9 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
 
         context["student_payment_details"] = student_payment_details
         context["current_per_page"] = str(
-            normalize_page_size(
-                self.request.GET.get(
-                    "per_page", self.request.session.get("payments_per_page")
-                )
-            )
+            normalize_page_size(self.request.GET.get("per_page"))
         )
         return context
-
-    def get(self, request, *args, **kwargs):
-        # Store per_page in session if provided
-        if "per_page" in request.GET:
-            request.session["payments_per_page"] = request.GET.get("per_page", str(self.paginate_by))
-        
-        # Check if URL parameters are present, if not, use session values if available
-        if not any(
-            key in request.GET
-            for key in ["q", "class_filter", "level_filter", "year", "per_page", "sort_by", "current_month_filter"]
-        ) and any(
-            key in request.session
-            for key in [
-                "payments_q",
-                "payments_class_filter",
-                "payments_level_filter",
-                "payments_year",
-                "payments_per_page",
-                "payments_sort_by",
-                "payments_current_month_filter",
-            ]
-        ):
-            # build URL from session values
-            params = {
-                "q": request.session.get("payments_q", ""),
-                "class_filter": request.session.get("payments_class_filter", ""),
-                "level_filter": request.session.get("payments_level_filter", ""),
-                "year": request.session.get("payments_year", str(datetime.date.today().year)),
-                "per_page": request.session.get("payments_per_page", str(self.paginate_by)),
-                "sort_by": request.session.get("payments_sort_by", ""),
-                "current_month_filter": request.session.get("payments_current_month_filter", ""),
-            }
-            # remove empty params
-            params = {k: v for k, v in params.items() if v}
-            # redirect to the filtered URL
-            if params:
-                return redirect(f"{request.path}?{urlencode(params)}")
-
-        # store current URL with all filters in session
-        self.request.session["payment_list_url"] = self.request.get_full_path()
-
-        # remove the automatic redirect to #payment-table anchor
-        return super().get(request, *args, **kwargs)
 
 
 class PaymentConfigView(SuperuserRequiredMixin, PaymentContextMixin, UpdateView):
@@ -331,28 +246,7 @@ class PaymentConfigView(SuperuserRequiredMixin, PaymentContextMixin, UpdateView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Use payment_list_url from session or reconstruct it
-        payment_list_url = self.request.session.get("payment_list_url")
-        if not payment_list_url:
-            # Reconstruct URL from session parameters
-            params = {
-                "q": self.request.session.get("payments_q", ""),
-                "class_filter": self.request.session.get("payments_class_filter", ""),
-                "level_filter": self.request.session.get("payments_level_filter", ""),
-                "year": self.request.session.get(
-                    "payments_year", str(datetime.date.today().year)
-                ),
-                "per_page": self.request.session.get(
-                    "payments_per_page", str(DEFAULT_PAGE_SIZE)
-                ),
-            }
-            # Remove empty params
-            params = {k: v for k, v in params.items() if v}
-            # Build query string
-            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-            payment_list_url = f"{reverse('payments:payment_list')}?{query_string}"
-
-        context["payment_list_url"] = payment_list_url
+        context["payment_list_url"] = reverse("payments:payment_list")
 
         return context
 
@@ -425,7 +319,7 @@ class StudentPaymentDetailView(StaffRequiredMixin, PaymentContextMixin, DetailVi
         context["total_remaining"] = context["total_due"] - context["total_paid"]
 
         # payment list URL
-        context["payment_list_url"] = self.request.session.get("payment_list_url") or reverse("payments:payment_list")
+        context["payment_list_url"] = reverse("payments:payment_list")
 
         return context
 

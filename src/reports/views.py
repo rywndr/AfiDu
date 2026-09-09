@@ -3,10 +3,10 @@ import zipfile
 from datetime import datetime
 
 from core.mixins import StaffRequiredMixin
-from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
+from core.pagination import normalize_page_size
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from django.views.generic import TemplateView
 
 from scores.models import SCORE_CATEGORIES, Score, ScoreConfig
@@ -65,38 +65,16 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         current_year = datetime.now().year
 
-        # Get filters from request or session
         try:
-            year = int(self.request.GET.get("year", self.request.session.get("reports_year", current_year)))
+            year = int(self.request.GET.get("year", current_year))
         except ValueError:
             year = current_year
-        semester = self.request.GET.get("semester", self.request.session.get("reports_semester", "mid"))
-        search_query = self.request.GET.get("q", self.request.session.get("reports_search_query", ""))
-        class_filter = self.request.GET.get("class_filter", self.request.session.get("reports_class_filter", ""))
-        level_filter = self.request.GET.get("level_filter", self.request.session.get("reports_level_filter", ""))
-        sort_by = self.request.GET.get("sort_by", self.request.session.get("reports_sort_by", ""))
-        per_page = normalize_page_size(
-            self.request.GET.get(
-                "per_page", self.request.session.get("reports_per_page")
-            )
-        )
-        per_page_str = str(per_page)
-
-        # Store filters in session if provided in request
-        if "year" in self.request.GET:
-            self.request.session["reports_year"] = year
-        if "semester" in self.request.GET:
-            self.request.session["reports_semester"] = semester
-        if "q" in self.request.GET:
-            self.request.session["reports_search_query"] = search_query
-        if "class_filter" in self.request.GET:
-            self.request.session["reports_class_filter"] = class_filter
-        if "level_filter" in self.request.GET:
-            self.request.session["reports_level_filter"] = level_filter
-        if "sort_by" in self.request.GET:
-            self.request.session["reports_sort_by"] = sort_by
-        if "per_page" in self.request.GET:
-            self.request.session["reports_per_page"] = per_page_str
+        semester = self.request.GET.get("semester", "mid")
+        search_query = self.request.GET.get("q", "")
+        class_filter = self.request.GET.get("class_filter", "")
+        level_filter = self.request.GET.get("level_filter", "")
+        sort_by = self.request.GET.get("sort_by", "")
+        per_page = normalize_page_size(self.request.GET.get("per_page"))
 
         students = Student.objects.select_related('assigned_class')
         if search_query:
@@ -173,41 +151,6 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        # Check if URL parameters are present, if not, use session values if available
-        if not any(
-            key in request.GET
-            for key in ["year", "semester", "q", "class_filter", "level_filter", "sort_by", "per_page"]
-        ) and any(
-            key in request.session
-            for key in [
-                "reports_year",
-                "reports_semester",
-                "reports_search_query",
-                "reports_class_filter",
-                "reports_level_filter",
-                "reports_sort_by",
-                "reports_per_page",
-            ]
-        ):
-            # Build URL from session values
-            from urllib.parse import urlencode
-            params = {
-                "year": request.session.get("reports_year", str(datetime.now().year)),
-                "semester": request.session.get("reports_semester", "mid"),
-                "q": request.session.get("reports_search_query", ""),
-                "class_filter": request.session.get("reports_class_filter", ""),
-                "level_filter": request.session.get("reports_level_filter", ""),
-                "sort_by": request.session.get("reports_sort_by", ""),
-                "per_page": request.session.get(
-                    "reports_per_page", str(DEFAULT_PAGE_SIZE)
-                ),
-            }
-            # Remove empty params
-            params = {k: v for k, v in params.items() if v}
-            # Redirect to the filtered URL
-            if params:
-                return redirect(f"{request.path}?{urlencode(params)}")
-
         context = self.get_context_data()
         return render(request, self.template_name, context)
 
