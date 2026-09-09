@@ -106,9 +106,11 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
             students = students.filter(level=level_filter)
 
         if sort_by == "name_asc":
-            students = students.order_by("name")
+            students = students.order_by("name", "pk")
         elif sort_by == "name_desc":
-            students = students.order_by("-name")
+            students = students.order_by("-name", "-pk")
+        else:
+            students = students.order_by("pk")
 
         paginator = Paginator(students, per_page)
         page_number = self.request.GET.get("page")

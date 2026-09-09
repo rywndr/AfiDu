@@ -91,11 +91,13 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             students = students.filter(assigned_class=class_filter)
         if level_filter:
             students = students.filter(level=level_filter)
-            
+
         if sort_by == "name_asc":
-            students = students.order_by("name")
+            students = students.order_by("name", "pk")
         elif sort_by == "name_desc":
-            students = students.order_by("-name")
+            students = students.order_by("-name", "-pk")
+        else:
+            students = students.order_by("pk")
 
         try:
             per_page = int(per_page_str)
@@ -215,9 +217,11 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             
         sort_by = request.session.get("scores_sort_by", "")
         if sort_by == "name_asc":
-            students = students.order_by("name")
+            students = students.order_by("name", "pk")
         elif sort_by == "name_desc":
-            students = students.order_by("-name")
+            students = students.order_by("-name", "-pk")
+        else:
+            students = students.order_by("pk")
 
         try:
             per_page_int = int(per_page)

@@ -94,11 +94,12 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
         if level_filter:
             queryset = queryset.filter(level=level_filter)
             
-        # apply sorting only if specified
         if sort_by == "name_asc":
-            queryset = queryset.order_by("name")
+            queryset = queryset.order_by("name", "pk")
         elif sort_by == "name_desc":
-            queryset = queryset.order_by("-name")
+            queryset = queryset.order_by("-name", "-pk")
+        else:
+            queryset = queryset.order_by("pk")
 
         return queryset
 

@@ -113,12 +113,6 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
         # filter by level
         if level_filter:
             qs = qs.filter(level=level_filter)
-        # sort by name
-        if sort_by == "name_asc":
-            qs = qs.order_by("name")
-        elif sort_by == "name_desc":
-            qs = qs.order_by("-name")
-            
         # filter by current month payment status
         if current_month_filter:
             year = self.get_year()
@@ -141,7 +135,14 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
                         paid=True
                     ).values_list('student_id', flat=True)
                     qs = qs.exclude(id__in=paid_student_ids)
-        
+
+        if sort_by == "name_asc":
+            qs = qs.order_by("name", "pk")
+        elif sort_by == "name_desc":
+            qs = qs.order_by("-name", "-pk")
+        else:
+            qs = qs.order_by("pk")
+
         return qs
 
     def get_year(self):
