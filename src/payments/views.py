@@ -12,7 +12,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView, UpdateView, View
 
-from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
+from core.mixins import (
+    CleanQueryParametersMixin,
+    StaffRequiredMixin,
+    SuperuserRequiredMixin,
+)
 from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
 from students.models import LEVELS, Student, StudentClass
 
@@ -56,7 +60,9 @@ class PaymentContextMixin:
         return context
 
 
-class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
+class PaymentListView(
+    SuperuserRequiredMixin, CleanQueryParametersMixin, PaymentContextMixin, ListView
+):
     model = Student
     template_name = "payments/payment_list.html"
     context_object_name = "students"

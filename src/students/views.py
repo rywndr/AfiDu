@@ -10,7 +10,11 @@ from django.views.generic import (
     UpdateView,
 )
 
-from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
+from core.mixins import (
+    CleanQueryParametersMixin,
+    StaffRequiredMixin,
+    SuperuserRequiredMixin,
+)
 from core.pagination import normalize_page_size
 
 from .forms import StudentForm, StudentClassForm
@@ -46,7 +50,9 @@ class StudentContextMixin:
         return context
 
 
-class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
+class StudentListView(
+    StaffRequiredMixin, CleanQueryParametersMixin, StudentContextMixin, ListView
+):
     model = Student
     template_name = "students/student_list.html"
     context_object_name = "students"

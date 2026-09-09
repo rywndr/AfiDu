@@ -3,6 +3,7 @@
 from functools import wraps
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
 
@@ -29,6 +30,32 @@ class Custom403Mixin:
         if self.request.user.is_authenticated:
             return render(self.request, "403.html", status=403)
         return super().handle_no_permission()
+
+
+class CleanQueryParametersMixin:
+    """Redirect GET requests after removing parameters with empty values."""
+
+    def get(self, request, *args, **kwargs):
+        cleaned = request.GET.copy()
+        changed = False
+
+        for key in list(cleaned):
+            values = [value for value in cleaned.getlist(key) if value != ""]
+            if len(values) != len(cleaned.getlist(key)):
+                changed = True
+                if values:
+                    cleaned.setlist(key, values)
+                else:
+                    del cleaned[key]
+
+        if changed:
+            query_string = cleaned.urlencode()
+            url = request.path
+            if query_string:
+                url = f"{url}?{query_string}"
+            return HttpResponseRedirect(url)
+
+        return super().get(request, *args, **kwargs)
 
 
 class StaffRequiredMixin(LoginRequiredMixin, Custom403Mixin, UserPassesTestMixin):

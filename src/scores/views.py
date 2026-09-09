@@ -3,7 +3,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from core.mixins import StaffRequiredMixin
+from core.mixins import CleanQueryParametersMixin, StaffRequiredMixin
 from core.pagination import normalize_page_size
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -41,7 +41,9 @@ class ScoreContextMixin:
         return context
 
 
-class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
+class ScoreListView(
+    StaffRequiredMixin, CleanQueryParametersMixin, ScoreContextMixin, TemplateView
+):
     template_name = "scores/score_list.html"
 
     def get_context_data(self, **kwargs):

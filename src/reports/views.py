@@ -2,7 +2,7 @@ import io
 import zipfile
 from datetime import datetime
 
-from core.mixins import StaffRequiredMixin
+from core.mixins import CleanQueryParametersMixin, StaffRequiredMixin
 from core.pagination import normalize_page_size
 from django.core.paginator import Paginator
 from django.http import HttpResponse
@@ -58,7 +58,9 @@ class ReportContextMixin:
         return scores_dict
 
 
-class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
+class ReportListView(
+    StaffRequiredMixin, CleanQueryParametersMixin, ReportContextMixin, TemplateView
+):
     template_name = "reports/report_list.html"
 
     def get_context_data(self, **kwargs):
@@ -149,11 +151,6 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
             "level_choices": Student._meta.get_field("level").choices,
         })
         return context
-
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data()
-        return render(request, self.template_name, context)
-
 
 class ExportReportPDFView(ReportContextMixin, TemplateView):
     def get(self, request, student_id, *args, **kwargs):
