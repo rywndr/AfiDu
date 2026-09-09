@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from core.mixins import StaffRequiredMixin
+from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Prefetch
@@ -55,7 +56,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             year = self.request.GET.get("year", current_year)
             semester = self.request.GET.get("semester", "mid")
             category = self.request.GET.get("category", "reading")
-            per_page_str = self.request.GET.get("per_page", "5")
+            per_page_str = self.request.GET.get("per_page", str(DEFAULT_PAGE_SIZE))
 
             if year in ("", "None"):
                 year = current_year
@@ -79,8 +80,14 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
             search_query = self.request.session.get("scores_search_query", "")
             class_filter = self.request.session.get("scores_class_filter", "")
             level_filter = self.request.session.get("scores_level_filter", "")
-            per_page_str = self.request.session.get("scores_per_page", "5")
+            per_page_str = self.request.session.get(
+                "scores_per_page", str(DEFAULT_PAGE_SIZE)
+            )
             sort_by = self.request.session.get("scores_sort_by", "")
+
+        per_page = normalize_page_size(per_page_str)
+        per_page_str = str(per_page)
+        self.request.session["scores_per_page"] = per_page_str
 
         config = ScoreConfig.resolve(year, semester, category)
 
@@ -99,11 +106,6 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
         else:
             students = students.order_by("pk")
 
-        try:
-            per_page = int(per_page_str)
-        except ValueError:
-            per_page = 5
-        
         paginator = Paginator(students, per_page)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
@@ -197,7 +199,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
         level_filter = request.POST.get(
             "level_filter", request.session.get("scores_level_filter", "")
         )
-        per_page = request.session.get("scores_per_page", "5")
+        per_page = normalize_page_size(request.session.get("scores_per_page"))
         page = self.request.GET.get("page", "")
 
         request.session["scores_year"] = year
@@ -223,11 +225,7 @@ class ScoreListView(StaffRequiredMixin, ScoreContextMixin, TemplateView):
         else:
             students = students.order_by("pk")
 
-        try:
-            per_page_int = int(per_page)
-        except ValueError:
-            per_page_int = 5
-        paginator = Paginator(students, per_page_int)
+        paginator = Paginator(students, per_page)
         page_obj = paginator.get_page(page)
         current_page_students = page_obj.object_list
 
@@ -524,7 +522,9 @@ class ScoreConfigView(StaffRequiredMixin, ScoreContextMixin, UpdateView):
         search_query = self.request.session.get("scores_search_query", "")
         class_filter = self.request.session.get("scores_class_filter", "")
         level_filter = self.request.session.get("scores_level_filter", "")
-        per_page = self.request.session.get("scores_per_page", "5")
+        per_page = self.request.session.get(
+            "scores_per_page", str(DEFAULT_PAGE_SIZE)
+        )
 
         if self.request.GET.get("action") == "delete":
             return (

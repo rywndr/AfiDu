@@ -11,6 +11,7 @@ from django.views.generic import (
 )
 
 from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
+from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
 
 from .forms import StudentForm, StudentClassForm
 from .models import Student, StudentClass
@@ -104,12 +105,12 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
         return queryset
 
     def get_paginate_by(self, queryset):
-        per_page = self.request.GET.get("per_page")
-        if per_page is None and "student_per_page" in self.request.session:
-            per_page = self.request.session["student_per_page"]
-        if per_page in ["5", "10", "15"]:
-            return int(per_page)
-        return 5
+        per_page = self.request.GET.get(
+            "per_page", self.request.session.get("student_per_page")
+        )
+        page_size = normalize_page_size(per_page)
+        self.request.session["student_per_page"] = str(page_size)
+        return page_size
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -124,8 +125,12 @@ class StudentListView(StaffRequiredMixin, StudentContextMixin, ListView):
         level_filter = self.request.GET.get(
             "level_filter", self.request.session.get("student_level_filter", "")
         )
-        per_page = self.request.GET.get(
-            "per_page", self.request.session.get("student_per_page", "5")
+        per_page = str(
+            normalize_page_size(
+                self.request.GET.get(
+                    "per_page", self.request.session.get("student_per_page")
+                )
+            )
         )
         sort_by = self.request.GET.get(
             "sort_by", self.request.session.get("student_sort_by", "")
@@ -168,7 +173,9 @@ class StudentDetailView(StaffRequiredMixin, StudentContextMixin, DetailView):
                 "q": self.request.session.get("scores_search_query", ""),
                 "class_filter": self.request.session.get("scores_class_filter", ""),
                 "level_filter": self.request.session.get("scores_level_filter", ""),
-                "per_page": self.request.session.get("scores_per_page", "5"),
+                "per_page": self.request.session.get(
+                    "scores_per_page", str(DEFAULT_PAGE_SIZE)
+                ),
             }
             # re‑serialize into a querystring
             query_string = "&".join(f"{k}={v}" for k, v in params.items() if v != "")

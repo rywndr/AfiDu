@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView, UpdateView, View
 
 from core.mixins import StaffRequiredMixin, SuperuserRequiredMixin
+from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
 from students.models import LEVELS, Student, StudentClass
 
 from .forms import PaymentConfigForm
@@ -60,13 +61,15 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
     model = Student
     template_name = "payments/payment_list.html"
     context_object_name = "students"
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGE_SIZE
 
     def get_paginate_by(self, queryset):
-        per_page = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
-        if per_page and per_page.isdigit():
-            return int(per_page)
-        return self.paginate_by
+        per_page = self.request.GET.get(
+            "per_page", self.request.session.get("payments_per_page")
+        )
+        page_size = normalize_page_size(per_page)
+        self.request.session["payments_per_page"] = str(page_size)
+        return page_size
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("assigned_class")
@@ -249,7 +252,13 @@ class PaymentListView(SuperuserRequiredMixin, PaymentContextMixin, ListView):
             }
 
         context["student_payment_details"] = student_payment_details
-        context["current_per_page"] = self.request.GET.get("per_page", self.request.session.get("payments_per_page", str(self.paginate_by)))
+        context["current_per_page"] = str(
+            normalize_page_size(
+                self.request.GET.get(
+                    "per_page", self.request.session.get("payments_per_page")
+                )
+            )
+        )
         return context
 
     def get(self, request, *args, **kwargs):
@@ -333,7 +342,9 @@ class PaymentConfigView(SuperuserRequiredMixin, PaymentContextMixin, UpdateView)
                 "year": self.request.session.get(
                     "payments_year", str(datetime.date.today().year)
                 ),
-                "per_page": self.request.session.get("payments_per_page", "5"),
+                "per_page": self.request.session.get(
+                    "payments_per_page", str(DEFAULT_PAGE_SIZE)
+                ),
             }
             # Remove empty params
             params = {k: v for k, v in params.items() if v}

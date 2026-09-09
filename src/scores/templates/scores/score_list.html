@@ -264,9 +264,9 @@
           <label for="per_page_select" class="text-gray-700">Items per page:</label>
           <select name="per_page" id="per_page_select" onchange="this.form.submit()"
                   class="border border-gray-300 rounded-full py-1 px-3 focus:outline-none">
-            <option value="5" {% if current_per_page == "5" %}selected{% endif %}>5</option>
-            <option value="10" {% if current_per_page == "10" %}selected{% endif %}>10</option>
             <option value="15" {% if current_per_page == "15" %}selected{% endif %}>15</option>
+            <option value="25" {% if current_per_page == "25" %}selected{% endif %}>25</option>
+            <option value="50" {% if current_per_page == "50" %}selected{% endif %}>50</option>
           </select>
         </form>
       </div>

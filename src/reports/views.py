@@ -3,6 +3,7 @@ import zipfile
 from datetime import datetime
 
 from core.mixins import StaffRequiredMixin
+from core.pagination import DEFAULT_PAGE_SIZE, normalize_page_size
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -74,12 +75,12 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
         class_filter = self.request.GET.get("class_filter", self.request.session.get("reports_class_filter", ""))
         level_filter = self.request.GET.get("level_filter", self.request.session.get("reports_level_filter", ""))
         sort_by = self.request.GET.get("sort_by", self.request.session.get("reports_sort_by", ""))
-        per_page_str = self.request.GET.get("per_page", self.request.session.get("reports_per_page", "5"))
-        
-        try:
-            per_page = int(per_page_str)
-        except ValueError:
-            per_page = 5
+        per_page = normalize_page_size(
+            self.request.GET.get(
+                "per_page", self.request.session.get("reports_per_page")
+            )
+        )
+        per_page_str = str(per_page)
 
         # Store filters in session if provided in request
         if "year" in self.request.GET:
@@ -197,7 +198,9 @@ class ReportListView(StaffRequiredMixin, ReportContextMixin, TemplateView):
                 "class_filter": request.session.get("reports_class_filter", ""),
                 "level_filter": request.session.get("reports_level_filter", ""),
                 "sort_by": request.session.get("reports_sort_by", ""),
-                "per_page": request.session.get("reports_per_page", "5"),
+                "per_page": request.session.get(
+                    "reports_per_page", str(DEFAULT_PAGE_SIZE)
+                ),
             }
             # Remove empty params
             params = {k: v for k, v in params.items() if v}
