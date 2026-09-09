@@ -17,7 +17,7 @@ The Next app also uses **Drizzle** as the ORM of choice, **shadcn** as the compo
 
 To run the Django app, you need to have these programs installed:
 
-1. Python 3.8+
+1. Python 3.10+
 2. Node.js (or any other JavaScript runtime of choice)
 
 Then, clone the repo
