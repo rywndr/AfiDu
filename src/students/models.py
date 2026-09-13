@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 from core.constants import (
     DAYS_OF_WEEK,
@@ -8,6 +9,8 @@ from core.constants import (
     LEVELS,
     phone_validator,
 )
+
+from .identifiers import generate_student_public_id
 
 # Create your models here.
 
@@ -23,6 +26,7 @@ __all__ = [
 
 class StudentClass(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True, editable=False)
     description = models.TextField(blank=True)
     start_time = models.TimeField(help_text="Class start time")
     end_time = models.TimeField(help_text="Class end time")
@@ -87,6 +91,24 @@ class StudentClass(models.Model):
     class Meta:
         ordering = ["name"]
 
+    def _build_slug(self):
+        base = slugify(self.name)[:110] or "class"
+        slug = base
+        suffix = 2
+        queryset = type(self).objects.exclude(pk=self.pk) if self.pk else type(self).objects.all()
+        while queryset.filter(slug=slug).exists():
+            slug = f"{base}-{suffix}"
+            suffix += 1
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_slug()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None and "slug" not in update_fields:
+                kwargs["update_fields"] = set(update_fields) | {"slug"}
+        super().save(*args, **kwargs)
+
     def __str__(self):
         days_str = self.days_short_display if self.days else "No schedule"
         return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}, {days_str})"
@@ -94,6 +116,12 @@ class StudentClass(models.Model):
 
 class Student(models.Model):
     name = models.CharField(max_length=100)
+    public_id = models.CharField(
+        max_length=22,
+        default=generate_student_public_id,
+        editable=False,
+        unique=True,
+    )
     gender = models.CharField(max_length=10, choices=GENDER)
     age = models.PositiveIntegerField()
     date_of_birth = models.DateField()

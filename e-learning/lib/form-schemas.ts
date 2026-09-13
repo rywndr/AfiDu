@@ -196,11 +196,11 @@ export const classMutationSchema = z.object({
 });
 
 export const assignmentLinkSchema = classMutationSchema.extend({
-  assignmentId: z.number().int().positive('Choose an assignment.'),
+  assignmentId: z.string().uuid('Choose an assignment.'),
 });
 
 export const assignmentLinkFormSchema = z.object({
-  assignmentId: z.number().int().positive('Choose an assignment.'),
+  assignmentId: z.string().uuid('Choose an assignment.'),
 });
 
 export type AssignmentLinkFormValues = z.infer<typeof assignmentLinkFormSchema>;
@@ -482,7 +482,7 @@ const questionInputSchema = z.object({
 const assignmentInputSchema = assignmentSharedSchema
   .extend({
     classId: z.number().int().positive(),
-    materialId: z.number().int().positive().nullable(),
+    materialId: z.string().uuid().nullable(),
     year: z.number().int().min(2000).max(2100).nullable(),
     semester: z.enum(semesters).nullable(),
     scoreTarget: z.enum(SCORE_TARGET_VALUES).nullable(),
@@ -539,7 +539,7 @@ const answerGradeSchema = z.object({
 });
 
 export const gradeSubmissionSchema = z.object({
-  assignmentId: z.number().int().positive(),
+  assignmentId: z.string().uuid(),
   status: z.enum(gradeStatuses, { error: 'Choose a status.' }),
   feedback: z.string().max(10_000, 'The feedback is too long.'),
   /**
@@ -582,7 +582,7 @@ export type GradeFormValues = z.infer<typeof gradeFormSchema>;
 const MAX_ANSWER_LENGTH = 20_000;
 
 export const startAttemptSchema = z.object({
-  assignmentId: z.number().int().positive(),
+  assignmentId: z.string().uuid(),
 });
 
 const attemptAnswerSchema = z.object({

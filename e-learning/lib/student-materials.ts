@@ -39,12 +39,12 @@ const PUBLISHED = 'published';
 
 /** A published assignment set on this class that a module is attached to. */
 export type StudentMaterialAssignment = {
-  id: number;
+  id: string;
   title: string;
 };
 
 export type StudentMaterial = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   materialType: string;
@@ -70,7 +70,8 @@ export type StudentMaterialQuery = StudentMaterialFilters &
   };
 
 const materialColumns = {
-  id: studyMaterial.id,
+  id: studyMaterial.publicId,
+  dbId: studyMaterial.id,
   title: studyMaterial.title,
   description: studyMaterial.description,
   materialType: studyMaterial.materialType,
@@ -168,13 +169,13 @@ export async function listStudentMaterials(
 
   const links = await listMaterialAssignments(
     classId,
-    materials.map((material) => material.id),
+    materials.map((material) => material.dbId),
   );
 
   return {
-    items: materials.map((material) => ({
+    items: materials.map(({ dbId, ...material }) => ({
       ...material,
-      linkedAssignments: links.get(material.id) ?? [],
+      linkedAssignments: links.get(dbId) ?? [],
     })),
     total,
     allTotal,
@@ -187,18 +188,19 @@ export async function listStudentMaterials(
 /** One module, or null when it is not this student's to read. */
 export async function getStudentMaterial(
   classId: number,
-  materialId: number,
+  materialId: string,
 ): Promise<StudentMaterial | null> {
   const [material] = await db
     .select(materialColumns)
     .from(studyMaterial)
-    .where(and(eq(studyMaterial.id, materialId), readableBy(classId)))
+    .where(and(eq(studyMaterial.publicId, materialId), readableBy(classId)))
     .limit(1);
 
   if (!material) return null;
 
-  const links = await listMaterialAssignments(classId, [materialId]);
-  return { ...material, linkedAssignments: links.get(materialId) ?? [] };
+  const { dbId, ...publicMaterial } = material;
+  const links = await listMaterialAssignments(classId, [dbId]);
+  return { ...publicMaterial, linkedAssignments: links.get(dbId) ?? [] };
 }
 
 /**
@@ -212,9 +214,9 @@ async function listMaterialAssignments(
   materialIds: number[],
 ): Promise<Map<number, StudentMaterialAssignment[]>> {
   const rows = await db
-    .select({
-      materialId: assignment.materialId,
-      id: assignment.id,
+      .select({
+        materialId: assignment.materialId,
+        id: assignment.publicId,
       title: assignment.title,
     })
     .from(assignment)

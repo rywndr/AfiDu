@@ -39,7 +39,7 @@ export function toGradeFormValues(
 }
 
 export function toGradeInput(
-  assignmentId: number,
+  assignmentId: string,
   values: GradeFormValues,
 ): GradeSubmissionInput {
   return {

@@ -153,11 +153,11 @@ class ReportListView(
         return context
 
 class ExportReportPDFView(ReportContextMixin, TemplateView):
-    def get(self, request, student_id, *args, **kwargs):
+    def get(self, request, public_id, *args, **kwargs):
         current_year = datetime.now().year
         year = request.GET.get("year", str(current_year))
         semester = request.GET.get("semester", "mid")
-        student = get_object_or_404(Student, id=student_id)
+        student = get_object_or_404(Student, public_id=public_id)
 
         student.scores_dict = self.get_student_scores(student, year, semester)
 

@@ -119,7 +119,7 @@ export function toAssignmentInput(
     level: values.level,
     status: values.status,
     description: values.description,
-    materialId: values.materialId ? Number(values.materialId) : null,
+    materialId: values.materialId || null,
     year: values.year ? Number(values.year) : null,
     semester: values.semester || null,
     scoreTarget: values.scoreTarget || null,

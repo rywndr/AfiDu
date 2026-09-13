@@ -4,6 +4,7 @@ import { apiError, authorizeApiRequest, readJson } from '@/lib/api';
 import { classMutationSchema, updateAssignmentSchema } from '@/lib/form-schemas';
 import { ROLE_SUPERUSER, ROLE_TEACHER } from '@/lib/session';
 import { deleteAssignment, updateAssignment } from '@/lib/assignment-mutations';
+import { parseRouteUuid } from '@/lib/route-params';
 import { isValidQuestionAudioUpload } from '@/lib/upload-token';
 
 const STAFF_ROLES = [ROLE_TEACHER, ROLE_SUPERUSER];
@@ -18,8 +19,8 @@ export async function PATCH(
   const body = await readJson(request);
   if (body instanceof Response) return body;
   const input = updateAssignmentSchema.safeParse(body);
-  const assignmentId = Number((await context.params).id);
-  if (!input.success || !Number.isInteger(assignmentId) || assignmentId <= 0) {
+  const assignmentId = parseRouteUuid((await context.params).id);
+  if (!input.success || assignmentId === null) {
     return apiError(
       'Check the assignment details and try again.',
       400,
@@ -40,9 +41,7 @@ export async function PATCH(
   const result = await updateAssignment(input.data, assignmentId);
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/assignment/${input.data.classId}`);
-  revalidatePath(`/teacher/assignment/${input.data.classId}/${assignmentId}`);
-  revalidatePath('/teacher/assignment');
+  revalidatePath('/teacher/assignment', 'layout');
   return Response.json({ success: true });
 }
 
@@ -56,15 +55,14 @@ export async function DELETE(
   const body = await readJson(request);
   if (body instanceof Response) return body;
   const classResult = classMutationSchema.safeParse(body);
-  const assignmentId = Number((await context.params).id);
-  if (!classResult.success || !Number.isInteger(assignmentId) || assignmentId <= 0) {
+  const assignmentId = parseRouteUuid((await context.params).id);
+  if (!classResult.success || assignmentId === null) {
     return apiError('Invalid assignment request.', 400);
   }
 
   const result = await deleteAssignment(classResult.data.classId, assignmentId);
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/assignment/${classResult.data.classId}`);
-  revalidatePath('/teacher/assignment');
+  revalidatePath('/teacher/assignment', 'layout');
   return Response.json({ success: true });
 }

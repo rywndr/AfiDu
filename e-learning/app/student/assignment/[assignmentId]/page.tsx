@@ -6,7 +6,7 @@ import { BackLink } from '@/components/dashboard/back-link';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { isB2Configured } from '@/lib/b2';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { requireStudentProfile } from '@/lib/student-access';
 import { getStudentAssignmentView } from '@/lib/student-attempts';
 
@@ -25,8 +25,8 @@ export default async function StudentAssignmentDetailPage({
   const profile = await requireStudentProfile();
   if (!profile || profile.classId === null) redirect('/student/assignment');
 
-  const assignmentId = parseRouteId((await params).assignmentId);
-  if (Number.isNaN(assignmentId)) notFound();
+  const assignmentId = parseRouteUuid((await params).assignmentId);
+  if (assignmentId === null) notFound();
 
   const view = await getStudentAssignmentView(
     profile.id,

@@ -36,7 +36,7 @@ export function AssignmentLinks({
   options,
 }: {
   classId: number;
-  materialId: number;
+  materialId: string;
   linked: LinkedAssignment[];
   options: LinkableAssignment[];
 }) {
@@ -50,7 +50,7 @@ export function AssignmentLinks({
     formState: { errors },
   } = useForm<AssignmentLinkFormValues>({
     resolver: zodResolver(assignmentLinkFormSchema),
-    defaultValues: { assignmentId: 0 },
+    defaultValues: { assignmentId: '' },
   });
 
   const linkable = options.filter((option) => option.materialId !== materialId);
@@ -205,7 +205,7 @@ export function DeleteMaterialButton({
   title,
 }: {
   classId: number;
-  materialId: number;
+  materialId: string;
   title: string;
 }) {
   const router = useRouter();
@@ -257,12 +257,14 @@ export function DeleteMaterialButton({
 
 export function MaterialActionMenu({
   classId,
+  classSlug,
   materialId,
   title,
   showEdit = true,
 }: {
   classId: number;
-  materialId: number;
+  classSlug: string;
+  materialId: string;
   title: string;
   showEdit?: boolean;
 }) {
@@ -316,7 +318,7 @@ export function MaterialActionMenu({
           {showEdit ? (
             <DropdownMenuItem
               render={
-                <Link href={`/teacher/module/${classId}/${materialId}/edit`} />
+                <Link href={`/teacher/module/${classSlug}/${materialId}/edit`} />
               }
             >
               <Pencil aria-hidden="true" />

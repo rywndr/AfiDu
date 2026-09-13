@@ -23,9 +23,10 @@ const ACTIVITY_LIMIT = 8;
 
 /** Assignment or module associated with an activity event. */
 export type ActivityTarget = {
-  id: number;
+  id: string;
   title: string;
   classId: number;
+  classSlug: string;
   className: string;
 };
 
@@ -60,9 +61,10 @@ async function readSubmissionEvents(
 
   const rows = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
       title: assignment.title,
       classId: studentClass.id,
+      classSlug: studentClass.slug,
       className: studentClass.name,
       total: count(),
       latest,
@@ -92,9 +94,10 @@ async function readModuleEvents(since: Date): Promise<TeacherActivityEvent[]> {
 
   const rows = await db
     .select({
-      id: studyMaterial.id,
+      id: studyMaterial.publicId,
       title: studyMaterial.title,
       classId: studentClass.id,
+      classSlug: studentClass.slug,
       className: studentClass.name,
       publishedAt: studyMaterial.publishedAt,
       sharedAt,
@@ -116,9 +119,10 @@ async function readModuleEvents(since: Date): Promise<TeacherActivityEvent[]> {
 async function readAssignmentEvents(since: Date): Promise<TeacherActivityEvent[]> {
   const rows = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
       title: assignment.title,
       classId: studentClass.id,
+      classSlug: studentClass.slug,
       className: studentClass.name,
       at: assignment.createdAt,
     })

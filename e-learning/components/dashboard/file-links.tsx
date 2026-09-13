@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 const linkClass = 'inline-flex items-center gap-1.5 text-accent-primary hover:underline';
 
-export function materialFileHref(materialId: number): string {
+export function materialFileHref(materialId: string): string {
   return `/api/study-materials/${materialId}/file`;
 }
 

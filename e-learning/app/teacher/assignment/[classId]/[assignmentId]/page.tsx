@@ -10,10 +10,10 @@ import { QueryPagination } from '@/components/dashboard/query-pagination';
 import { buttonVariants } from '@/components/ui/button';
 import { isSubmissionRowStatus } from '@/lib/choices';
 import { pluralize } from '@/lib/format';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { getAssignmentDetail, listAssignmentSubmissions } from '@/lib/assignments';
-import { getClassDetail } from '@/lib/study-materials';
+import { getClassDetailBySlug } from '@/lib/study-materials';
 
 import { DeleteAssignmentButton } from '../assignment-actions';
 import { AssignmentFacts } from './assignment-facts';
@@ -22,16 +22,15 @@ import { SubmissionToolbar } from './submission-toolbar';
 
 type AssignmentPageProps = PageProps<'/teacher/assignment/[classId]/[assignmentId]'>;
 
-/** Both ids of the route, or nulls if either is not a usable id. */
+/** Resolve the public class slug and assignment UUID to the internal class key. */
 async function routeIds(params: AssignmentPageProps['params']) {
-  const { classId, assignmentId } = await params;
-  const classIdNumber = parseRouteId(classId);
-  const assignmentIdNumber = parseRouteId(assignmentId);
-  const usable = !Number.isNaN(classIdNumber) && !Number.isNaN(assignmentIdNumber);
+  const { classId: classSlug, assignmentId } = await params;
+  const assignmentPublicId = parseRouteUuid(assignmentId);
+  const detail = await getClassDetailBySlug(classSlug);
 
-  return usable
-    ? { classId: classIdNumber, assignmentId: assignmentIdNumber }
-    : { classId: null, assignmentId: null };
+  return detail && assignmentPublicId !== null
+    ? { classSlug, classId: detail.id, assignmentId: assignmentPublicId, detail }
+    : { classSlug: null, classId: null, assignmentId: null, detail: null };
 }
 
 export async function generateMetadata({
@@ -68,14 +67,19 @@ export default async function AssignmentSubmissionsPage({
 }: AssignmentPageProps) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
-  const { classId, assignmentId } = await routeIds(params);
-  if (classId === null || assignmentId === null) notFound();
+  const route = await routeIds(params);
+  if (
+    route.classSlug === null ||
+    route.classId === null ||
+    route.assignmentId === null ||
+    route.detail === null
+  ) {
+    notFound();
+  }
 
-  const [detail, item] = await Promise.all([
-    getClassDetail(classId),
-    getAssignmentDetail(classId, assignmentId),
-  ]);
-  if (!detail || !item) notFound();
+  const { classSlug, classId, assignmentId, detail: classDetail } = route;
+  const item = await getAssignmentDetail(classId, assignmentId);
+  if (!item) notFound();
 
   const { query, status, page } = readSearchParams(await searchParams);
   const submissionPage = await listAssignmentSubmissions(classId, assignmentId, {
@@ -86,12 +90,12 @@ export default async function AssignmentSubmissionsPage({
   const rows = submissionPage.items;
   const awaiting = submissionPage.awaitingCount;
   const filtering = Boolean(query || status);
-  const basePath = `/teacher/assignment/${classId}/${assignmentId}`;
+  const basePath = `/teacher/assignment/${classSlug}/${assignmentId}`;
 
   return (
     <>
-      <BackLink href={`/teacher/assignment/${classId}`}>
-        {detail.name} assignments
+      <BackLink href={`/teacher/assignment/${classSlug}`}>
+        {classDetail.name} assignments
       </BackLink>
 
       <PageHeader
@@ -105,7 +109,7 @@ export default async function AssignmentSubmissionsPage({
           <div className="flex flex-wrap items-center gap-2">
             {item.status !== 'published' ? (
               <Link
-                href={`/teacher/assignment/${classId}/${assignmentId}/edit`}
+                href={`/teacher/assignment/${classSlug}/${assignmentId}/edit`}
                 className={buttonVariants({ variant: 'secondary', size: 'lg' })}
               >
                 <Pencil aria-hidden="true" />
@@ -122,7 +126,7 @@ export default async function AssignmentSubmissionsPage({
         }
       />
 
-      <AssignmentFacts item={item} classId={classId} />
+      <AssignmentFacts item={item} classSlug={classSlug} />
 
       <section aria-labelledby="submissions-heading">
         <div className="mb-3 flex flex-col gap-2 sm:mb-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
@@ -155,7 +159,7 @@ export default async function AssignmentSubmissionsPage({
           >
             {filtering
               ? 'No students match the current search and filters.'
-              : `No students are assigned to ${detail.name} yet, so there is nothing to mark.`}
+              : `No students are assigned to ${classDetail.name} yet, so there is nothing to mark.`}
           </EmptyState>
         ) : (
           <ul className="flex flex-col gap-3 sm:gap-4">
@@ -164,6 +168,7 @@ export default async function AssignmentSubmissionsPage({
                 <SubmissionCard
                   row={row}
                   classId={classId}
+                  classSlug={classSlug}
                   assignmentId={assignmentId}
                   maxPoints={item.maxPoints}
                 />

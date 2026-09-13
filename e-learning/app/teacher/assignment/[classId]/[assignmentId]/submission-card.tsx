@@ -19,7 +19,8 @@ const IN_PROGRESS = 'in_progress';
 type SubmissionCardProps = {
   row: SubmissionRow;
   classId: number;
-  assignmentId: number;
+  classSlug: string;
+  assignmentId: string;
   maxPoints: string;
 };
 
@@ -27,11 +28,12 @@ type SubmissionCardProps = {
 export function SubmissionCard({
   row,
   classId,
+  classSlug,
   assignmentId,
   maxPoints,
 }: SubmissionCardProps) {
   const href = row.submissionId
-    ? `/teacher/assignment/${classId}/${assignmentId}/submissions/${row.submissionId}`
+    ? `/teacher/assignment/${classSlug}/${assignmentId}/submissions/${row.submissionId}`
     : null;
   // an attempt still in progress has nothing to look at and must not be reset
   const actionable = href !== null && row.status !== IN_PROGRESS;

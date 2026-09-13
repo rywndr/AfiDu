@@ -37,7 +37,7 @@ export default async function TeacherAssignmentPage() {
           {classes.map((studentClass) => (
             <li key={studentClass.id}>
               <Link
-                href={`/teacher/assignment/${studentClass.id}`}
+                href={`/teacher/assignment/${studentClass.slug}`}
                 className="block rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-accent-warm/50"
               >
                 <SurfaceCard className="h-full transition-shadow hover:shadow-accent">

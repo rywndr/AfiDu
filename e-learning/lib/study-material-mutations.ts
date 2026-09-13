@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
+
 import { and, eq, isNull, or } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -41,6 +43,7 @@ export async function createMaterial(
 
   try {
     await db.insert(studyMaterial).values({
+      publicId: randomUUID(),
       title: input.title,
       slug: await buildMaterialSlug(input.title),
       description: input.description.trim(),
@@ -72,11 +75,11 @@ export async function createMaterial(
 
 export async function updateMaterial(
   input: UpdateMaterialInput,
-  materialId: number,
+  materialId: string,
 ): Promise<MutationResult> {
   const [current] = await db
     .select({
-      id: studyMaterial.id,
+      id: studyMaterial.publicId,
       title: studyMaterial.title,
       slug: studyMaterial.slug,
       materialType: studyMaterial.materialType,
@@ -89,7 +92,7 @@ export async function updateMaterial(
     .from(studyMaterial)
     .where(
       and(
-        eq(studyMaterial.id, materialId),
+        eq(studyMaterial.publicId, materialId),
         eq(studyMaterial.studentClassId, input.classId),
       ),
     )
@@ -144,7 +147,7 @@ export async function updateMaterial(
           input.status === 'published' ? current.publishedAt ?? now : null,
         editedAt: now,
       })
-      .where(eq(studyMaterial.id, materialId));
+      .where(eq(studyMaterial.publicId, materialId));
   } catch (error) {
     console.error('could not update study material', error);
     return fail('Could not update the material. Please try again.', 500);
@@ -158,14 +161,17 @@ export async function updateMaterial(
 
 export async function deleteMaterial(
   classId: number,
-  materialId: number,
+  materialId: string,
 ): Promise<MutationResult> {
   const [material] = await db
-    .select({ id: studyMaterial.id, file: studyMaterial.file })
+    .select({
+      dbId: studyMaterial.id,
+      file: studyMaterial.file,
+    })
     .from(studyMaterial)
     .where(
       and(
-        eq(studyMaterial.id, materialId),
+        eq(studyMaterial.publicId, materialId),
         eq(studyMaterial.studentClassId, classId),
       ),
     )
@@ -179,8 +185,8 @@ export async function deleteMaterial(
       db
         .update(assignment)
         .set({ materialId: null, updatedAt: new Date() })
-        .where(eq(assignment.materialId, materialId)),
-      db.delete(studyMaterial).where(eq(studyMaterial.id, materialId)),
+        .where(eq(assignment.materialId, material.dbId)),
+      db.delete(studyMaterial).where(eq(studyMaterial.id, material.dbId)),
     ]);
   } catch (error) {
     console.error('could not delete study material', error);
@@ -193,15 +199,15 @@ export async function deleteMaterial(
 
 export async function linkAssignment(
   classId: number,
-  materialId: number,
-  assignmentId: number,
+  materialId: string,
+  assignmentId: string,
 ): Promise<MutationResult> {
   const [material] = await db
     .select({ id: studyMaterial.id })
     .from(studyMaterial)
     .where(
       and(
-        eq(studyMaterial.id, materialId),
+        eq(studyMaterial.publicId, materialId),
         eq(studyMaterial.studentClassId, classId),
       ),
     )
@@ -211,10 +217,10 @@ export async function linkAssignment(
 
   const updated = await db
     .update(assignment)
-    .set({ materialId, updatedAt: new Date() })
+    .set({ materialId: material.id, updatedAt: new Date() })
     .where(
       and(
-        eq(assignment.id, assignmentId),
+        eq(assignment.publicId, assignmentId),
         or(eq(assignment.studentClassId, classId), isNull(assignment.studentClassId)),
       ),
     )
@@ -229,16 +235,31 @@ export async function linkAssignment(
 
 export async function unlinkAssignment(
   classId: number,
-  materialId: number,
-  assignmentId: number,
+  materialId: string,
+  assignmentId: string,
 ): Promise<MutationResult> {
+  const [material] = await db
+    .select({ id: studyMaterial.id })
+    .from(studyMaterial)
+    .where(
+      and(
+        eq(studyMaterial.publicId, materialId),
+        eq(studyMaterial.studentClassId, classId),
+      ),
+    )
+    .limit(1);
+
+  if (!material) {
+    return { error: 'That material no longer exists.', status: 404 };
+  }
+
   const unlinked = await db
     .update(assignment)
     .set({ materialId: null, updatedAt: new Date() })
     .where(
       and(
-        eq(assignment.id, assignmentId),
-        eq(assignment.materialId, materialId),
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.materialId, material.id),
         or(eq(assignment.studentClassId, classId), isNull(assignment.studentClassId)),
       ),
     )

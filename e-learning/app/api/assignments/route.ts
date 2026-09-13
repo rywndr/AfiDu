@@ -40,7 +40,6 @@ export async function POST(request: Request) {
   );
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/assignment/${input.data.classId}`);
-  revalidatePath('/teacher/assignment');
+  revalidatePath('/teacher/assignment', 'layout');
   return Response.json({ success: true }, { status: 201 });
 }

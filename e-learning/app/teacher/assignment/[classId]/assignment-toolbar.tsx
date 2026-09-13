@@ -12,14 +12,14 @@ import {
 import { cn } from '@/lib/utils';
 
 type AssignmentToolbarProps = {
-  classId: number;
+  classSlug: string;
   query: string;
   category?: SubjectCategory;
   status?: AssignmentStatus;
 };
 
 export function AssignmentToolbar({
-  classId,
+  classSlug,
   query,
   category,
   status,
@@ -49,7 +49,7 @@ export function AssignmentToolbar({
       view={{ noun: 'assignments', role: 'teacher' }}
       action={
         <Link
-          href={`/teacher/assignment/${classId}/new`}
+          href={`/teacher/assignment/${classSlug}/new`}
           className={cn(
             buttonVariants({ size: 'lg' }),
             'h-11 w-full shrink-0 lg:h-9 lg:w-auto',

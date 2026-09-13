@@ -25,6 +25,7 @@ import {
   time,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
 
@@ -100,6 +101,7 @@ export const verification = pgTable('auth_verification', {
 export const student = pgTable('students_student', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
+  publicId: varchar('public_id', { length: 22 }).notNull().unique(),
   level: varchar('level', { length: 20 }).notNull(),
   email: varchar('email', { length: 254 }).notNull().default(''),
   assignedClassId: bigint('assigned_class_id', { mode: 'number' }),
@@ -110,6 +112,7 @@ export const student = pgTable('students_student', {
 export const studentClass = pgTable('students_studentclass', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   name: varchar('name', { length: 100 }).notNull().unique(),
+  slug: varchar('slug', { length: 120 }).notNull().unique(),
   description: text('description').notNull(),
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
@@ -130,6 +133,7 @@ export const studyMaterial = pgTable(
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
     title: varchar('title', { length: 255 }).notNull(),
+    publicId: uuid('public_id').notNull().unique(),
     slug: varchar('slug', { length: 280 }).notNull().unique(),
     description: text('description').notNull(),
     materialType: varchar('material_type', { length: 20 })
@@ -180,6 +184,7 @@ export const assignment = pgTable(
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
     title: varchar('title', { length: 255 }).notNull(),
+    publicId: uuid('public_id').notNull().unique(),
     slug: varchar('slug', { length: 280 }).notNull().unique(),
     description: text('description').notNull(),
     category: varchar('category', { length: 20 }).notNull(),

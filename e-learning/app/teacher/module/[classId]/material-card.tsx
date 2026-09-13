@@ -17,10 +17,11 @@ import {
 type MaterialCardProps = {
   material: MaterialSummary;
   classId: number;
+  classSlug: string;
   assignments: LinkableAssignment[];
 };
 
-function MaterialRow({ material, classId, assignments }: MaterialCardProps) {
+function MaterialRow({ material, classId, classSlug, assignments }: MaterialCardProps) {
   return (
     <SurfaceCard>
       <CardContent className="p-4 sm:p-5">
@@ -53,7 +54,11 @@ function MaterialRow({ material, classId, assignments }: MaterialCardProps) {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-start gap-2 sm:justify-end">
-                <MaterialActions material={material} classId={classId} />
+                <MaterialActions
+                  material={material}
+                  classId={classId}
+                  classSlug={classSlug}
+                />
               </div>
             </div>
           </div>
@@ -73,6 +78,7 @@ function MaterialRow({ material, classId, assignments }: MaterialCardProps) {
 function MaterialTile({
   material,
   classId,
+  classSlug,
   assignments,
 }: MaterialCardProps) {
   return (
@@ -105,6 +111,7 @@ function MaterialTile({
           <MaterialFileLinks material={material} />
           <MaterialActionMenu
             classId={classId}
+            classSlug={classSlug}
             materialId={material.id}
             title={material.title}
           />

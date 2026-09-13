@@ -152,7 +152,7 @@
           {% for item in students_data %}
             <tr class="hover:bg-orange-50">
               <td class="px-4 py-2 whitespace-nowrap">
-                <a href="{% url 'students:student-detail' item.student.id %}?next={% url 'reports:report-list' %}" class="text-[#ff4f25] hover:underline">
+                <a href="{% url 'students:student-detail' item.student.public_id %}?next={% url 'reports:report-list' %}" class="text-[#ff4f25] hover:underline">
                   {{ item.student.name }}
                 </a>
               </td>
@@ -176,7 +176,7 @@
                 </td>
               {% endfor %}
               <td class="px-4 py-2 whitespace-nowrap text-center">
-                <button title="Download student report"  type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.id %}?year={{ year }}&semester={{ semester }}'"
+                <button title="Download student report"  type="button" onclick="window.location.href='{% url 'reports:export-report-pdf' item.student.public_id %}?year={{ year }}&semester={{ semester }}'"
                         class="bg-[#ff4f25] hover:bg-[#cc3f1e] text-white rounded-full p-2 shadow" id="export-report-btn">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13 7h-2V3H9v4H7l3 3 3-3zM5 13v2h10v-2H5z" />

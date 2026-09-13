@@ -89,7 +89,7 @@
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{% if payment.payment_date %}{{ payment.payment_date|date:"d M Y H:i" }}{% else %}-{% endif %}</td>
                       <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
                         <button type="button" class="update-payment-btn inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#ff4f25] hover:bg-[#e63e20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]" data-id="{{ payment.id }}" data-current="{{ payment.amount_paid }}" data-fee="{{ payment_config.monthly_fee }}" data-is-installment="{{ payment.is_installment|lower }}" data-current-installment="{{ payment.current_installment }}"><i class="fa-solid fa-money-bill-wave mr-1"></i> Update Payment</button>
-                        <form method="post" action="{% url 'payments:toggle-payment' student.id payment.month year %}" class="inline-block ml-2">
+                        <form method="post" action="{% url 'payments:toggle-payment' student.public_id payment.month year %}" class="inline-block ml-2">
                           {% csrf_token %}
                           <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff4f25]">{% if payment.paid %}<i class="fa-solid fa-rotate-left mr-1"></i> Mark Unpaid{% else %}<i class="fa-solid fa-check mr-1"></i> Mark Paid{% endif %}</button>
                         </form>

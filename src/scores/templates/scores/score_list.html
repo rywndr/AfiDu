@@ -200,7 +200,7 @@
                 {% for student, form in forms %}
                   <tr class="score-row" data-prefix="student_{{ student.id }}">
                     <td class="sticky left-0 z-10 min-w-44 whitespace-nowrap bg-white px-4 py-3">
-                      <a href="{% url 'students:student-detail' student.id %}?next={% url 'scores:score-list' %}"
+                      <a href="{% url 'students:student-detail' student.public_id %}?next={% url 'scores:score-list' %}"
                         class="text-sm font-medium text-[#e54320] hover:underline">
                         {{ student.name }}
                       </a>

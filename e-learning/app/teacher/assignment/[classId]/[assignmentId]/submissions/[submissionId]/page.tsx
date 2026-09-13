@@ -10,36 +10,40 @@ import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
 import { submissionStatusLabel } from '@/lib/choices';
 import { formatDateTime, formatDuration } from '@/lib/format';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteId, parseRouteUuid } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { getSubmissionDetail, type SubmissionDetail } from '@/lib/assignments';
+import { getClassDetailBySlug } from '@/lib/study-materials';
 
 import { GradeForm } from './grade-form';
 
 type SubmissionPageProps = PageProps<'/teacher/assignment/[classId]/[assignmentId]/submissions/[submissionId]'>;
 
-/** The three ids of the route, or nulls if any of them is not a usable id. */
+/** Resolve the public class slug and assignment UUID; submissions stay numeric. */
 async function routeIds(params: SubmissionPageProps['params']) {
-  const { classId, assignmentId, submissionId } = await params;
-  const ids = {
-    classId: parseRouteId(classId),
-    assignmentId: parseRouteId(assignmentId),
-    submissionId: parseRouteId(submissionId),
-  };
+  const { classId: classSlug, assignmentId, submissionId } = await params;
+  const detail = await getClassDetailBySlug(classSlug);
+  const assignmentPublicId = parseRouteUuid(assignmentId);
+  const submissionIdNumber = parseRouteId(submissionId);
 
-  return Object.values(ids).some(Number.isNaN)
-    ? { classId: null, assignmentId: null, submissionId: null }
-    : ids;
+  return detail && assignmentPublicId !== null && !Number.isNaN(submissionIdNumber)
+    ? {
+        classSlug,
+        classId: detail.id,
+        assignmentId: assignmentPublicId,
+        submissionId: submissionIdNumber,
+      }
+    : { classSlug: null, classId: null, assignmentId: null, submissionId: null };
 }
 
 export async function generateMetadata({
   params,
 }: SubmissionPageProps): Promise<Metadata> {
-  const { assignmentId, submissionId } = await routeIds(params);
+  const { classId, assignmentId, submissionId } = await routeIds(params);
   const detail =
-    assignmentId === null || submissionId === null
+    classId === null || assignmentId === null || submissionId === null
       ? null
-      : await getSubmissionDetail(assignmentId, submissionId);
+      : await getSubmissionDetail(classId, assignmentId, submissionId);
 
   return {
     title: detail
@@ -122,15 +126,24 @@ function SubmissionFacts({ detail }: { detail: SubmissionDetail }) {
 export default async function SubmissionPage({ params }: SubmissionPageProps) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
-  const { classId, assignmentId, submissionId } = await routeIds(params);
-  if (classId === null || assignmentId === null || submissionId === null) notFound();
+  const route = await routeIds(params);
+  if (
+    route.classSlug === null ||
+    route.classId === null ||
+    route.assignmentId === null ||
+    route.submissionId === null
+  ) {
+    notFound();
+  }
 
-  const detail = await getSubmissionDetail(assignmentId, submissionId);
+  const { classSlug, classId, assignmentId, submissionId } = route;
+
+  const detail = await getSubmissionDetail(classId, assignmentId, submissionId);
   if (!detail) notFound();
 
   return (
     <>
-      <BackLink href={`/teacher/assignment/${classId}/${assignmentId}`}>
+      <BackLink href={`/teacher/assignment/${classSlug}/${assignmentId}`}>
         All submissions
       </BackLink>
 
@@ -142,7 +155,7 @@ export default async function SubmissionPage({ params }: SubmissionPageProps) {
       <SubmissionFacts detail={detail} />
 
       <GradeForm
-        classId={classId}
+        classSlug={classSlug}
         assignmentId={assignmentId}
         submission={detail}
       />

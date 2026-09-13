@@ -36,10 +36,11 @@ export type StartAttemptResult = MutationResult & { submissionId?: number };
 export async function startAttempt(
   studentId: number,
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<StartAttemptResult> {
   const [item] = await db
     .select({
+      id: assignment.id,
       status: assignment.status,
       openAt: assignment.openAt,
       dueAt: assignment.dueAt,
@@ -49,7 +50,7 @@ export async function startAttempt(
     .from(assignment)
     .where(
       and(
-        eq(assignment.id, assignmentId),
+        eq(assignment.publicId, assignmentId),
         eq(assignment.studentClassId, classId),
         eq(assignment.status, 'published'),
       ),
@@ -57,6 +58,8 @@ export async function startAttempt(
     .limit(1);
 
   if (!item) return { error: 'That assignment is not available.', status: 404 };
+
+  const assignmentDbId = item.id;
 
   const attempts = await db
     .select({
@@ -66,7 +69,10 @@ export async function startAttempt(
     })
     .from(submission)
     .where(
-      and(eq(submission.assignmentId, assignmentId), eq(submission.studentId, studentId)),
+      and(
+        eq(submission.assignmentId, assignmentDbId),
+        eq(submission.studentId, studentId),
+      ),
     )
     .orderBy(asc(submission.attemptNumber));
 
@@ -86,7 +92,7 @@ export async function startAttempt(
     const [created] = await db
       .insert(submission)
       .values({
-        assignmentId,
+        assignmentId: assignmentDbId,
         studentId,
         attemptNumber,
         status: IN_PROGRESS,

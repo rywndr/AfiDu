@@ -10,6 +10,7 @@ import {
   getStudentProfile,
   isStaffRole,
 } from '@/lib/session';
+import { parseRouteUuid } from '@/lib/route-params';
 import { canStudentReadMaterial } from '@/lib/student-materials';
 
 /**
@@ -42,8 +43,8 @@ export async function GET(
     return new Response('Not found', { status: 404 });
   }
 
-  const id = Number((await params).id);
-  if (!Number.isInteger(id)) {
+  const id = parseRouteUuid((await params).id);
+  if (id === null) {
     return new Response('Not found', { status: 404 });
   }
 
@@ -55,7 +56,7 @@ export async function GET(
       studentClassId: studyMaterial.studentClassId,
     })
     .from(studyMaterial)
-    .where(eq(studyMaterial.id, id))
+    .where(eq(studyMaterial.publicId, id))
     .limit(1);
 
   if (!material?.file || !(await mayRead(session.user, material))) {

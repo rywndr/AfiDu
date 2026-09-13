@@ -5,7 +5,7 @@ import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { materialTypeLabel } from '@/lib/choices';
 import { formatDate } from '@/lib/format';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { requireStudentProfile } from '@/lib/student-access';
 import { getStudentMaterial } from '@/lib/student-materials';
 
@@ -22,8 +22,8 @@ export default async function StudentModuleDetailPage({
   const profile = await requireStudentProfile();
   if (!profile || profile.classId === null) redirect('/student/module');
 
-  const materialId = parseRouteId((await params).materialId);
-  if (Number.isNaN(materialId)) notFound();
+  const materialId = parseRouteUuid((await params).materialId);
+  if (materialId === null) notFound();
 
   const material = await getStudentMaterial(profile.classId, materialId);
   if (!material) notFound();

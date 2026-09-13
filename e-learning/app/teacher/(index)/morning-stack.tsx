@@ -85,8 +85,8 @@ function stackDetail(item: TeacherStackItem, now: Date): string {
 
 /** A draft is opened to be finished; everything else, to see who handed in. */
 function stackHref(item: TeacherStackItem): string {
-  const { classId, id } = item.assignment;
-  const base = `/teacher/assignment/${classId}/${id}`;
+  const { classSlug, id } = item.assignment;
+  const base = `/teacher/assignment/${classSlug}/${id}`;
   return item.kind === 'draft' ? `${base}/edit` : base;
 }
 

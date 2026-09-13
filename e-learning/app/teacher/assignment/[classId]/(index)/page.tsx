@@ -18,10 +18,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { isAssignmentStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
 import { parseListView } from '@/lib/list-view';
-import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listClassAssignments } from '@/lib/assignments';
-import { getClassDetail } from '@/lib/study-materials';
+import { getClassDetailBySlug } from '@/lib/study-materials';
 
 import { AssignmentCard } from '../assignment-card';
 import { AssignmentToolbar } from '../assignment-toolbar';
@@ -29,9 +28,8 @@ import { AssignmentToolbar } from '../assignment-toolbar';
 export async function generateMetadata({
   params,
 }: PageProps<'/teacher/assignment/[classId]'>): Promise<Metadata> {
-  const { classId } = await params;
-  const id = parseRouteId(classId);
-  const detail = Number.isNaN(id) ? null : await getClassDetail(id);
+  const { classId: classSlug } = await params;
+  const detail = await getClassDetailBySlug(classSlug);
 
   return {
     title: detail
@@ -64,7 +62,7 @@ async function AssignmentDescription({
   detail,
   assignmentPage,
 }: {
-  detail: NonNullable<Awaited<ReturnType<typeof getClassDetail>>>;
+  detail: NonNullable<Awaited<ReturnType<typeof getClassDetailBySlug>>>;
   assignmentPage: AssignmentPagePromise;
 }) {
   const result = await assignmentPage;
@@ -76,10 +74,12 @@ async function AssignmentDescription({
 }
 
 async function AssignmentResults({
+  classSlug,
   classId,
   assignmentPage,
   search,
 }: {
+  classSlug: string;
   classId: number;
   assignmentPage: AssignmentPagePromise;
   search: AssignmentSearch;
@@ -104,14 +104,14 @@ async function AssignmentResults({
           action={
             filtering ? (
               <ListViewLink
-                href={`/teacher/assignment/${classId}`}
+                href={`/teacher/assignment/${classSlug}`}
                 className={buttonVariants({ variant: 'outline', size: 'lg' })}
               >
                 Clear filters
               </ListViewLink>
             ) : (
               <Link
-                href={`/teacher/assignment/${classId}/new`}
+                href={`/teacher/assignment/${classSlug}/new`}
                 className={buttonVariants({ size: 'lg' })}
               >
                 New assignment
@@ -127,14 +127,14 @@ async function AssignmentResults({
         <ClientList>
           {assignments.map((item) => (
             <li key={item.id}>
-              <AssignmentCard item={item} classId={classId} />
+              <AssignmentCard item={item} classId={classId} classSlug={classSlug} />
             </li>
           ))}
         </ClientList>
       )}
 
       <QueryPagination
-        pathname={`/teacher/assignment/${classId}`}
+        pathname={`/teacher/assignment/${classSlug}`}
         page={result.page}
         totalPages={result.totalPages}
         query={{
@@ -153,15 +153,13 @@ export default async function ClassAssignmentPage({
 }: PageProps<'/teacher/assignment/[classId]'>) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
-  const id = parseRouteId((await params).classId);
-  if (Number.isNaN(id)) notFound();
-
-  const detail = await getClassDetail(id);
+  const classSlug = (await params).classId;
+  const detail = await getClassDetailBySlug(classSlug);
   if (!detail) notFound();
 
   const search = readSearchParams(await searchParams);
   const { query, category, status, view, page } = search;
-  const assignmentPage = listClassAssignments(id, {
+  const assignmentPage = listClassAssignments(detail.id, {
     query,
     category,
     status,
@@ -184,7 +182,7 @@ export default async function ClassAssignmentPage({
         }
         actions={
           <AssignmentToolbar
-            classId={id}
+            classSlug={classSlug}
             query={query}
             category={category}
             status={status}
@@ -206,7 +204,8 @@ export default async function ClassAssignmentPage({
         }
       >
         <AssignmentResults
-          classId={id}
+          classSlug={classSlug}
+          classId={detail.id}
           assignmentPage={assignmentPage}
           search={search}
         />

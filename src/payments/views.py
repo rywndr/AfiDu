@@ -259,6 +259,8 @@ class PaymentConfigView(SuperuserRequiredMixin, PaymentContextMixin, UpdateView)
 
 class StudentPaymentDetailView(StaffRequiredMixin, PaymentContextMixin, DetailView):
     model = Student
+    slug_field = "public_id"
+    slug_url_kwarg = "public_id"
     template_name = "payments/payment_detail.html"
     context_object_name = "student"
 
@@ -506,8 +508,8 @@ class UpdatePaymentView(StaffRequiredMixin, View):
 
 
 class TogglePaymentView(View):
-    def post(self, request, student_id, month, year):
-        student = get_object_or_404(Student, id=student_id)
+    def post(self, request, public_id, month, year):
+        student = get_object_or_404(Student, public_id=public_id)
         payment = Payment.objects.get(student=student, year=year, month=month)
         previous_state = payment.paid
         payment.paid = not payment.paid

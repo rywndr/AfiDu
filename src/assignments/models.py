@@ -1,4 +1,5 @@
 from decimal import Decimal
+import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -35,6 +36,7 @@ class Assignment(models.Model):
     ]
 
     title = models.CharField(max_length=255)
+    public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     description = models.TextField(blank=True)
 

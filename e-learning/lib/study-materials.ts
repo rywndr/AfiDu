@@ -49,6 +49,7 @@ import {
 
 export type ClassSummary = {
   id: number;
+  slug: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -58,7 +59,7 @@ export type ClassSummary = {
 };
 
 export type MaterialSummary = {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   description: string;
@@ -77,7 +78,7 @@ export type MaterialSummary = {
 export type MaterialPage = PageResult<MaterialSummary>;
 
 export type EditableMaterial = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   materialType: MaterialType;
@@ -91,14 +92,14 @@ export type EditableMaterial = {
 };
 
 export type LinkedAssignment = {
-  id: number;
+  id: string;
   title: string;
   status: string;
 };
 
 export type LinkableAssignment = LinkedAssignment & {
   classScoped: boolean;
-  materialId: number | null;
+  materialId: string | null;
 };
 
 /** Every class, with the two counts the class cards show. */
@@ -107,6 +108,7 @@ export async function listClasses(): Promise<ClassSummary[]> {
     db
       .select({
         id: studentClass.id,
+        slug: studentClass.slug,
         name: studentClass.name,
         startTime: studentClass.startTime,
         endTime: studentClass.endTime,
@@ -140,10 +142,11 @@ export async function listClasses(): Promise<ClassSummary[]> {
  * to preselect the level on the upload form -- `StudentClass` has no level of
  * its own, but `StudyMaterial.level` is NOT NULL.
  */
-export async function getClassDetail(classId: number) {
+async function readClassDetail(where: SQL) {
   const [classRow] = await db
     .select({
       id: studentClass.id,
+      slug: studentClass.slug,
       name: studentClass.name,
       description: studentClass.description,
       startTime: studentClass.startTime,
@@ -151,7 +154,7 @@ export async function getClassDetail(classId: number) {
       days: studentClass.days,
     })
     .from(studentClass)
-    .where(eq(studentClass.id, classId))
+    .where(where)
     .limit(1);
 
   if (!classRow) return null;
@@ -159,7 +162,7 @@ export async function getClassDetail(classId: number) {
   const [commonLevel] = await db
     .select({ level: student.level, total: count() })
     .from(student)
-    .where(eq(student.assignedClassId, classId))
+    .where(eq(student.assignedClassId, classRow.id))
     .groupBy(student.level)
     .orderBy(desc(count()))
     .limit(1);
@@ -169,6 +172,10 @@ export async function getClassDetail(classId: number) {
     days: classRow.days ?? [],
     suggestedLevel: commonLevel?.level ?? null,
   };
+}
+
+export function getClassDetailBySlug(slug: string) {
+  return readClassDetail(eq(studentClass.slug, slug));
 }
 
 /** Materials targeted at one class, newest first, with their linked assignments. */
@@ -216,7 +223,8 @@ export async function listClassMaterials(
 
   const materials = await db
     .select({
-      id: studyMaterial.id,
+      id: studyMaterial.publicId,
+      dbId: studyMaterial.id,
       title: studyMaterial.title,
       slug: studyMaterial.slug,
       description: studyMaterial.description,
@@ -246,16 +254,16 @@ export async function listClassMaterials(
   const links = await db
     .select({
       materialId: assignment.materialId,
-      id: assignment.id,
+      id: assignment.publicId,
       title: assignment.title,
       status: assignment.status,
     })
     .from(assignment)
     .where(
-      inArray(
-        assignment.materialId,
-        materials.map((material) => material.id),
-      ),
+        inArray(
+          assignment.materialId,
+          materials.map((material) => material.dbId),
+        ),
     )
     .orderBy(desc(assignment.createdAt));
 
@@ -268,13 +276,13 @@ export async function listClassMaterials(
   }
 
   const items = materials.map(
-    ({ uploaderFirstName, uploaderLastName, uploaderEmail, ...material }) => ({
+    ({ dbId, uploaderFirstName, uploaderLastName, uploaderEmail, ...material }) => ({
       ...material,
       uploaderName:
         [uploaderFirstName, uploaderLastName].filter(Boolean).join(' ').trim() ||
         uploaderEmail ||
         null,
-      linkedAssignments: byMaterial.get(material.id) ?? [],
+      linkedAssignments: byMaterial.get(dbId) ?? [],
     }),
   );
 
@@ -283,11 +291,11 @@ export async function listClassMaterials(
 
 export async function getEditableMaterial(
   classId: number,
-  materialId: number,
+  materialId: string,
 ): Promise<EditableMaterial | null> {
   const [material] = await db
     .select({
-      id: studyMaterial.id,
+      id: studyMaterial.publicId,
       title: studyMaterial.title,
       description: studyMaterial.description,
       materialType: studyMaterial.materialType,
@@ -302,7 +310,7 @@ export async function getEditableMaterial(
     .from(studyMaterial)
     .where(
       and(
-        eq(studyMaterial.id, materialId),
+        eq(studyMaterial.publicId, materialId),
         eq(studyMaterial.studentClassId, classId),
       ),
     )
@@ -327,13 +335,14 @@ export async function listLinkableAssignments(
 ): Promise<LinkableAssignment[]> {
   const rows = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
       title: assignment.title,
       status: assignment.status,
       studentClassId: assignment.studentClassId,
-      materialId: assignment.materialId,
+      materialId: studyMaterial.publicId,
     })
     .from(assignment)
+    .leftJoin(studyMaterial, eq(assignment.materialId, studyMaterial.id))
     .where(
       and(
         or(

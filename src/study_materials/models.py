@@ -58,6 +58,7 @@ class StudyMaterial(models.Model):
     LEVEL_CHOICES = LEVELS
 
     title = models.CharField(max_length=255)
+    public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     description = models.TextField(blank=True)
     material_type = models.CharField(

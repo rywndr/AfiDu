@@ -14,7 +14,7 @@ export function StartAttempt({
   assignmentId,
   attemptNumber,
 }: {
-  assignmentId: number;
+  assignmentId: string;
   attemptNumber: number;
 }) {
   const router = useRouter();

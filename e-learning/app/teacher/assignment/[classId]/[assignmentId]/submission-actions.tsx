@@ -11,7 +11,7 @@ import { pluralize } from '@/lib/format';
 
 type ResetSubmissionButtonProps = {
   classId: number;
-  assignmentId: number;
+  assignmentId: string;
   studentId: number;
   studentName: string;
   attemptCount: number;

@@ -15,7 +15,7 @@ import { apiRequest } from '@/lib/api-client';
 
 type AssignmentActionProps = {
   classId: number;
-  assignmentId: number;
+  assignmentId: string;
   title: string;
   submissionCount: number;
 };

@@ -40,9 +40,10 @@ const CANDIDATE_LIMIT = 60;
 
 /** Assignment and class shown in a queue item. */
 export type StackAssignment = {
-  id: number;
+  id: string;
   title: string;
   classId: number;
+  classSlug: string;
   className: string;
 };
 
@@ -92,12 +93,14 @@ function tieBreak(item: TeacherStackItem): number {
 }
 
 type CandidateRow = {
-  id: number;
+  id: string;
+  dbId: number;
   title: string;
   status: string;
   dueAt: Date | null;
   allowLate: boolean;
   classId: number;
+  classSlug: string;
   className: string;
 };
 
@@ -150,10 +153,11 @@ function stackItemFor(
     id: row.id,
     title: row.title,
     classId: row.classId,
+    classSlug: row.classSlug,
     className: row.className,
   };
 
-  const awaitingCount = awaitingCounts.get(row.id) ?? 0;
+  const awaitingCount = awaitingCounts.get(row.dbId) ?? 0;
   if (awaitingCount > 0) {
     return { kind: 'to_mark', assignment: target, awaitingCount };
   }
@@ -177,12 +181,14 @@ export async function listMorningStack(now: Date = new Date()): Promise<TeacherS
 
   const rows = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
+      dbId: assignment.id,
       title: assignment.title,
       status: assignment.status,
       dueAt: assignment.dueAt,
       allowLate: assignment.allowLate,
       classId: studentClass.id,
+      classSlug: studentClass.slug,
       className: studentClass.name,
     })
     .from(assignment)

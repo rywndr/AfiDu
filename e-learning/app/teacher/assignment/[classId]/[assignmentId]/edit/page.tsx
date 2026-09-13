@@ -4,12 +4,12 @@ import { notFound } from 'next/navigation';
 import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { UnsavedChangesProvider } from '@/components/form/unsaved-changes';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { listScoreConfigs } from '@/lib/score-config-data';
 import { getEditableAssignment, listClassMaterialOptions } from '@/lib/assignments';
 import { isB2Configured } from '@/lib/b2';
-import { getClassDetail } from '@/lib/study-materials';
+import { getClassDetailBySlug } from '@/lib/study-materials';
 
 import { AssignmentForm } from '../../new/assignment-form';
 
@@ -24,12 +24,12 @@ export async function generateMetadata({
   params,
 }: EditAssignmentPageProps): Promise<Metadata> {
   const { classId, assignmentId } = await params;
-  const classIdNumber = parseRouteId(classId);
-  const assignmentIdNumber = parseRouteId(assignmentId);
+  const assignmentPublicId = parseRouteUuid(assignmentId);
+  const detail = await getClassDetailBySlug(classId);
   const item =
-    Number.isNaN(classIdNumber) || Number.isNaN(assignmentIdNumber)
+    !detail || assignmentPublicId === null
       ? null
-      : await getEditableAssignment(classIdNumber, assignmentIdNumber);
+      : await getEditableAssignment(detail.id, assignmentPublicId);
 
   return {
     title: item
@@ -44,21 +44,22 @@ export default async function EditAssignmentPage({
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
   const { classId, assignmentId } = await params;
-  const classIdNumber = parseRouteId(classId);
-  const assignmentIdNumber = parseRouteId(assignmentId);
-  if (Number.isNaN(classIdNumber) || Number.isNaN(assignmentIdNumber)) notFound();
+  const assignmentPublicId = parseRouteUuid(assignmentId);
+  if (assignmentPublicId === null) notFound();
 
-  const [detail, item, materials, scoreConfigs] = await Promise.all([
-    getClassDetail(classIdNumber),
-    getEditableAssignment(classIdNumber, assignmentIdNumber),
-    listClassMaterialOptions(classIdNumber),
+  const detail = await getClassDetailBySlug(classId);
+  if (!detail) notFound();
+
+  const [item, materials, scoreConfigs] = await Promise.all([
+    getEditableAssignment(detail.id, assignmentPublicId),
+    listClassMaterialOptions(detail.id),
     listScoreConfigs(),
   ]);
-  if (!detail || !item) notFound();
+  if (!item) notFound();
 
   return (
     <UnsavedChangesProvider>
-      <BackLink href={`/teacher/assignment/${classIdNumber}/${assignmentIdNumber}`}>
+      <BackLink href={`/teacher/assignment/${classId}/${assignmentPublicId}`}>
         Back to submissions
       </BackLink>
 
@@ -68,7 +69,8 @@ export default async function EditAssignmentPage({
       />
 
       <AssignmentForm
-        classId={classIdNumber}
+        classId={detail.id}
+        classSlug={classId}
         suggestedLevel={detail.suggestedLevel}
         materials={materials}
         scoreConfigs={scoreConfigs}

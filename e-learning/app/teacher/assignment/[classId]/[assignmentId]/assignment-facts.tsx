@@ -16,10 +16,10 @@ import type { AssignmentSummary } from '@/lib/assignments';
 /** The window, marks and progress of an assignment, above its submissions. */
 export function AssignmentFacts({
   item,
-  classId,
+  classSlug,
 }: {
   item: AssignmentSummary;
-  classId: number;
+  classSlug: string;
 }) {
   const points = formatScore(item.maxPoints);
 
@@ -88,7 +88,7 @@ export function AssignmentFacts({
                 <MetaItem icon={BookOpen}>
                   <span className="truncate">
                     <Link
-                      href={`/teacher/module/${classId}/${item.materialId}/edit`}
+                      href={`/teacher/module/${classSlug}/${item.materialId}/edit`}
                       className="text-accent-primary hover:underline"
                     >
                       {item.materialTitle}

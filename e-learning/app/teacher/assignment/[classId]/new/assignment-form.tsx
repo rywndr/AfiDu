@@ -28,6 +28,7 @@ import { AssignmentScheduleSection } from './assignment-schedule-section';
 
 type AssignmentFormProps = {
   classId: number;
+  classSlug: string;
   suggestedLevel: string | null;
   materials: MaterialOption[];
   storageReady: boolean;
@@ -37,6 +38,7 @@ type AssignmentFormProps = {
 
 export function AssignmentForm({
   classId,
+  classSlug,
   suggestedLevel,
   materials,
   storageReady,
@@ -90,7 +92,7 @@ export function AssignmentForm({
       );
 
       form.reset();
-      router.push(`/teacher/assignment/${classId}`);
+      router.push(`/teacher/assignment/${classSlug}`);
       router.refresh();
     } catch (error) {
       setSaving(false);

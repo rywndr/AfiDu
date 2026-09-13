@@ -65,6 +65,7 @@ import { recordingQuestionIdFromFilename } from '@/lib/recordings';
 
 export type AssignmentClassSummary = {
   id: number;
+  slug: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -75,7 +76,7 @@ export type AssignmentClassSummary = {
 };
 
 export type AssignmentSummary = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   category: string;
@@ -89,7 +90,7 @@ export type AssignmentSummary = {
   allowLate: boolean;
   autoGrade: boolean;
   createdAt: Date;
-  materialId: number | null;
+  materialId: string | null;
   materialTitle: string | null;
   questionCount: number;
   submissionCount: number;
@@ -120,13 +121,13 @@ export type EditableQuestion = {
 };
 
 export type EditableAssignment = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   category: SubjectCategory;
   level: Level;
   status: AssignmentStatus;
-  materialId: number | null;
+  materialId: string | null;
   year: number | null;
   semester: Semester | null;
   scoreTarget: ScoreTarget | null;
@@ -204,7 +205,7 @@ export type SubmissionFileRef = {
 
 export type SubmissionDetail = {
   id: number;
-  assignmentId: number;
+  assignmentId: string;
   assignmentTitle: string;
   maxPoints: string;
   studentId: number;
@@ -229,7 +230,7 @@ export type SubmissionDetail = {
 };
 
 export type MaterialOption = {
-  id: number;
+  id: string;
   title: string;
   materialType: string;
   status: string;
@@ -243,6 +244,7 @@ export async function listAssignmentClasses(): Promise<AssignmentClassSummary[]>
     db
       .select({
         id: studentClass.id,
+        slug: studentClass.slug,
         name: studentClass.name,
         startTime: studentClass.startTime,
         endTime: studentClass.endTime,
@@ -320,7 +322,8 @@ export async function listClassAssignments(
 
   const rows = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
+      dbId: assignment.id,
       title: assignment.title,
       description: assignment.description,
       category: assignment.category,
@@ -334,7 +337,7 @@ export async function listClassAssignments(
       allowLate: assignment.allowLate,
       autoGrade: assignment.autoGrade,
       createdAt: assignment.createdAt,
-      materialId: assignment.materialId,
+      materialId: studyMaterial.publicId,
       materialTitle: studyMaterial.title,
     })
     .from(assignment)
@@ -348,7 +351,7 @@ export async function listClassAssignments(
     return { items: [], total, allTotal, page, pageSize, totalPages };
   }
 
-  const ids = rows.map((row) => row.id);
+  const ids = rows.map((row) => row.dbId);
   const [questionCounts, submissionCounts] = await Promise.all([
     db
       .select({ assignmentId: question.assignmentId, total: count() })
@@ -386,10 +389,11 @@ export async function listClassAssignments(
   }
 
   const items = rows.map((row) => {
-    const counts = submissions.get(row.id);
+    const counts = submissions.get(row.dbId);
+    const { dbId, ...publicRow } = row;
     return {
-      ...row,
-      questionCount: questions.get(row.id) ?? 0,
+      ...publicRow,
+      questionCount: questions.get(dbId) ?? 0,
       submissionCount: counts?.total ?? 0,
       awaitingGradingCount: counts?.awaiting ?? 0,
       gradedCount: counts?.graded ?? 0,
@@ -402,11 +406,12 @@ export async function listClassAssignments(
 /** One assignment scoped to its class, or null when it belongs elsewhere. */
 export async function getAssignmentDetail(
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<AssignmentSummary | null> {
   const [row] = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
+      dbId: assignment.id,
       title: assignment.title,
       description: assignment.description,
       category: assignment.category,
@@ -420,27 +425,32 @@ export async function getAssignmentDetail(
       allowLate: assignment.allowLate,
       autoGrade: assignment.autoGrade,
       createdAt: assignment.createdAt,
-      materialId: assignment.materialId,
+      materialId: studyMaterial.publicId,
       materialTitle: studyMaterial.title,
     })
     .from(assignment)
     .leftJoin(studyMaterial, eq(assignment.materialId, studyMaterial.id))
     .where(
-      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, classId)),
+      and(
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.studentClassId, classId),
+      ),
     )
     .limit(1);
 
   if (!row) return null;
 
+  const { dbId, ...publicRow } = row;
+
   const [questionCounts, submissionCounts] = await Promise.all([
     db
       .select({ total: count() })
       .from(question)
-      .where(eq(question.assignmentId, assignmentId)),
+      .where(eq(question.assignmentId, dbId)),
     db
       .select({ status: submission.status, total: count() })
       .from(submission)
-      .where(eq(submission.assignmentId, assignmentId))
+      .where(eq(submission.assignmentId, dbId))
       .groupBy(submission.status),
   ]);
 
@@ -456,7 +466,7 @@ export async function getAssignmentDetail(
   }
 
   return {
-    ...row,
+    ...publicRow,
     questionCount: questionCounts[0]?.total ?? 0,
     submissionCount,
     awaitingGradingCount,
@@ -467,17 +477,18 @@ export async function getAssignmentDetail(
 /** The assignment as the create/edit form needs it, questions included. */
 export async function getEditableAssignment(
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<EditableAssignment | null> {
   const [row] = await db
     .select({
-      id: assignment.id,
+      id: assignment.publicId,
+      dbId: assignment.id,
       title: assignment.title,
       description: assignment.description,
       category: assignment.category,
       level: assignment.level,
       status: assignment.status,
-      materialId: assignment.materialId,
+      materialId: studyMaterial.publicId,
       year: assignment.year,
       semester: assignment.semester,
       scoreTarget: assignment.scoreTarget,
@@ -494,7 +505,10 @@ export async function getEditableAssignment(
     })
     .from(assignment)
     .where(
-      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, classId)),
+      and(
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.studentClassId, classId),
+      ),
     )
     .limit(1);
 
@@ -507,15 +521,17 @@ export async function getEditableAssignment(
     return null;
   }
 
+  const { dbId, ...publicRow } = row;
+
   return {
-    ...row,
+    ...publicRow,
     category: row.category,
     level: row.level,
     status: row.status,
     semester: row.semester && isSemester(row.semester) ? row.semester : null,
     scoreTarget:
       row.scoreTarget && isScoreTarget(row.scoreTarget) ? row.scoreTarget : null,
-    questions: await listQuestions(assignmentId),
+    questions: await listQuestions(dbId),
   };
 }
 
@@ -591,7 +607,7 @@ export async function listQuestions(
  */
 export async function listAssignmentSubmissions(
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
   options: {
     query?: string;
     status?: SubmissionRowStatus;
@@ -599,6 +615,25 @@ export async function listAssignmentSubmissions(
     pageSize?: number;
   } = {},
 ): Promise<SubmissionPage> {
+  const [assignmentRow] = await db
+    .select({ id: assignment.id })
+    .from(assignment)
+    .where(eq(assignment.publicId, assignmentId))
+    .limit(1);
+  if (!assignmentRow) {
+    const { page, pageSize, totalPages } = resolvePageWindow(0, options);
+    return {
+      items: [],
+      total: 0,
+      allTotal: 0,
+      awaitingCount: 0,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  const assignmentDbId = assignmentRow.id;
   const [roster, submissions] = await Promise.all([
     db
       .select({ id: student.id, name: student.name, level: student.level })
@@ -623,7 +658,7 @@ export async function listAssignmentSubmissions(
       })
       .from(submission)
       .innerJoin(student, eq(submission.studentId, student.id))
-      .where(eq(submission.assignmentId, assignmentId))
+        .where(eq(submission.assignmentId, assignmentDbId))
       .orderBy(asc(submission.studentId), desc(submission.attemptNumber)),
   ]);
 
@@ -712,13 +747,15 @@ export async function listAssignmentSubmissions(
  * opened by editing the URL.
  */
 export async function getSubmissionDetail(
-  assignmentId: number,
+  classId: number,
+  assignmentId: string,
   submissionId: number,
 ): Promise<SubmissionDetail | null> {
   const [row] = await db
     .select({
       id: submission.id,
-      assignmentId: submission.assignmentId,
+      assignmentId: assignment.publicId,
+      assignmentDbId: submission.assignmentId,
       assignmentTitle: assignment.title,
       maxPoints: assignment.maxPoints,
       studentId: submission.studentId,
@@ -744,20 +781,30 @@ export async function getSubmissionDetail(
     .innerJoin(student, eq(submission.studentId, student.id))
     .leftJoin(user, eq(submission.gradedById, user.id))
     .where(
-      and(eq(submission.id, submissionId), eq(submission.assignmentId, assignmentId)),
+      and(
+        eq(submission.id, submissionId),
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.studentClassId, classId),
+      ),
     )
     .limit(1);
 
   if (!row) return null;
 
-  const { graderFirstName, graderLastName, graderEmail, ...submissionRow } = row;
+  const {
+    graderFirstName,
+    graderLastName,
+    graderEmail,
+    assignmentDbId,
+    ...submissionRow
+  } = row;
   const gradedByName =
     [graderFirstName, graderLastName].filter(Boolean).join(' ').trim() ||
     graderEmail ||
     null;
 
   const [questions, answers, files, attemptCount] = await Promise.all([
-    listQuestions(assignmentId),
+    listQuestions(assignmentDbId),
     db
       .select({
         id: submissionAnswer.id,
@@ -788,7 +835,7 @@ export async function getSubmissionDetail(
       .from(submission)
       .where(
         and(
-          eq(submission.assignmentId, assignmentId),
+          eq(submission.assignmentId, assignmentDbId),
           eq(submission.studentId, row.studentId),
         ),
       ),
@@ -880,7 +927,7 @@ export async function listClassMaterialOptions(
 ): Promise<MaterialOption[]> {
   return db
     .select({
-      id: studyMaterial.id,
+      id: studyMaterial.publicId,
       title: studyMaterial.title,
       materialType: studyMaterial.materialType,
       status: studyMaterial.status,

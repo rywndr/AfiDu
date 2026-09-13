@@ -36,7 +36,7 @@ function describe(event: TeacherActivityEvent): ActivityLine {
         iconClass: 'text-accent-warm-strong',
         summary: `${pluralize(event.count, 'submission')} received for ${assignment.title}`,
         className: assignment.className,
-        href: `/teacher/assignment/${assignment.classId}/${assignment.id}`,
+        href: `/teacher/assignment/${assignment.classSlug}/${assignment.id}`,
       };
     }
     case 'submissions_marked': {
@@ -46,7 +46,7 @@ function describe(event: TeacherActivityEvent): ActivityLine {
         iconClass: 'text-accent-primary',
         summary: `${pluralize(event.count, 'submission')} marked for ${assignment.title}`,
         className: assignment.className,
-        href: `/teacher/assignment/${assignment.classId}/${assignment.id}`,
+        href: `/teacher/assignment/${assignment.classSlug}/${assignment.id}`,
       };
     }
     case 'assignment_added': {
@@ -56,7 +56,7 @@ function describe(event: TeacherActivityEvent): ActivityLine {
         iconClass: 'text-accent-cool',
         summary: `${assignment.title} added`,
         className: assignment.className,
-        href: `/teacher/assignment/${assignment.classId}/${assignment.id}`,
+        href: `/teacher/assignment/${assignment.classSlug}/${assignment.id}`,
       };
     }
     case 'module_published': {
@@ -66,7 +66,7 @@ function describe(event: TeacherActivityEvent): ActivityLine {
         iconClass: 'text-accent-primary',
         summary: `${material.title} published`,
         className: material.className,
-        href: `/teacher/module/${material.classId}`,
+        href: `/teacher/module/${material.classSlug}`,
       };
     }
     case 'module_added': {
@@ -76,7 +76,7 @@ function describe(event: TeacherActivityEvent): ActivityLine {
         iconClass: 'text-ink-subtle',
         summary: `${material.title} uploaded`,
         className: material.className,
-        href: `/teacher/module/${material.classId}`,
+        href: `/teacher/module/${material.classSlug}`,
       };
     }
     default: {

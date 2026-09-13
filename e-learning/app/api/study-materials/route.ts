@@ -44,7 +44,6 @@ export async function POST(request: Request) {
   );
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/module/${input.classId}`);
-  revalidatePath('/teacher/module');
+  revalidatePath('/teacher/module', 'layout');
   return Response.json({ success: true }, { status: 201 });
 }

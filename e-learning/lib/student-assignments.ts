@@ -45,7 +45,7 @@ export type LatestAttempt = {
 };
 
 export type StudentAssignment = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   category: string;
@@ -61,7 +61,7 @@ export type StudentAssignment = {
   timeLimitMinutes: number | null;
   maxAttempts: number;
   maxPoints: string;
-  materialId: number | null;
+  materialId: string | null;
   materialTitle: string | null;
   createdAt: Date;
   questionCount: number;
@@ -131,7 +131,8 @@ export type StudentQuestion = {
 };
 
 const assignmentColumns = {
-  id: assignment.id,
+  id: assignment.publicId,
+  dbId: assignment.id,
   title: assignment.title,
   description: assignment.description,
   category: assignment.category,
@@ -147,7 +148,7 @@ const assignmentColumns = {
   timeLimitMinutes: assignment.timeLimitMinutes,
   maxAttempts: assignment.maxAttempts,
   maxPoints: assignment.maxPoints,
-  materialId: assignment.materialId,
+  materialId: studyMaterial.publicId,
   materialTitle: studyMaterial.title,
   createdAt: assignment.createdAt,
 };
@@ -203,7 +204,7 @@ export async function listStudentAssignments(
     return { ...paginate([], 0, options), outstanding: 0 };
   }
 
-  const ids = rows.map((row) => row.id);
+  const ids = rows.map((row) => row.dbId);
   const [questionCounts, attempts] = await Promise.all([
     db
       .select({ assignmentId: question.assignmentId, total: count() })
@@ -215,11 +216,11 @@ export async function listStudentAssignments(
 
   const questions = new Map(questionCounts.map((row) => [row.assignmentId, row.total]));
 
-  const all: StudentAssignment[] = rows.map((row) => ({
+  const all: StudentAssignment[] = rows.map(({ dbId, ...row }) => ({
     ...row,
-    questionCount: questions.get(row.id) ?? 0,
-    attemptsUsed: attempts.get(row.id)?.used ?? 0,
-    latestAttempt: attempts.get(row.id)?.latest ?? null,
+    questionCount: questions.get(dbId) ?? 0,
+    attemptsUsed: attempts.get(dbId)?.used ?? 0,
+    latestAttempt: attempts.get(dbId)?.latest ?? null,
   }));
 
   const needle = parseSearchQuery(options.query).toLowerCase();
@@ -253,7 +254,7 @@ export async function listStudentAssignments(
 export async function getStudentAssignment(
   studentId: number,
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<StudentAssignment | null> {
   const [row] = await db
     .select(assignmentColumns)
@@ -261,7 +262,7 @@ export async function getStudentAssignment(
     .leftJoin(studyMaterial, eq(assignment.materialId, studyMaterial.id))
     .where(
       and(
-        eq(assignment.id, assignmentId),
+        eq(assignment.publicId, assignmentId),
         eq(assignment.studentClassId, classId),
         eq(assignment.status, PUBLISHED),
       ),
@@ -270,20 +271,35 @@ export async function getStudentAssignment(
 
   if (!row) return null;
 
+  const { dbId, ...publicRow } = row;
+
   const [questionCounts, attempts] = await Promise.all([
     db
       .select({ total: count() })
       .from(question)
-      .where(eq(question.assignmentId, assignmentId)),
-    listAttempts(studentId, [assignmentId]),
+      .where(eq(question.assignmentId, dbId)),
+    listAttempts(studentId, [dbId]),
   ]);
 
   return {
-    ...row,
+    ...publicRow,
     questionCount: questionCounts[0]?.total ?? 0,
-    attemptsUsed: attempts.get(assignmentId)?.used ?? 0,
-    latestAttempt: attempts.get(assignmentId)?.latest ?? null,
+    attemptsUsed: attempts.get(dbId)?.used ?? 0,
+    latestAttempt: attempts.get(dbId)?.latest ?? null,
   };
+}
+
+/** Resolve a public assignment id for internal question and submission joins. */
+export async function getAssignmentDatabaseId(
+  assignmentId: string,
+): Promise<number | null> {
+  const [row] = await db
+    .select({ id: assignment.id })
+    .from(assignment)
+    .where(eq(assignment.publicId, assignmentId))
+    .limit(1);
+
+  return row?.id ?? null;
 }
 
 /**

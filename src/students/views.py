@@ -111,6 +111,8 @@ class StudentListView(
 
 class StudentDetailView(StaffRequiredMixin, StudentContextMixin, DetailView):
     model = Student
+    slug_field = "public_id"
+    slug_url_kwarg = "public_id"
     template_name = "students/student_detail.html"
     context_object_name = "student"
 
@@ -125,7 +127,7 @@ class StudentDetailView(StaffRequiredMixin, StudentContextMixin, DetailView):
         context["next"] = next_url
 
         # build "edit" link that bounces back to the same "next"
-        edit_base = reverse("students:student-edit", args=[self.object.pk])
+        edit_base = reverse("students:student-edit", args=[self.object.public_id])
         context["edit_url"] = f"{edit_base}?next={next_url}"
 
         return context
@@ -148,6 +150,8 @@ class StudentCreateView(SuperuserRequiredMixin, StudentContextMixin, CreateView)
 
 class StudentUpdateView(SuperuserRequiredMixin, StudentContextMixin, UpdateView):
     model = Student
+    slug_field = "public_id"
+    slug_url_kwarg = "public_id"
     form_class = StudentForm
     template_name = "students/student_form.html"
     success_url = reverse_lazy("students:student-list")
@@ -174,6 +178,8 @@ class StudentUpdateView(SuperuserRequiredMixin, StudentContextMixin, UpdateView)
 
 class StudentDeleteView(SuperuserRequiredMixin, StudentContextMixin, DeleteView):
     model = Student
+    slug_field = "public_id"
+    slug_url_kwarg = "public_id"
     template_name = "students/student_confirm_delete.html"
     success_url = reverse_lazy("students:student-list")
 
@@ -214,6 +220,8 @@ class StudentClassCreateView(SuperuserRequiredMixin, ClassContextMixin, CreateVi
 
 class StudentClassUpdateView(SuperuserRequiredMixin, ClassContextMixin, UpdateView):
     model = StudentClass
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
     form_class = StudentClassForm
     template_name = "students/class_form.html"
     success_url = reverse_lazy("students:class-list")
@@ -229,6 +237,8 @@ class StudentClassUpdateView(SuperuserRequiredMixin, ClassContextMixin, UpdateVi
 
 class StudentClassDeleteView(SuperuserRequiredMixin, ClassContextMixin, DeleteView):
     model = StudentClass
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
     template_name = "students/class_confirm_delete.html"
     success_url = reverse_lazy("students:class-list")
 

@@ -15,6 +15,8 @@
 
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
+
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -70,30 +72,35 @@ async function classExists(classId: number): Promise<boolean> {
   return Boolean(row);
 }
 
-/** A material may only be referenced if it belongs to the same class. */
-async function materialBelongsToClass(
-  materialId: number,
+/** Resolve a public material id to its internal FK after checking its class. */
+async function materialDatabaseId(
+  materialId: string | null,
   classId: number,
-): Promise<boolean> {
+): Promise<number | null> {
+  if (materialId === null) return null;
+
   const [row] = await db
     .select({ id: studyMaterial.id })
     .from(studyMaterial)
     .where(
-      and(eq(studyMaterial.id, materialId), eq(studyMaterial.studentClassId, classId)),
+      and(
+        eq(studyMaterial.publicId, materialId),
+        eq(studyMaterial.studentClassId, classId),
+      ),
     )
     .limit(1);
-  return Boolean(row);
+  return row?.id ?? null;
 }
 
 /** The columns shared by insert and update, derived from the validated input. */
-function assignmentValues(input: AssignmentInput) {
+function assignmentValues(input: AssignmentInput, materialId: number | null) {
   return {
     title: input.title,
     description: input.description.trim(),
     category: input.category,
     level: input.level,
     studentClassId: input.classId,
-    materialId: input.materialId,
+    materialId,
     year: input.year,
     semester: input.semester,
     scoreTarget: input.scoreTarget,
@@ -138,10 +145,8 @@ export async function createAssignment(
   if (!(await classExists(input.classId))) {
     return fail('That class no longer exists.', 404);
   }
-  if (
-    input.materialId !== null &&
-    !(await materialBelongsToClass(input.materialId, input.classId))
-  ) {
+  const materialId = await materialDatabaseId(input.materialId, input.classId);
+  if (input.materialId !== null && materialId === null) {
     return fail('That module is not available to this class.');
   }
   if (!(await scoreTargetIsAvailable(input))) {
@@ -154,7 +159,8 @@ export async function createAssignment(
     const [created] = await db
       .insert(assignment)
       .values({
-        ...assignmentValues(input),
+        ...assignmentValues(input, materialId),
+        publicId: randomUUID(),
         slug: await buildAssignmentSlug(input.title),
         createdById: userId,
         createdAt: now,
@@ -178,7 +184,7 @@ export async function createAssignment(
 
 export async function updateAssignment(
   input: AssignmentInput,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<MutationResult> {
   const replacementAudio = input.questions.flatMap((item) =>
     item.audio ? [item.audio.key] : [],
@@ -196,7 +202,10 @@ export async function updateAssignment(
     })
     .from(assignment)
     .where(
-      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, input.classId)),
+        and(
+          eq(assignment.publicId, assignmentId),
+          eq(assignment.studentClassId, input.classId),
+        ),
     )
     .limit(1);
 
@@ -204,10 +213,8 @@ export async function updateAssignment(
   if (current.status === 'published') {
     return fail('Published assignments cannot be edited.', 409);
   }
-  if (
-    input.materialId !== null &&
-    !(await materialBelongsToClass(input.materialId, input.classId))
-  ) {
+  const materialId = await materialDatabaseId(input.materialId, input.classId);
+  if (input.materialId !== null && materialId === null) {
     return fail('That module is not available to this class.');
   }
   if (!(await scoreTargetIsAvailable(input))) {
@@ -218,16 +225,16 @@ export async function updateAssignment(
     await db
       .update(assignment)
       .set({
-        ...assignmentValues(input),
+        ...assignmentValues(input, materialId),
         slug:
           input.title === current.title
             ? current.slug
             : await buildAssignmentSlug(input.title),
         updatedAt: new Date(),
       })
-      .where(eq(assignment.id, assignmentId));
+      .where(eq(assignment.id, current.id));
 
-    const discardedAudio = await replaceQuestions(assignmentId, input.questions);
+    const discardedAudio = await replaceQuestions(current.id, input.questions);
     await Promise.all(discardedAudio.map(deleteObject));
     return {};
   } catch (error) {
@@ -238,37 +245,42 @@ export async function updateAssignment(
 
 export async function deleteAssignment(
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<MutationResult> {
   const [row] = await db
     .select({ id: assignment.id })
     .from(assignment)
     .where(
-      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, classId)),
+      and(
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.studentClassId, classId),
+      ),
     )
     .limit(1);
 
   if (!row) return { error: 'That assignment no longer exists.', status: 404 };
 
+  const assignmentDbId = row.id;
+
   const questionAudio = await db
     .select({ key: question.audio })
     .from(question)
-    .where(eq(question.assignmentId, assignmentId));
+    .where(eq(question.assignmentId, assignmentDbId));
 
   const submissionIds = () =>
     db
       .select({ id: submission.id })
       .from(submission)
-      .where(eq(submission.assignmentId, assignmentId));
+      .where(eq(submission.assignmentId, assignmentDbId));
   const questionIds = () =>
     db
       .select({ id: question.id })
       .from(question)
-      .where(eq(question.assignmentId, assignmentId));
+      .where(eq(question.assignmentId, assignmentDbId));
 
   try {
     await db.batch([
-      db.delete(scoreEntry).where(eq(scoreEntry.assignmentId, assignmentId)),
+      db.delete(scoreEntry).where(eq(scoreEntry.assignmentId, assignmentDbId)),
       db
         .delete(submissionAnswerChoice)
         .where(
@@ -286,10 +298,10 @@ export async function deleteAssignment(
       db
         .delete(submissionFile)
         .where(inArray(submissionFile.submissionId, submissionIds())),
-      db.delete(submission).where(eq(submission.assignmentId, assignmentId)),
+      db.delete(submission).where(eq(submission.assignmentId, assignmentDbId)),
       db.delete(questionChoice).where(inArray(questionChoice.questionId, questionIds())),
-      db.delete(question).where(eq(question.assignmentId, assignmentId)),
-      db.delete(assignment).where(eq(assignment.id, assignmentId)),
+      db.delete(question).where(eq(question.assignmentId, assignmentDbId)),
+      db.delete(assignment).where(eq(assignment.id, assignmentDbId)),
     ]);
   } catch (error) {
     console.error('could not delete assignment', error);
@@ -311,18 +323,23 @@ export async function deleteAssignment(
  */
 export async function resetStudentSubmissions(
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
   studentId: number,
 ): Promise<MutationResult> {
   const [row] = await db
     .select({ id: assignment.id })
     .from(assignment)
     .where(
-      and(eq(assignment.id, assignmentId), eq(assignment.studentClassId, classId)),
+      and(
+        eq(assignment.publicId, assignmentId),
+        eq(assignment.studentClassId, classId),
+      ),
     )
     .limit(1);
 
   if (!row) return { error: 'That assignment no longer exists.', status: 404 };
+
+  const assignmentDbId = row.id;
 
   const submissionIds = () =>
     db
@@ -330,7 +347,7 @@ export async function resetStudentSubmissions(
       .from(submission)
       .where(
         and(
-          eq(submission.assignmentId, assignmentId),
+          eq(submission.assignmentId, assignmentDbId),
           eq(submission.studentId, studentId),
         ),
       );
@@ -367,7 +384,7 @@ export async function resetStudentSubmissions(
         .delete(submission)
         .where(
           and(
-            eq(submission.assignmentId, assignmentId),
+            eq(submission.assignmentId, assignmentDbId),
             eq(submission.studentId, studentId),
           ),
         ),
@@ -618,13 +635,23 @@ export async function gradeSubmission(
   input: GradeSubmissionInput,
   graderId: number | null,
 ): Promise<MutationResult> {
+  const [assignmentRow] = await db
+    .select({ id: assignment.id })
+    .from(assignment)
+    .where(eq(assignment.publicId, input.assignmentId))
+    .limit(1);
+
+  if (!assignmentRow) {
+    return { error: 'That assignment no longer exists.', status: 404 };
+  }
+
   const [current] = await db
     .select({ id: submission.id, status: submission.status })
     .from(submission)
     .where(
       and(
         eq(submission.id, submissionId),
-        eq(submission.assignmentId, input.assignmentId),
+        eq(submission.assignmentId, assignmentRow.id),
       ),
     )
     .limit(1);

@@ -12,14 +12,14 @@ import {
 import { cn } from '@/lib/utils';
 
 type ModuleToolbarProps = {
-  classId: number;
+  classSlug: string;
   query: string;
   category?: SubjectCategory;
   status?: MaterialStatus;
 };
 
 export function ModuleToolbar({
-  classId,
+  classSlug,
   query,
   category,
   status,
@@ -49,7 +49,7 @@ export function ModuleToolbar({
       view={{ noun: 'modules', role: 'teacher' }}
       action={
         <Link
-          href={`/teacher/module/${classId}/upload`}
+          href={`/teacher/module/${classSlug}/upload`}
           className={cn(
             buttonVariants({ size: 'lg' }),
             'h-11 w-full shrink-0 lg:h-9 lg:w-auto',

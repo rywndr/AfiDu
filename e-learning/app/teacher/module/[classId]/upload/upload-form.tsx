@@ -32,6 +32,7 @@ import {
 
 type ModuleFormProps = {
   classId: number;
+  classSlug: string;
   suggestedLevel: string | null;
   storageReady: boolean;
   initialMaterial?: EditableMaterial;
@@ -39,6 +40,7 @@ type ModuleFormProps = {
 
 export function ModuleForm({
   classId,
+  classSlug,
   suggestedLevel,
   storageReady,
   initialMaterial,
@@ -103,7 +105,7 @@ export function ModuleForm({
       );
 
       form.reset();
-      router.push(`/teacher/module/${classId}`);
+      router.push(`/teacher/module/${classSlug}`);
       router.refresh();
     } catch (error) {
       setPhase('idle');

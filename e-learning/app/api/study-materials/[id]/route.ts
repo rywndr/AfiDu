@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { apiError, authorizeApiRequest, readJson } from '@/lib/api';
 import { classMutationSchema, updateMaterialSchema } from '@/lib/form-schemas';
 import { ROLE_SUPERUSER, ROLE_TEACHER } from '@/lib/session';
+import { parseRouteUuid } from '@/lib/route-params';
 import { deleteMaterial, updateMaterial } from '@/lib/study-material-mutations';
 import { verifyUploadToken } from '@/lib/upload-token';
 
@@ -18,8 +19,8 @@ export async function PATCH(
   const body = await readJson(request);
   if (body instanceof Response) return body;
   const input = updateMaterialSchema.safeParse(body);
-  const materialId = Number((await context.params).id);
-  if (!input.success || !Number.isInteger(materialId) || materialId <= 0) {
+  const materialId = parseRouteUuid((await context.params).id);
+  if (!input.success || materialId === null) {
     return apiError(
       'Check the module details and try again.',
       400,
@@ -46,8 +47,7 @@ export async function PATCH(
   const result = await updateMaterial(input.data, materialId);
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/module/${input.data.classId}`);
-  revalidatePath('/teacher/module');
+  revalidatePath('/teacher/module', 'layout');
   return Response.json({ success: true });
 }
 
@@ -61,15 +61,14 @@ export async function DELETE(
   const body = await readJson(request);
   if (body instanceof Response) return body;
   const classResult = classMutationSchema.safeParse(body);
-  const materialId = Number((await context.params).id);
-  if (!classResult.success || !Number.isInteger(materialId) || materialId <= 0) {
+  const materialId = parseRouteUuid((await context.params).id);
+  if (!classResult.success || materialId === null) {
     return apiError('Invalid material request.', 400);
   }
 
   const result = await deleteMaterial(classResult.data.classId, materialId);
   if (result.error) return apiError(result.error, result.status ?? 400);
 
-  revalidatePath(`/teacher/module/${classResult.data.classId}`);
-  revalidatePath('/teacher/module');
+  revalidatePath('/teacher/module', 'layout');
   return Response.json({ success: true });
 }

@@ -55,14 +55,16 @@ export function MaterialFileLinks({ material }: { material: MaterialSummary }) {
 export function MaterialActions({
   material,
   classId,
+  classSlug,
 }: {
   material: MaterialSummary;
   classId: number;
+  classSlug: string;
 }) {
   return (
     <>
       <Link
-        href={`/teacher/module/${classId}/${material.id}/edit`}
+        href={`/teacher/module/${classSlug}/${material.id}/edit`}
         className={buttonVariants({ variant: 'secondary', size: 'sm' })}
       >
         <Pencil aria-hidden="true" />
@@ -70,6 +72,7 @@ export function MaterialActions({
       </Link>
       <MaterialActionMenu
         classId={classId}
+        classSlug={classSlug}
         materialId={material.id}
         title={material.title}
         showEdit={false}

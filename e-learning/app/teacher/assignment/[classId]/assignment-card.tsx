@@ -30,6 +30,7 @@ import { DeleteAssignmentMenu } from './assignment-actions';
 type AssignmentCardProps = {
   item: AssignmentSummary;
   classId: number;
+  classSlug: string;
 };
 
 type AssignmentLayoutProps = AssignmentCardProps;
@@ -121,11 +122,11 @@ function SubmissionCounts({ item }: { item: AssignmentSummary }) {
   );
 }
 
-function AssignmentActions({ item, classId }: AssignmentLayoutProps) {
+function AssignmentActions({ item, classId, classSlug }: AssignmentLayoutProps) {
   return (
     <>
       <Link
-        href={`/teacher/assignment/${classId}/${item.id}`}
+        href={`/teacher/assignment/${classSlug}/${item.id}`}
         className={buttonVariants({ variant: 'secondary', size: 'sm' })}
       >
         <Users aria-hidden="true" />
@@ -133,7 +134,7 @@ function AssignmentActions({ item, classId }: AssignmentLayoutProps) {
       </Link>
       {item.status !== 'published' ? (
         <Link
-          href={`/teacher/assignment/${classId}/${item.id}/edit`}
+          href={`/teacher/assignment/${classSlug}/${item.id}/edit`}
           className={buttonVariants({ variant: 'outline', size: 'sm' })}
         >
           <Pencil aria-hidden="true" />
@@ -151,7 +152,7 @@ function AssignmentActions({ item, classId }: AssignmentLayoutProps) {
 }
 
 /** Wide layout: icon, details and actions on one line. */
-function AssignmentRow({ item, classId }: AssignmentLayoutProps) {
+function AssignmentRow({ item, classId, classSlug }: AssignmentLayoutProps) {
   return (
     <SurfaceCard>
       <CardContent className="p-4 sm:p-5">
@@ -162,7 +163,7 @@ function AssignmentRow({ item, classId }: AssignmentLayoutProps) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
                 <Link
-                  href={`/teacher/assignment/${classId}/${item.id}`}
+                  href={`/teacher/assignment/${classSlug}/${item.id}`}
                   className="text-base font-semibold break-words text-ink-strong hover:underline"
                 >
                   {item.title}
@@ -182,7 +183,11 @@ function AssignmentRow({ item, classId }: AssignmentLayoutProps) {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-start gap-2 sm:justify-end">
-                <AssignmentActions item={item} classId={classId} />
+                <AssignmentActions
+                  item={item}
+                  classId={classId}
+                  classSlug={classSlug}
+                />
               </div>
             </div>
           </div>
@@ -193,7 +198,7 @@ function AssignmentRow({ item, classId }: AssignmentLayoutProps) {
 }
 
 /** Narrow layout: the same details stacked, actions pinned to the bottom. */
-function AssignmentTile({ item, classId }: AssignmentLayoutProps) {
+function AssignmentTile({ item, classId, classSlug }: AssignmentLayoutProps) {
   return (
     <SurfaceCard className="h-full">
       <CardContent className="flex h-full flex-col p-4 sm:p-5">
@@ -202,7 +207,7 @@ function AssignmentTile({ item, classId }: AssignmentLayoutProps) {
 
           <div className="min-w-0 flex-1">
             <Link
-              href={`/teacher/assignment/${classId}/${item.id}`}
+              href={`/teacher/assignment/${classSlug}/${item.id}`}
               className="line-clamp-2 text-base font-semibold break-words text-ink-strong hover:underline"
             >
               {item.title}
@@ -221,7 +226,11 @@ function AssignmentTile({ item, classId }: AssignmentLayoutProps) {
         <SubmissionCounts item={item} />
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-          <AssignmentActions item={item} classId={classId} />
+          <AssignmentActions
+            item={item}
+            classId={classId}
+            classSlug={classSlug}
+          />
         </div>
       </CardContent>
     </SurfaceCard>

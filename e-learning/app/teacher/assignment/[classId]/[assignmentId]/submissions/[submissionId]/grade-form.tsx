@@ -23,12 +23,16 @@ import { GradeResultSection } from './grade-result-section';
 import { SubmissionFiles } from './submission-files';
 
 type GradeFormProps = {
-  classId: number;
-  assignmentId: number;
+  classSlug: string;
+  assignmentId: string;
   submission: SubmissionDetail;
 };
 
-export function GradeForm({ classId, assignmentId, submission }: GradeFormProps) {
+export function GradeForm({
+  classSlug,
+  assignmentId,
+  submission,
+}: GradeFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export function GradeForm({ classId, assignmentId, submission }: GradeFormProps)
         body: JSON.stringify(toGradeInput(assignmentId, values)),
       });
 
-      router.push(`/teacher/assignment/${classId}/${assignmentId}`);
+      router.push(`/teacher/assignment/${classSlug}/${assignmentId}`);
       router.refresh();
     } catch (error) {
       setSaving(false);

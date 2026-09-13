@@ -16,6 +16,7 @@ import {
   type AttemptGate,
 } from '@/lib/assignment-availability';
 import {
+  getAssignmentDatabaseId,
   getStudentAssignment,
   listStudentQuestions,
   type StudentAssignment,
@@ -69,7 +70,7 @@ const IN_PROGRESS = 'in_progress';
 export async function getStudentAssignmentView(
   studentId: number,
   classId: number,
-  assignmentId: number,
+  assignmentId: string,
 ): Promise<StudentAssignmentView | null> {
   let item = await getStudentAssignment(studentId, classId, assignmentId);
   if (!item) return null;
@@ -86,6 +87,9 @@ export async function getStudentAssignmentView(
     if (!reread) return null;
     item = reread;
   }
+
+  const assignmentDbId = await getAssignmentDatabaseId(assignmentId);
+  if (assignmentDbId === null) return null;
 
   const gate = attemptGate({
     status: item.status,
@@ -109,7 +113,7 @@ export async function getStudentAssignmentView(
   return {
     assignment: item,
     questions: orderQuestions(
-      await listStudentQuestions(assignmentId, { revealKey }),
+      await listStudentQuestions(assignmentDbId, { revealKey }),
       item.shuffleQuestions ? attempt?.id : undefined,
     ),
     gate,

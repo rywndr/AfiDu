@@ -5,9 +5,9 @@ import { BackLink } from '@/components/dashboard/back-link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { UnsavedChangesProvider } from '@/components/form/unsaved-changes';
 import { isB2Configured } from '@/lib/b2';
-import { parseRouteId } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
-import { getClassDetail, getEditableMaterial } from '@/lib/study-materials';
+import { getClassDetailBySlug, getEditableMaterial } from '@/lib/study-materials';
 
 import { ModuleForm } from '../../upload/upload-form';
 
@@ -19,12 +19,12 @@ export async function generateMetadata({
   params,
 }: EditModulePageProps): Promise<Metadata> {
   const { classId, materialId } = await params;
-  const classIdNumber = parseRouteId(classId);
-  const materialIdNumber = parseRouteId(materialId);
+  const materialPublicId = parseRouteUuid(materialId);
+  const detail = await getClassDetailBySlug(classId);
   const material =
-    Number.isNaN(classIdNumber) || Number.isNaN(materialIdNumber)
+    !detail || materialPublicId === null
       ? null
-      : await getEditableMaterial(classIdNumber, materialIdNumber);
+      : await getEditableMaterial(detail.id, materialPublicId);
 
   return {
     title: material
@@ -39,19 +39,17 @@ export default async function EditModulePage({
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
   const { classId, materialId } = await params;
-  const classIdNumber = parseRouteId(classId);
-  const materialIdNumber = parseRouteId(materialId);
-  if (Number.isNaN(classIdNumber) || Number.isNaN(materialIdNumber)) notFound();
+  const materialPublicId = parseRouteUuid(materialId);
+  if (materialPublicId === null) notFound();
 
-  const [detail, material] = await Promise.all([
-    getClassDetail(classIdNumber),
-    getEditableMaterial(classIdNumber, materialIdNumber),
-  ]);
-  if (!detail || !material) notFound();
+  const detail = await getClassDetailBySlug(classId);
+  if (!detail) notFound();
+  const material = await getEditableMaterial(detail.id, materialPublicId);
+  if (!material) notFound();
 
   return (
     <UnsavedChangesProvider>
-      <BackLink href={`/teacher/module/${classIdNumber}`}>
+      <BackLink href={`/teacher/module/${classId}`}>
         Back to modules
       </BackLink>
 
@@ -62,7 +60,8 @@ export default async function EditModulePage({
 
       <div className="w-full">
         <ModuleForm
-          classId={classIdNumber}
+          classId={detail.id}
+          classSlug={classId}
           suggestedLevel={detail.suggestedLevel}
           storageReady={isB2Configured()}
           initialMaterial={material}

@@ -153,7 +153,7 @@
             {% with details=student_payment_details|get_item:student.id %}
             <tr class="hover:bg-orange-50">
               <td class="px-4 py-4 whitespace-nowrap">
-                <a href="{% url 'students:student-detail' student.id %}?next={% url 'payments:payment_list' %}" class="text-[#ff4f25] hover:underline">
+                <a href="{% url 'students:student-detail' student.public_id %}?next={% url 'payments:payment_list' %}" class="text-[#ff4f25] hover:underline">
                   {{ student.name }}
                 </a>
               </td>
@@ -197,7 +197,7 @@
                 </div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-center">
-                <a href="{% url 'payments:payment_detail' student.id %}?year={{ year }}" 
+                <a href="{% url 'payments:payment_detail' student.public_id %}?year={{ year }}"
                    class="bg-[#ff4f25] hover:bg-[#e63e20] text-white text-sm rounded-full py-1 px-4 transition">
                   <i class="fa-solid fa-eye mr-1"></i> View Details
                 </a>

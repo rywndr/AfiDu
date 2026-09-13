@@ -4,6 +4,7 @@ import { apiError, authorizeApiRequest, readJson } from '@/lib/api';
 import { resetSubmissionsSchema } from '@/lib/form-schemas';
 import { ROLE_SUPERUSER, ROLE_TEACHER } from '@/lib/session';
 import { resetStudentSubmissions } from '@/lib/assignment-mutations';
+import { parseRouteUuid } from '@/lib/route-params';
 
 const STAFF_ROLES = [ROLE_TEACHER, ROLE_SUPERUSER];
 
@@ -18,8 +19,8 @@ export async function DELETE(
   const body = await readJson(request);
   if (body instanceof Response) return body;
   const input = resetSubmissionsSchema.safeParse(body);
-  const assignmentId = Number((await context.params).id);
-  if (!input.success || !Number.isInteger(assignmentId) || assignmentId <= 0) {
+  const assignmentId = parseRouteUuid((await context.params).id);
+  if (!input.success || assignmentId === null) {
     return apiError('Invalid reset request.', 400);
   }
 

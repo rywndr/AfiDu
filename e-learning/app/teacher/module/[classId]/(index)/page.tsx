@@ -18,10 +18,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { isMaterialStatus, isSubjectCategory } from '@/lib/choices';
 import { formatClassSchedule, pluralize } from '@/lib/format';
 import { parseListView } from '@/lib/list-view';
-import { parseRouteId } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import {
-  getClassDetail,
+  getClassDetailBySlug,
   listClassMaterials,
   listLinkableAssignments,
 } from '@/lib/study-materials';
@@ -32,9 +31,8 @@ import { ModuleToolbar } from '../module-toolbar';
 export async function generateMetadata({
   params,
 }: PageProps<'/teacher/module/[classId]'>): Promise<Metadata> {
-  const { classId } = await params;
-  const id = parseRouteId(classId);
-  const detail = Number.isNaN(id) ? null : await getClassDetail(id);
+  const { classId: classSlug } = await params;
+  const detail = await getClassDetailBySlug(classSlug);
 
   return {
     title: detail
@@ -66,7 +64,7 @@ async function ModuleDescription({
   detail,
   materialPage,
 }: {
-  detail: NonNullable<Awaited<ReturnType<typeof getClassDetail>>>;
+  detail: NonNullable<Awaited<ReturnType<typeof getClassDetailBySlug>>>;
   materialPage: MaterialPagePromise;
 }) {
   const result = await materialPage;
@@ -75,11 +73,13 @@ async function ModuleDescription({
 }
 
 async function ModuleResults({
+  classSlug,
   classId,
   materialPage,
   assignments,
   search,
 }: {
+  classSlug: string;
   classId: number;
   materialPage: MaterialPagePromise;
   assignments: AssignmentsPromise;
@@ -109,14 +109,14 @@ async function ModuleResults({
           action={
             filtering ? (
               <ListViewLink
-                href={`/teacher/module/${classId}`}
+                href={`/teacher/module/${classSlug}`}
                 className={buttonVariants({ variant: 'outline', size: 'lg' })}
               >
                 Clear filters
               </ListViewLink>
             ) : (
               <Link
-                href={`/teacher/module/${classId}/upload`}
+                href={`/teacher/module/${classSlug}/upload`}
                 className={buttonVariants({ size: 'lg' })}
               >
                 Add module
@@ -135,6 +135,7 @@ async function ModuleResults({
               <MaterialCard
                 material={material}
                 classId={classId}
+                classSlug={classSlug}
                 assignments={linkableAssignments}
               />
             </li>
@@ -143,7 +144,7 @@ async function ModuleResults({
       )}
 
       <QueryPagination
-        pathname={`/teacher/module/${classId}`}
+        pathname={`/teacher/module/${classSlug}`}
         page={result.page}
         totalPages={result.totalPages}
         query={{
@@ -162,16 +163,14 @@ export default async function ClassModulePage({
 }: PageProps<'/teacher/module/[classId]'>) {
   await requireRole([ROLE_TEACHER, ROLE_SUPERUSER]);
 
-  const id = parseRouteId((await params).classId);
-  if (Number.isNaN(id)) notFound();
-
-  const detail = await getClassDetail(id);
+  const classSlug = (await params).classId;
+  const detail = await getClassDetailBySlug(classSlug);
   if (!detail) notFound();
 
   const search = readSearchParams(await searchParams);
   const { query, category, status, view, page } = search;
-  const materialPage = listClassMaterials(id, { query, category, status, page });
-  const assignments = listLinkableAssignments(id);
+  const materialPage = listClassMaterials(detail.id, { query, category, status, page });
+  const assignments = listLinkableAssignments(detail.id);
   const resultsKey = [query, category, status, page].join(':');
 
   return (
@@ -187,7 +186,7 @@ export default async function ClassModulePage({
         }
         actions={
           <ModuleToolbar
-            classId={id}
+            classSlug={classSlug}
             query={query}
             category={category}
             status={status}
@@ -209,7 +208,8 @@ export default async function ClassModulePage({
         }
       >
         <ModuleResults
-          classId={id}
+          classSlug={classSlug}
+          classId={detail.id}
           materialPage={materialPage}
           assignments={assignments}
           search={search}
