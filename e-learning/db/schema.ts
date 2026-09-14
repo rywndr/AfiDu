@@ -249,23 +249,21 @@ export const score = pgTable(
     year: integer('year').notNull(),
     semester: varchar('semester', { length: 5 }).notNull(),
     category: varchar('category', { length: 10 }).notNull(),
-    legacyExerciseScores: jsonb('legacy_exercise_scores').notNull().default([]),
+    legacyExerciseScores: jsonb('legacy_exercise_scores').notNull(),
     midTerm: numeric('mid_term', { precision: 5, scale: 2 }),
     midTermSource: varchar('mid_term_source', { length: 20 })
-      .notNull()
-      .default('manual'),
+      .notNull(),
     midTermAssignmentId: bigint('mid_term_assignment_id', {
       mode: 'number',
     }).references(() => assignment.id, { onDelete: 'set null' }),
-    midTermNote: varchar('mid_term_note', { length: 255 }).notNull().default(''),
+    midTermNote: varchar('mid_term_note', { length: 255 }).notNull(),
     finals: numeric('finals', { precision: 5, scale: 2 }),
     finalsSource: varchar('finals_source', { length: 20 })
-      .notNull()
-      .default('manual'),
+      .notNull(),
     finalsAssignmentId: bigint('finals_assignment_id', {
       mode: 'number',
     }).references(() => assignment.id, { onDelete: 'set null' }),
-    finalsNote: varchar('finals_note', { length: 255 }).notNull().default(''),
+    finalsNote: varchar('finals_note', { length: 255 }).notNull(),
   },
   (table) => [
     uniqueIndex('score_student_period_category_uniq').on(
@@ -361,14 +359,14 @@ export const scoreEntry = pgTable(
       .references(() => score.id),
     slot: smallint('slot').notNull(),
     points: numeric('points', { precision: 5, scale: 2 }),
-    source: varchar('source', { length: 20 }).notNull().default('manual'),
+    source: varchar('source', { length: 20 }).notNull(),
     assignmentId: bigint('assignment_id', { mode: 'number' }).references(
       () => assignment.id,
     ),
     submissionId: bigint('submission_id', { mode: 'number' }).references(
       () => submission.id,
     ),
-    note: varchar('note', { length: 255 }).notNull().default(''),
+    note: varchar('note', { length: 255 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
   },

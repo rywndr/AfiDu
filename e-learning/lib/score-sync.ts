@@ -85,6 +85,10 @@ async function scoreRow(item: LinkedSubmission): Promise<number> {
       semester: item.semester,
       category: item.category,
       legacyExerciseScores: [],
+      midTermSource: 'manual',
+      midTermNote: '',
+      finalsSource: 'manual',
+      finalsNote: '',
     })
     .onConflictDoUpdate({
       target: [score.studentId, score.year, score.semester, score.category],
@@ -166,6 +170,7 @@ export async function syncSubmissionScore(submissionId: number): Promise<void> {
         source: 'assignment',
         assignmentId: item.assignmentId,
         submissionId,
+        note: '',
         createdAt: now,
         updatedAt: now,
       })
