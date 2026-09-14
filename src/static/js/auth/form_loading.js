@@ -1,18 +1,41 @@
 (() => {
-  const forms = document.querySelectorAll('form[method="post"]');
+  const forms = document.querySelectorAll(
+    'form[method="post"], form[data-loading-form]'
+  );
+
+  const setLoadingState = (form, button) => {
+    form.setAttribute('aria-busy', 'true');
+
+    if (!(button instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.classList.add('opacity-75');
+    button.textContent = 'Loading...';
+  };
 
   forms.forEach((form) => {
-    form.addEventListener('submit', () => {
-      const submitButton = form.querySelector('button[type="submit"]');
+    form.addEventListener('submit', (event) => {
+      const submitButton =
+        event.submitter instanceof HTMLButtonElement
+          ? event.submitter
+          : form.querySelector('button[type="submit"]');
 
-      if (!(submitButton instanceof HTMLButtonElement)) {
-        return;
-      }
-
-      submitButton.disabled = true;
-      submitButton.setAttribute('aria-busy', 'true');
-      submitButton.classList.add('opacity-75');
-      submitButton.textContent = 'Loading...';
+      setLoadingState(form, submitButton);
     });
+
+    form
+      .querySelectorAll(
+        'button[type="button"][id="clear-filters"], button[title="Clear search"]'
+      )
+      .forEach((button) => {
+        button.addEventListener(
+          'click',
+          () => setLoadingState(form, button),
+          { capture: true }
+        );
+      });
   });
 })();
