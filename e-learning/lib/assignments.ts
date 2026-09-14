@@ -504,6 +504,7 @@ export async function getEditableAssignment(
       maxPoints: assignment.maxPoints,
     })
     .from(assignment)
+    .leftJoin(studyMaterial, eq(assignment.materialId, studyMaterial.id))
     .where(
       and(
         eq(assignment.publicId, assignmentId),
