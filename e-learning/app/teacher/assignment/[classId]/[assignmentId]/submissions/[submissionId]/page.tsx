@@ -10,7 +10,7 @@ import { SurfaceCard } from '@/components/dashboard/surfaces';
 import { CardContent } from '@/components/ui/card';
 import { submissionStatusLabel } from '@/lib/choices';
 import { formatDateTime, formatDuration } from '@/lib/format';
-import { parseRouteId, parseRouteUuid } from '@/lib/route-params';
+import { parseRouteUuid } from '@/lib/route-params';
 import { ROLE_SUPERUSER, ROLE_TEACHER, requireRole } from '@/lib/session';
 import { getSubmissionDetail, type SubmissionDetail } from '@/lib/assignments';
 import { getClassDetailBySlug } from '@/lib/study-materials';
@@ -19,19 +19,19 @@ import { GradeForm } from './grade-form';
 
 type SubmissionPageProps = PageProps<'/teacher/assignment/[classId]/[assignmentId]/submissions/[submissionId]'>;
 
-/** Resolve the public class slug and assignment UUID; submissions stay numeric. */
+/** Resolve the public class slug, assignment UUID, and submission UUID. */
 async function routeIds(params: SubmissionPageProps['params']) {
   const { classId: classSlug, assignmentId, submissionId } = await params;
   const detail = await getClassDetailBySlug(classSlug);
   const assignmentPublicId = parseRouteUuid(assignmentId);
-  const submissionIdNumber = parseRouteId(submissionId);
+  const submissionPublicId = parseRouteUuid(submissionId);
 
-  return detail && assignmentPublicId !== null && !Number.isNaN(submissionIdNumber)
+  return detail && assignmentPublicId !== null && submissionPublicId !== null
     ? {
         classSlug,
         classId: detail.id,
         assignmentId: assignmentPublicId,
-        submissionId: submissionIdNumber,
+        submissionId: submissionPublicId,
       }
     : { classSlug: null, classId: null, assignmentId: null, submissionId: null };
 }

@@ -4,13 +4,21 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase
 
-from .models import Assignment, Question
+from .models import Assignment, Question, Submission
 
 
 class PublicIdentifierTests(SimpleTestCase):
     def test_assignments_get_distinct_uuid_public_ids_without_database_ids(self):
         first = Assignment()
         second = Assignment()
+
+        self.assertIsInstance(first.public_id, uuid.UUID)
+        self.assertIsInstance(second.public_id, uuid.UUID)
+        self.assertNotEqual(first.public_id, second.public_id)
+
+    def test_submissions_get_distinct_uuid_public_ids_without_database_ids(self):
+        first = Submission()
+        second = Submission()
 
         self.assertIsInstance(first.public_id, uuid.UUID)
         self.assertIsInstance(second.public_id, uuid.UUID)

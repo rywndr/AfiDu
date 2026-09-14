@@ -150,7 +150,7 @@ export type SubmissionRow = {
   studentName: string;
   studentLevel: string;
   inClass: boolean;
-  submissionId: number | null;
+  submissionId: string | null;
   attemptNumber: number | null;
   attemptCount: number;
   status: string | null;
@@ -643,7 +643,7 @@ export async function listAssignmentSubmissions(
       .orderBy(asc(student.name)),
     db
       .select({
-        id: submission.id,
+        id: submission.publicId,
         studentId: submission.studentId,
         studentName: student.name,
         studentLevel: student.level,
@@ -750,7 +750,7 @@ export async function listAssignmentSubmissions(
 export async function getSubmissionDetail(
   classId: number,
   assignmentId: string,
-  submissionId: number,
+  submissionId: string,
 ): Promise<SubmissionDetail | null> {
   const [row] = await db
     .select({
@@ -783,7 +783,7 @@ export async function getSubmissionDetail(
     .leftJoin(user, eq(submission.gradedById, user.id))
     .where(
       and(
-        eq(submission.id, submissionId),
+        eq(submission.publicId, submissionId),
         eq(assignment.publicId, assignmentId),
         eq(assignment.studentClassId, classId),
       ),
@@ -792,6 +792,7 @@ export async function getSubmissionDetail(
 
   if (!row) return null;
 
+  const submissionDbId = row.id;
   const {
     graderFirstName,
     graderLastName,
@@ -817,7 +818,7 @@ export async function getSubmissionDetail(
         feedback: submissionAnswer.feedback,
       })
       .from(submissionAnswer)
-      .where(eq(submissionAnswer.submissionId, submissionId)),
+      .where(eq(submissionAnswer.submissionId, submissionDbId)),
     db
       .select({
         id: submissionFile.id,
@@ -829,7 +830,7 @@ export async function getSubmissionDetail(
         uploadedAt: submissionFile.uploadedAt,
       })
       .from(submissionFile)
-      .where(eq(submissionFile.submissionId, submissionId))
+      .where(eq(submissionFile.submissionId, submissionDbId))
       .orderBy(desc(submissionFile.uploadedAt)),
     db
       .select({ total: count() })

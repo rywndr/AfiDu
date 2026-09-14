@@ -310,6 +310,7 @@ class Submission(models.Model):
         (STATUS_RETURNED, "Returned"),
     ]
 
+    public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     assignment = models.ForeignKey(
         Assignment, on_delete=models.CASCADE, related_name="submissions"
     )

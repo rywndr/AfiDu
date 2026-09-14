@@ -3,6 +3,8 @@
  */
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
+
 import { and, asc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -92,6 +94,7 @@ export async function startAttempt(
     const [created] = await db
       .insert(submission)
       .values({
+        publicId: randomUUID(),
         assignmentId: assignmentDbId,
         studentId,
         attemptNumber,

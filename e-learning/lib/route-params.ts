@@ -1,4 +1,4 @@
-/** Parse an integer route segment used by legacy records such as submissions. */
+/** Parse a positive integer route segment used by internal numeric IDs. */
 export function parseRouteId(value: string): number {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : Number.NaN;

@@ -319,6 +319,7 @@ export const submission = pgTable(
   'assignments_submission',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
+    publicId: uuid('public_id').notNull().unique(),
     assignmentId: bigint('assignment_id', { mode: 'number' })
       .notNull()
       .references(() => assignment.id, { onDelete: 'cascade' }),
