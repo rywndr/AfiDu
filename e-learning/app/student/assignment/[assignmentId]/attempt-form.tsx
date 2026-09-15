@@ -259,44 +259,42 @@ export function AttemptForm({
                       className="mb-3 w-full"
                     />
                   ) : null}
-                  <div data-clarity-mask="true">
-                    <AnswerControl
-                      form={form}
-                      disabled={busy}
-                      question={question}
-                      index={index}
-                      submissionId={attempt.id}
-                      storageReady={storageReady}
-                      recordedFiles={attempt.files.filter(
-                        (file) => file.questionId === question.id,
-                      )}
-                      pendingFiles={files.filter(
-                        (file) => file.questionId === question.id,
-                      )}
-                      onRecorded={(file) =>
-                        updateFiles((current) => [
-                          ...current.filter(
-                            (item) => item.questionId !== question.id,
-                          ),
-                          file,
-                        ])
-                      }
-                      onRemovePendingRecording={async (file) => {
-                        await deletePendingSubmissionFile(attempt.id, file);
-                        updateFiles((current) =>
-                          current.filter((item) => item.key !== file.key),
-                        );
-                      }}
-                      onRemoveRecordedRecording={async (fileId) => {
-                        await apiRequest<{ success: true }>(
-                          `/api/submissions/${attempt.id}/files/${fileId}`,
-                          { method: 'DELETE' },
-                        );
-                        router.refresh();
-                      }}
-                      onRecordingUpload={trackUpload}
-                    />
-                  </div>
+                  <AnswerControl
+                    form={form}
+                    disabled={busy}
+                    question={question}
+                    index={index}
+                    submissionId={attempt.id}
+                    storageReady={storageReady}
+                    recordedFiles={attempt.files.filter(
+                      (file) => file.questionId === question.id,
+                    )}
+                    pendingFiles={files.filter(
+                      (file) => file.questionId === question.id,
+                    )}
+                    onRecorded={(file) =>
+                      updateFiles((current) => [
+                        ...current.filter(
+                          (item) => item.questionId !== question.id,
+                        ),
+                        file,
+                      ])
+                    }
+                    onRemovePendingRecording={async (file) => {
+                      await deletePendingSubmissionFile(attempt.id, file);
+                      updateFiles((current) =>
+                        current.filter((item) => item.key !== file.key),
+                      );
+                    }}
+                    onRemoveRecordedRecording={async (fileId) => {
+                      await apiRequest<{ success: true }>(
+                        `/api/submissions/${attempt.id}/files/${fileId}`,
+                        { method: 'DELETE' },
+                      );
+                      router.refresh();
+                    }}
+                    onRecordingUpload={trackUpload}
+                  />
                 </QuestionShell>
               </li>
             ))}
