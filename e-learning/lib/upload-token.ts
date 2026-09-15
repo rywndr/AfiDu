@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { MATERIAL_TYPES } from '@/lib/choices';
 import type { UploadedQuestionAudio } from '@/lib/form-schemas';
 
-const TOKEN_TTL_MS = 20 * 60 * 1000;
+export const UPLOAD_TOKEN_TTL_MS = 20 * 60 * 1000;
 const materialTypes = MATERIAL_TYPES.map(({ value }) => value) as [
   (typeof MATERIAL_TYPES)[number]['value'],
   ...(typeof MATERIAL_TYPES)[number]['value'][],
@@ -31,6 +31,7 @@ const payloadSchema = filePayloadSchema.extend({
  * cannot be replayed against somebody else's submission.
  */
 const submissionPayloadSchema = filePayloadSchema.extend({
+  ticketId: z.number().int().positive(),
   submissionId: z.number().int().positive(),
   questionId: z.number().int().positive().nullable(),
 });
@@ -57,7 +58,7 @@ function signature(encodedPayload: string) {
 
 function sign(payload: object): string {
   const encodedPayload = Buffer.from(
-    JSON.stringify({ ...payload, expiresAt: Date.now() + TOKEN_TTL_MS }),
+    JSON.stringify({ ...payload, expiresAt: Date.now() + UPLOAD_TOKEN_TTL_MS }),
   ).toString('base64url');
   return `${encodedPayload}.${signature(encodedPayload)}`;
 }

@@ -5,6 +5,7 @@ import {
   LEVELS,
   MATERIAL_STATUSES,
   MATERIAL_TYPES,
+  MAX_SUBMISSION_FILES,
   QUESTION_KINDS,
   SCORE_TARGET_VALUES,
   SCORE_YEARS,
@@ -612,7 +613,7 @@ export const saveAttemptSchema = z.object({
   finalize: z.boolean(),
   answers: z.array(attemptAnswerSchema).max(200),
   /** Files uploaded during this attempt that are not recorded yet. */
-  files: z.array(submissionFileSchema).max(100),
+  files: z.array(submissionFileSchema).max(MAX_SUBMISSION_FILES),
 });
 
 export type SaveAttemptInput = z.infer<typeof saveAttemptSchema>;

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   const key = questionAudioKey(input.filename);
   try {
-    const url = await presignUpload(key, input.contentType);
+    const url = await presignUpload(key, input.contentType, input.size);
     const uploadToken = createQuestionAudioUploadToken({
       classId: input.classId,
       key,

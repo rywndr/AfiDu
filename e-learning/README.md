@@ -69,6 +69,11 @@ b2 bucket update <bucket-name> --cors-rules '[
 Downloads do not need a rule: `/api/study-materials/[id]/file` redirects to a
 signed GET, so the browser follows a normal top-level navigation.
 
+Set storage and download caps and billing alerts in Backblaze as a final limit
+on a compromised account. Submission PUTs bind `Content-Length` to the signed
+request, and the save route checks the stored object's size and content type,
+but provider-side caps still protect against application or credential failure.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

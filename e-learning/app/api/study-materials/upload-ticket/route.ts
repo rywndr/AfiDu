@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   const key = studyMaterialKey(input.filename);
   try {
-    const url = await presignUpload(key, input.contentType);
+    const url = await presignUpload(key, input.contentType, input.size);
     const uploadToken = createUploadToken({
       classId: input.classId,
       materialType: input.materialType,

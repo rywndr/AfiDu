@@ -350,6 +350,33 @@ export const submission = pgTable(
   ],
 );
 
+/** Django: assignments.SubmissionUploadTicket */
+export const submissionUploadTicket = pgTable(
+  'assignments_submissionuploadticket',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    submissionId: bigint('submission_id', { mode: 'number' })
+      .notNull()
+      .references(() => submission.id, { onDelete: 'cascade' }),
+    questionId: bigint('question_id', { mode: 'number' }).references(
+      () => question.id,
+      { onDelete: 'cascade' },
+    ),
+    objectKey: varchar('object_key', { length: 100 }).notNull().unique(),
+    originalFilename: varchar('original_filename', { length: 255 }).notNull(),
+    expectedSize: bigint('expected_size', { mode: 'number' }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('upload_ticket_sub_created_idx').on(
+      table.submissionId,
+      table.createdAt,
+    ),
+  ],
+);
+
 /** Django: scores.ScoreEntry */
 export const scoreEntry = pgTable(
   'scores_scoreentry',
@@ -447,6 +474,7 @@ export const schema = {
   question,
   questionChoice,
   submission,
+  submissionUploadTicket,
   submissionAnswer,
   submissionAnswerChoice,
   submissionFile,

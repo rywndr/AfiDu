@@ -14,6 +14,7 @@ import 'server-only';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -92,12 +93,58 @@ function datedKey(prefix: string, filename: string): string {
 }
 
 /** Short-lived signed PUT the browser uploads straight to B2 with. */
-export async function presignUpload(key: string, contentType: string) {
+export async function presignUpload(
+  key: string,
+  contentType: string,
+  contentLength: number,
+) {
   return getSignedUrl(
     s3(),
-    new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
-    { expiresIn: UPLOAD_URL_TTL_SECONDS },
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: contentType,
+      ContentLength: contentLength,
+    }),
+    {
+      expiresIn: UPLOAD_URL_TTL_SECONDS,
+      signableHeaders: new Set(['content-type']),
+    },
   );
+}
+
+export type UploadedObjectVerification =
+  | { kind: 'valid' }
+  | { kind: 'invalid' }
+  | { kind: 'unavailable' };
+
+/**
+ * Read the object metadata from B2 before the application records an upload.
+ * A client cannot forge these values because they come from object storage.
+ */
+export async function verifyUploadedObject(input: {
+  key: string;
+  expectedSize: number;
+  expectedContentType: string;
+}): Promise<UploadedObjectVerification> {
+  try {
+    const object = await s3().send(
+      new HeadObjectCommand({ Bucket: bucket, Key: input.key }),
+    );
+    const actualContentType = object.ContentType?.trim().toLowerCase();
+    const expectedContentType = input.expectedContentType.trim().toLowerCase();
+    if (
+      object.ContentLength !== input.expectedSize ||
+      actualContentType !== expectedContentType
+    ) {
+      await deleteObjectStrict(input.key);
+      return { kind: 'invalid' };
+    }
+    return { kind: 'valid' };
+  } catch (error) {
+    console.error('could not verify B2 object', input.key, error);
+    return { kind: 'unavailable' };
+  }
 }
 
 /** Signed GET for a private object, optionally forcing a download. */
@@ -125,10 +172,14 @@ export async function presignDownload(
  * Best-effort object removal. Django logs and swallows the same failure: an
  * orphaned object is a smaller problem than a row that refuses to be deleted.
  */
+async function deleteObjectStrict(key: string): Promise<void> {
+  await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}
+
 export async function deleteObject(key: string): Promise<void> {
   if (!key || !isB2Configured()) return;
   try {
-    await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+    await deleteObjectStrict(key);
   } catch (error) {
     console.error('could not delete B2 object', key, error);
   }

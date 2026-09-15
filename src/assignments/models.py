@@ -516,6 +516,33 @@ class SubmissionAnswer(models.Model):
         return f"answer to {self.question_id}"
 
 
+class SubmissionUploadTicket(models.Model):
+    submission = models.ForeignKey(
+        Submission, on_delete=models.CASCADE, related_name="upload_tickets"
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="submission_upload_tickets",
+    )
+    object_key = models.CharField(max_length=100, unique=True)
+    original_filename = models.CharField(max_length=255)
+    expected_size = models.PositiveBigIntegerField()
+    mime_type = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["submission", "created_at"],
+                name="upload_ticket_sub_created_idx",
+            ),
+        ]
+
+
 class SubmissionFile(models.Model):
     submission = models.ForeignKey(
         Submission, on_delete=models.CASCADE, related_name="files"

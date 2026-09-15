@@ -17,6 +17,11 @@ import {
 import { authorizeStudentRequest } from '@/lib/student-access';
 import { getOpenAttempt } from '@/lib/student-attempts';
 import {
+  consumeSubmissionUploadTickets,
+  grantSubmissionUploadTicket,
+  isActiveSubmissionUploadTicket,
+} from '@/lib/submission-upload-security';
+import {
   createSubmissionUploadToken,
   verifySubmissionUploadToken,
 } from '@/lib/upload-token';
@@ -71,8 +76,27 @@ export async function POST(
 
   const key = submissionFileKey(input.filename);
   try {
-    const url = await presignUpload(key, input.contentType);
+    const url = await presignUpload(key, input.contentType, input.size);
+    const grant = await grantSubmissionUploadTicket({
+      studentId: authorization.profile.id,
+      submissionId,
+      questionId: input.questionId,
+      key,
+      originalFilename: input.filename,
+      expectedSize: input.size,
+      mimeType: input.contentType,
+    });
+    if (grant.kind === 'rate-limited') {
+      const response = apiError('Upload limit reached. Try again later.', 429);
+      response.headers.set('Retry-After', String(grant.retryAfterSeconds));
+      return response;
+    }
+    if (grant.kind === 'attempt-full') {
+      return apiError('This attempt has reached its file limit.', 409);
+    }
+
     const uploadToken = createSubmissionUploadToken({
+      ticketId: grant.ticketId,
       submissionId,
       key,
       originalFilename: input.filename,
@@ -115,9 +139,11 @@ export async function DELETE(
     token.originalFilename === file.originalFilename &&
     token.mimeType === file.mimeType &&
     token.size === file.size &&
-    token.questionId === file.questionId;
-  if (!valid) return apiError('That upload has expired.', 400);
+    token.questionId === file.questionId &&
+    (await isActiveSubmissionUploadTicket(token));
+  if (!valid || !token) return apiError('That upload has expired.', 400);
 
   await deleteObject(file.key);
+  await consumeSubmissionUploadTickets([token]);
   return Response.json({ success: true });
 }
