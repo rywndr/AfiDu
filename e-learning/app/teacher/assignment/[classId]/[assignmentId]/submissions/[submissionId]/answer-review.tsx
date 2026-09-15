@@ -150,16 +150,19 @@ export function AnswerReview({
       ) : null}
 
       {answer.autoGradable ? (
-        <>
+        <div data-clarity-mask="true">
           <ChoiceAnswer answer={answer} />
           <p className="mt-2">
             <AutoResult answer={answer} />
           </p>
-        </>
+        </div>
       ) : answer.answerId === null ? (
         <p className="mt-2 text-sm text-ink-subtle italic">Not answered.</p>
       ) : (
-        <div className="mt-2 rounded-lg border border-border bg-white px-3 py-2.5 text-sm whitespace-pre-line text-ink">
+        <div
+          className="mt-2 rounded-lg border border-border bg-white px-3 py-2.5 text-sm whitespace-pre-line text-ink"
+          data-clarity-mask="true"
+        >
           {answer.textAnswer.trim() || (
             <span className="text-ink-subtle italic">No written answer.</span>
           )}
@@ -173,12 +176,14 @@ export function AnswerReview({
       />
 
       {fieldIndex === undefined ? null : (
-        <AnswerMarks
-          form={form}
-          disabled={disabled}
-          answer={answer}
-          fieldIndex={fieldIndex}
-        />
+        <div data-clarity-mask="true">
+          <AnswerMarks
+            form={form}
+            disabled={disabled}
+            answer={answer}
+            fieldIndex={fieldIndex}
+          />
+        </div>
       )}
 
       {answer.explanation ? (

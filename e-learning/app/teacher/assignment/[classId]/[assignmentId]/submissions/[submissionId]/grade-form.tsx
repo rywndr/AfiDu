@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
 import { labelClass } from '@/components/form/field';
+import { trackClarityEvent } from '@/components/analytics/clarity-analytics';
 import {
   FormAlert,
   FormEmptyNote,
@@ -58,6 +59,8 @@ export function GradeForm({
         body: JSON.stringify(toGradeInput(assignmentId, values)),
       });
 
+      trackClarityEvent('teacher_submission_graded');
+
       router.push(`/teacher/assignment/${classSlug}/${assignmentId}`);
       router.refresh();
     } catch (error) {
@@ -98,7 +101,10 @@ export function GradeForm({
         )}
 
         {submission.unattachedFiles.length > 0 ? (
-          <div className="mt-4 border-t border-shell-divider pt-4">
+          <div
+            className="mt-4 border-t border-shell-divider pt-4"
+            data-clarity-mask="true"
+          >
             <p className={labelClass}>Files handed in</p>
             <SubmissionFiles
               submissionId={submission.id}
@@ -108,12 +114,14 @@ export function GradeForm({
         ) : null}
       </FormSection>
 
-      <GradeResultSection
-        form={form}
-        disabled={saving}
-        maxPoints={submission.maxPoints}
-        markableCount={markable.length}
-      />
+      <div data-clarity-mask="true">
+        <GradeResultSection
+          form={form}
+          disabled={saving}
+          maxPoints={submission.maxPoints}
+          markableCount={markable.length}
+        />
+      </div>
 
       <FormAlert message={requestError} />
 

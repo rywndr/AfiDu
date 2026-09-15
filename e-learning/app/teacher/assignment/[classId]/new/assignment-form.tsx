@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
 import { ConfirmDialog } from '@/components/dashboard/confirm-dialog';
+import { trackClarityEvent } from '@/components/analytics/clarity-analytics';
 import { FormAlert, FormSubmitRow } from '@/components/form/form-shell';
 import { useUnsavedChanges } from '@/components/form/unsaved-changes';
 import { apiRequest } from '@/lib/api-client';
@@ -90,6 +91,8 @@ export function AssignmentForm({
           ),
         },
       );
+
+      if (!initialAssignment) trackClarityEvent('teacher_assignment_created');
 
       form.reset();
       router.push(`/teacher/assignment/${classSlug}`);

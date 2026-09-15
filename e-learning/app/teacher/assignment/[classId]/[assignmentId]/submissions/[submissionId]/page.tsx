@@ -36,20 +36,8 @@ async function routeIds(params: SubmissionPageProps['params']) {
     : { classSlug: null, classId: null, assignmentId: null, submissionId: null };
 }
 
-export async function generateMetadata({
-  params,
-}: SubmissionPageProps): Promise<Metadata> {
-  const { classId, assignmentId, submissionId } = await routeIds(params);
-  const detail =
-    classId === null || assignmentId === null || submissionId === null
-      ? null
-      : await getSubmissionDetail(classId, assignmentId, submissionId);
-
-  return {
-    title: detail
-      ? `${detail.studentName} · ${detail.assignmentTitle} | AfiDu E-Learning`
-      : 'Submission | AfiDu E-Learning',
-  };
+export function generateMetadata(): Metadata {
+  return { title: 'Submission | AfiDu E-Learning' };
 }
 
 function SubmissionFacts({ detail }: { detail: SubmissionDetail }) {
@@ -64,10 +52,12 @@ function SubmissionFacts({ detail }: { detail: SubmissionDetail }) {
       <CardContent className="p-4 sm:p-5">
         <FactGrid>
           <Fact label="Student">
-            <FactValue className="font-semibold text-ink-strong">
-              <MetaItem icon={UserRound}>{detail.studentName}</MetaItem>
-            </FactValue>
-            <FactNote>{detail.studentLevel}</FactNote>
+            <div data-clarity-mask="true">
+              <FactValue className="font-semibold text-ink-strong">
+                <MetaItem icon={UserRound}>{detail.studentName}</MetaItem>
+              </FactValue>
+              <FactNote>{detail.studentLevel}</FactNote>
+            </div>
           </Fact>
 
           <Fact label="Handed in">
@@ -148,7 +138,11 @@ export default async function SubmissionPage({ params }: SubmissionPageProps) {
       </BackLink>
 
       <PageHeader
-        title={detail.studentName.toUpperCase()}
+        title={
+          <span data-clarity-mask="true">
+            {detail.studentName.toUpperCase()}
+          </span>
+        }
         description={`${detail.assignmentTitle} · ${submissionStatusLabel(detail.status)}`}
       />
 

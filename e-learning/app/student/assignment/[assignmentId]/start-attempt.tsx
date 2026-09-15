@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { FormAlert } from '@/components/form/form-shell';
+import { trackClarityEvent } from '@/components/analytics/clarity-analytics';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api-client';
 
@@ -25,14 +26,17 @@ export function StartAttempt({
     if (busy) return;
     setBusy(true);
     setError(null);
+    trackClarityEvent('assignment_start_clicked');
 
     try {
       await apiRequest<{ submissionId: number }>('/api/submissions', {
         method: 'POST',
         body: JSON.stringify({ assignmentId }),
       });
+      trackClarityEvent('assignment_started');
       router.refresh();
     } catch (requestError) {
+      trackClarityEvent('assignment_start_failed');
       setBusy(false);
       setError(
         requestError instanceof Error

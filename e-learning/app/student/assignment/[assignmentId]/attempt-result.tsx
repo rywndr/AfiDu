@@ -260,7 +260,10 @@ export function AttemptResult({ assignment, questions, attempt }: AttemptResultP
         </FactGrid>
 
         {attempt.feedback ? (
-          <p className="mt-4 rounded-xl bg-accent-primary-soft/60 px-3.5 py-3 text-sm whitespace-pre-line text-ink">
+          <p
+            className="mt-4 rounded-xl bg-accent-primary-soft/60 px-3.5 py-3 text-sm whitespace-pre-line text-ink"
+            data-clarity-mask="true"
+          >
             <span className="font-semibold">Teacher’s comment: </span>
             {attempt.feedback}
           </p>
@@ -268,7 +271,10 @@ export function AttemptResult({ assignment, questions, attempt }: AttemptResultP
       </section>
 
       {unattachedFiles.length > 0 ? (
-        <section className="rounded-2xl bg-white p-4 shadow-card sm:p-6">
+        <section
+          className="rounded-2xl bg-white p-4 shadow-card sm:p-6"
+          data-clarity-mask="true"
+        >
           <SectionHeading>Files you handed in</SectionHeading>
           <ul className="mt-4 flex flex-col gap-1.5">
             {unattachedFiles.map((file) => (
@@ -317,13 +323,15 @@ export function AttemptResult({ assignment, questions, attempt }: AttemptResultP
                         />
                       </div>
                     ) : null}
-                    <AnswerSummary
-                      question={question}
-                      answer={answer}
-                      files={filesByQuestion.get(question.id) ?? []}
-                      submissionId={attempt.id}
-                    />
-                    <AnswerMarks answer={answer} />
+                    <div data-clarity-mask="true">
+                      <AnswerSummary
+                        question={question}
+                        answer={answer}
+                        files={filesByQuestion.get(question.id) ?? []}
+                        submissionId={attempt.id}
+                      />
+                      <AnswerMarks answer={answer} />
+                    </div>
                     {question.explanation ? (
                       <p className="mt-2 text-xs text-ink-subtle">
                         <span className="font-semibold uppercase">

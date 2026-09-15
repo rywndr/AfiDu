@@ -11,6 +11,7 @@ import {
   FormNotice,
   FormSubmitRow,
 } from '@/components/form/form-shell';
+import { trackClarityEvent } from '@/components/analytics/clarity-analytics';
 import { useUnsavedChanges } from '@/components/form/unsaved-changes';
 import { apiRequest } from '@/lib/api-client';
 import {
@@ -103,6 +104,8 @@ export function ModuleForm({
           body: JSON.stringify(toMaterialInput(classId, values, uploaded)),
         },
       );
+
+      if (!initialMaterial) trackClarityEvent('teacher_module_created');
 
       form.reset();
       router.push(`/teacher/module/${classSlug}`);

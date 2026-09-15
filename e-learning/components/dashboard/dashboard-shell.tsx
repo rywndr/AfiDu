@@ -27,7 +27,10 @@ export function DashboardShell({ children, role, userName }: DashboardShellProps
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-shell-border bg-white/90 px-4 py-2.5 backdrop-blur-sm lg:static lg:justify-end lg:border-b-0 lg:bg-transparent lg:px-8 lg:pt-6 lg:pb-0 lg:backdrop-blur-none xl:px-12">
           <MobileNav role={role} />
           <BrandMark href={`/${role}`} size="sm" className="lg:hidden" />
-          <div className="ml-auto flex items-center lg:ml-0">
+          <div
+            className="ml-auto flex items-center lg:ml-0"
+            data-clarity-mask="true"
+          >
             <ProfileMenu userName={userName} accent={role} />
           </div>
         </header>

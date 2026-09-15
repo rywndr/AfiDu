@@ -16,7 +16,7 @@ export function SubmissionFiles({
   if (files.length === 0) return null;
 
   return (
-    <ul className="mt-2 flex flex-col gap-1.5">
+    <ul className="mt-2 flex flex-col gap-1.5" data-clarity-mask="true">
       {files.map((file) => (
         <li
           key={file.id}

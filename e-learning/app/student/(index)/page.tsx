@@ -36,7 +36,11 @@ export default async function StudentDashboardPage() {
   const userName = profile?.name || user.name || user.email;
   const greeting = (
     <PageHeader
-      title={`HELLO, ${userName.toUpperCase()}`}
+      title={
+        <span data-clarity-mask="true">
+          HELLO, {userName.toUpperCase()}
+        </span>
+      }
       description="Have a great day!"
       tone="accent"
     />

@@ -43,6 +43,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 Without the `B2_*` values the module upload form still loads but only accepts
 write-up materials because file uploads require B2.
 
+## Microsoft Clarity
+
+Set `NEXT_PUBLIC_CLARITY_PROJECT_ID` to the Microsoft Clarity project ID. The
+variable is optional, and Clarity stays disabled when it is missing or empty.
+Production deployments must configure the variable and redeploy after changing
+it because Next.js embeds public environment variables during the build.
+
+The integration uses one project for both interfaces and adds `role` and
+`study` custom tags. It does not send custom user identifiers.
+
 ## Study material uploads need a bucket CORS rule
 
 Files are uploaded **straight from the browser to B2** with a presigned PUT

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
 import { FocusGuardDialog } from '@/components/assignments/focus-guard-dialog';
+import { trackClarityEvent } from '@/components/analytics/clarity-analytics';
 import { QuestionShell } from '@/components/assignments/question-shell';
 import {
   FormAlert,
@@ -141,6 +142,7 @@ export function AttemptForm({
           [...attempt.files, ...filesRef.current].map((file) => file.questionId),
         );
         if (missing.length > 0) {
+          trackClarityEvent('assignment_validation_failed');
           changePhase('idle');
           setRequestError(
             `Answer question ${missing.join(', ')} before handing this in.`,
@@ -152,6 +154,9 @@ export function AttemptForm({
       try {
         await save(values, finalize);
 
+        if (finalize) trackClarityEvent('assignment_handed_in');
+        else trackClarityEvent('assignment_draft_saved');
+
         updateFiles(() => []);
         // the clock ran out while this was in flight, so this request is the
         // hand-in the dialog is waiting on
@@ -159,6 +164,7 @@ export function AttemptForm({
         router.refresh();
         if (!finalize) changePhase('idle');
       } catch (error) {
+        if (finalize) trackClarityEvent('assignment_hand_in_failed');
         const message =
           error instanceof Error
             ? error.message
@@ -185,6 +191,7 @@ export function AttemptForm({
     try {
       await waitForUploads();
       await save(form.getValues(), true);
+      trackClarityEvent('assignment_auto_handed_in');
       setHandedIn(true);
     } catch (error) {
       setTimeoutError(
@@ -200,6 +207,9 @@ export function AttemptForm({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        if (phaseRef.current === 'idle') {
+          trackClarityEvent('assignment_hand_in_clicked');
+        }
         void send(true);
       }}
       className="flex flex-col gap-4 sm:gap-5"
@@ -249,42 +259,44 @@ export function AttemptForm({
                       className="mb-3 w-full"
                     />
                   ) : null}
-                  <AnswerControl
-                    form={form}
-                    disabled={busy}
-                    question={question}
-                    index={index}
-                    submissionId={attempt.id}
-                    storageReady={storageReady}
-                    recordedFiles={attempt.files.filter(
-                      (file) => file.questionId === question.id,
-                    )}
-                    pendingFiles={files.filter(
-                      (file) => file.questionId === question.id,
-                    )}
-                    onRecorded={(file) =>
-                      updateFiles((current) => [
-                        ...current.filter(
-                          (item) => item.questionId !== question.id,
-                        ),
-                        file,
-                      ])
-                    }
-                    onRemovePendingRecording={async (file) => {
-                      await deletePendingSubmissionFile(attempt.id, file);
-                      updateFiles((current) =>
-                        current.filter((item) => item.key !== file.key),
-                      );
-                    }}
-                    onRemoveRecordedRecording={async (fileId) => {
-                      await apiRequest<{ success: true }>(
-                        `/api/submissions/${attempt.id}/files/${fileId}`,
-                        { method: 'DELETE' },
-                      );
-                      router.refresh();
-                    }}
-                    onRecordingUpload={trackUpload}
-                  />
+                  <div data-clarity-mask="true">
+                    <AnswerControl
+                      form={form}
+                      disabled={busy}
+                      question={question}
+                      index={index}
+                      submissionId={attempt.id}
+                      storageReady={storageReady}
+                      recordedFiles={attempt.files.filter(
+                        (file) => file.questionId === question.id,
+                      )}
+                      pendingFiles={files.filter(
+                        (file) => file.questionId === question.id,
+                      )}
+                      onRecorded={(file) =>
+                        updateFiles((current) => [
+                          ...current.filter(
+                            (item) => item.questionId !== question.id,
+                          ),
+                          file,
+                        ])
+                      }
+                      onRemovePendingRecording={async (file) => {
+                        await deletePendingSubmissionFile(attempt.id, file);
+                        updateFiles((current) =>
+                          current.filter((item) => item.key !== file.key),
+                        );
+                      }}
+                      onRemoveRecordedRecording={async (fileId) => {
+                        await apiRequest<{ success: true }>(
+                          `/api/submissions/${attempt.id}/files/${fileId}`,
+                          { method: 'DELETE' },
+                        );
+                        router.refresh();
+                      }}
+                      onRecordingUpload={trackUpload}
+                    />
+                  </div>
                 </QuestionShell>
               </li>
             ))}
@@ -295,7 +307,7 @@ export function AttemptForm({
       {takesFiles ? (
         <FormSection title="Files to hand in">
           {storageReady ? (
-            <div className="mt-4">
+            <div className="mt-4" data-clarity-mask="true">
               <AttemptUploads
                 submissionId={attempt.id}
                 recorded={attempt.files.filter((file) => file.questionId === null)}
