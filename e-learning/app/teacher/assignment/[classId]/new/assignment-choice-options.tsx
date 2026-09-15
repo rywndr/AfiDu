@@ -48,12 +48,12 @@ export function ChoiceOptions({
   return (
     <div className="flex flex-col gap-2 sm:col-span-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className={labelClass}>
-          Options{' '}
-          {kind === 'multi_select'
-            ? '(tick every correct one)'
-            : '(tick the correct one)'}
-        </span>
+        <div>
+          <p className={labelClass}>Answer key</p>
+          <p className="mt-1 text-xs text-ink-subtle">
+            Tick the correct option(s). These are used for automatic scoring.
+          </p>
+        </div>
         <Button
           type="button"
           variant="ghost"

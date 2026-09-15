@@ -214,11 +214,20 @@ export function QuestionEditor({ form, disabled, ...toolbar }: QuestionEditorPro
 
         <TextareaField
           id={`question-explanation-${index}`}
-          label="Explanation"
+          label={questionHasChoices(kind) ? 'Explanation' : 'Answer key / marking guide'}
           className="sm:col-span-4"
           rows={2}
           disabled={disabled}
-          placeholder="Optional. Shown after submitting when answers are revealed."
+          placeholder={
+            questionHasChoices(kind)
+              ? 'Optional explanation shown after submitting when answers are revealed.'
+              : 'Optional expected answer or marking notes.'
+          }
+          hint={
+            questionHasChoices(kind)
+              ? undefined
+              : 'Shown after submission when answer reveal is enabled. You still mark this answer by hand.'
+          }
           error={questionErrors?.explanation?.message}
           {...register(`questions.${index}.explanation`)}
         />

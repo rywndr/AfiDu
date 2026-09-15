@@ -62,7 +62,7 @@ function AutoResult({ answer }: { answer: AnswerDetail }) {
   if (answer.isCorrect === null) {
     return (
       <span className="text-xs font-semibold text-ink-subtle">
-        Not scored — no answer key set
+        Not auto-scored. This choice question has no correct option configured.
       </span>
     );
   }
@@ -183,7 +183,9 @@ export function AnswerReview({
 
       {answer.explanation ? (
         <p className="mt-2 text-xs text-ink-subtle">
-          <span className="font-semibold uppercase">Explanation: </span>
+          <span className="font-semibold uppercase">
+            {answer.autoGradable ? 'Explanation: ' : 'Answer key / marking guide: '}
+          </span>
           {answer.explanation}
         </p>
       ) : null}
