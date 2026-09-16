@@ -326,7 +326,11 @@ export function AttemptResult({ assignment, questions, attempt }: AttemptResultP
                     <AnswerMarks answer={answer} />
                     {question.explanation ? (
                       <p className="mt-2 text-xs text-ink-subtle">
-                        <span className="font-semibold uppercase">Explanation: </span>
+                        <span className="font-semibold uppercase">
+                          {questionHasChoices(question.kind)
+                            ? 'Explanation: '
+                            : 'Answer key / marking guide: '}
+                        </span>
                         {question.explanation}
                       </p>
                     ) : null}
