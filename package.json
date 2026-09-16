@@ -1,6 +1,11 @@
 {
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names django,tailwind \"uv run python src/manage.py runserver\" \"pnpm run dev:css\"",
+    "dev:css": "tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch"
+  },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.7",
+    "concurrently": "^10.0.5",
     "tailwindcss": "^4.1.7"
   }
 }

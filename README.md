@@ -41,29 +41,22 @@ Set up environment variables and edit them accordingly
 cp .env.example .env
 ```
 
-Run the migrate command inside `src`
+Run the database migrations
 ```bash
-uv run python manage.py migrate
+uv run python src/manage.py migrate
 ```
 
 And finally, create a superuser for the Django app
 ```bash
-uv run python manage.py createsuperuser
+uv run python src/manage.py createsuperuser
 ```
 
-Now to run the actual Django app, you'd need two terminal windows open. One for the Tailwind compiler and the other for the dev server.
-
-Terminal 1 (Tailwind compiler)
+Start the Django server and Tailwind compiler together
 ```bash
-pnpm exec tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
+pnpm dev
 ```
 
-Terminal 2 (dev server)
-```bash
-uv run python manage.py runserver
-```
-
-The app should be ready at `http://127.0.0.1:8000` to be accessed from the browser.
+The app should be available at `http://127.0.0.1:8000`. Press `Ctrl+C` to stop both processes.
 
 ## Setting up the Next app
 
