@@ -17,36 +17,23 @@ The Next app also uses **Drizzle** as the ORM of choice, **shadcn** as the compo
 
 To run the Django app, you need to have these programs installed:
 
-1. Python 3.10+
-2. Node.js (or any other JavaScript runtime of choice)
+1. [uv](https://docs.astral.sh/uv/)
+2. Node.js 20+
+3. [pnpm](https://pnpm.io/)
 
 Then, clone the repo
 ```bash
 git clone https://github.com/rywndr/afidu.git
 ```
 
-Create a Python venv inside said repo
-```bash
-python -m venv .venv
-
-# on Windows
-.venv\Scripts\activate
-
-# on Windows but Git Bash
-source .venv/Scripts/activate
-
-# on macOS/linux
-source .venv/bin/activate
-```
-
 Install Python dependencies
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 Install Node dependencies (for the Django app, because we're using tailwind)
 ```bash
-npm install
+pnpm install
 ```
 
 Set up environment variables and edit them accordingly
@@ -56,24 +43,24 @@ cp .env.example .env
 
 Run the migrate command inside `src`
 ```bash
-python manage.py migrate
+uv run python manage.py migrate
 ```
 
 And finally, create a superuser for the Django app
 ```bash
-python manage.py createsuperuser
+uv run python manage.py createsuperuser
 ```
 
 Now to run the actual Django app, you'd need two terminal windows open. One for the Tailwind compiler and the other for the dev server.
 
 Terminal 1 (Tailwind compiler)
 ```bash
-npx tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
+pnpm exec tailwindcss -i ./src/static/src/input.css -o ./src/static/src/output.css --watch
 ```
 
 Terminal 2 (dev server)
 ```bash
-python manage.py runserver
+uv run python manage.py runserver
 ```
 
 The app should be ready at `http://127.0.0.1:8000` to be accessed from the browser.
@@ -84,7 +71,7 @@ cd into the e-learning directory from the root directory `cd e-learning` and the
 
 First, install the Node dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 Then, set up your environment variables
@@ -94,7 +81,7 @@ cp .env.example .env
 
 And finally, start the dev server
 ```bash
-npm run dev
+pnpm dev
 ```
 
 We're done!
