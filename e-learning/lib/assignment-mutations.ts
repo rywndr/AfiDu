@@ -31,6 +31,7 @@ import {
   submissionAnswer,
   submissionAnswerChoice,
   submissionFile,
+  submissionUploadTicket,
 } from '@/db/schema';
 import { questionHasChoices } from '@/lib/choices';
 import { deleteObject } from '@/lib/b2';
@@ -298,6 +299,9 @@ export async function deleteAssignment(
       db
         .delete(submissionFile)
         .where(inArray(submissionFile.submissionId, submissionIds())),
+      db
+        .delete(submissionUploadTicket)
+        .where(inArray(submissionUploadTicket.submissionId, submissionIds())),
       db.delete(submission).where(eq(submission.assignmentId, assignmentDbId)),
       db.delete(questionChoice).where(inArray(questionChoice.questionId, questionIds())),
       db.delete(question).where(eq(question.assignmentId, assignmentDbId)),
@@ -380,6 +384,9 @@ export async function resetStudentSubmissions(
       db
         .delete(submissionFile)
         .where(inArray(submissionFile.submissionId, submissionIds())),
+      db
+        .delete(submissionUploadTicket)
+        .where(inArray(submissionUploadTicket.submissionId, submissionIds())),
       db
         .delete(submission)
         .where(
@@ -616,6 +623,9 @@ function deleteQuestionStatements(questionIds: number[]) {
       .update(submissionFile)
       .set({ questionId: null })
       .where(inArray(submissionFile.questionId, questionIds)),
+    db
+      .delete(submissionUploadTicket)
+      .where(inArray(submissionUploadTicket.questionId, questionIds)),
     db.delete(questionChoice).where(inArray(questionChoice.questionId, questionIds)),
     db.delete(question).where(inArray(question.id, questionIds)),
   ];
