@@ -3,6 +3,7 @@ name = "afidu"
 version = "0.1.0"
 requires-python = ">=3.10,<3.14"
 dependencies = [
+    "b2>=5.0.0",
     "django>=5.1.7",
     "django-compressor>=4.5.1",
     "django-widget-tweaks>=1.5.0",
