@@ -6,7 +6,12 @@ export default async function StudentLayout({ children }: LayoutProps<'/student'
   const profile = await getStudentProfile(user.id);
 
   return (
-    <DashboardShell role="student" userName={profile?.name || user.name || user.email}>
+     <DashboardShell
+      role="student"
+      userName={profile?.name || user.name || user.email}
+      studentClassName={profile?.className}
+      studentLevel={profile?.level}
+    >
       {children}
     </DashboardShell>
   );
