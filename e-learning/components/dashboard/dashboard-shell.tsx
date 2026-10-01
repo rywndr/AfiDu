@@ -11,9 +11,17 @@ type DashboardShellProps = {
   children: ReactNode;
   role: DashboardRole;
   userName: string;
+  studentClassName?: string | null;
+  studentLevel?: string | null;
 };
 
-export function DashboardShell({ children, role, userName }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  role,
+  userName,
+  studentClassName,
+  studentLevel,
+}: DashboardShellProps) {
   return (
     <div className="isolate min-h-dvh bg-shell lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
       <DoodleBackdrop />
@@ -31,6 +39,23 @@ export function DashboardShell({ children, role, userName }: DashboardShellProps
             className="ml-auto flex items-center lg:ml-0"
             data-clarity-mask="true"
           >
+            <div className="ml-auto flex min-w-0 items-center gap-3 lg:ml-0">
+            {role === 'student' && (studentClassName || studentLevel) ? (
+              <div className="min-w-0 text-right text-xs leading-tight text-ink-muted sm:text-sm">
+                {studentClassName ? (
+                  <p className="truncate font-semibold text-ink-strong">
+                    <span className="hidden sm:inline">Class </span>
+                    {studentClassName}
+                  </p>
+                ) : null}
+                {studentLevel ? (
+                  <p className="mt-0.5 truncate capitalize">
+                    <span className="hidden sm:inline">Level </span>
+                    {studentLevel}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <ProfileMenu userName={userName} accent={role} />
           </div>
         </header>
