@@ -36,10 +36,9 @@ export function DashboardShell({
           <MobileNav role={role} />
           <BrandMark href={`/${role}`} size="sm" className="lg:hidden" />
           <div
-            className="ml-auto flex items-center lg:ml-0"
+            className="ml-auto flex min-w-0 items-center gap-3 lg:ml-0"
             data-clarity-mask="true"
           >
-            <div className="ml-auto flex min-w-0 items-center gap-3 lg:ml-0">
             {role === 'student' && (studentClassName || studentLevel) ? (
               <div className="min-w-0 text-right text-xs leading-tight text-ink-muted sm:text-sm">
                 {studentClassName ? (

@@ -6,7 +6,7 @@ export default async function StudentLayout({ children }: LayoutProps<'/student'
   const profile = await getStudentProfile(user.id);
 
   return (
-     <DashboardShell
+    <DashboardShell
       role="student"
       userName={profile?.name || user.name || user.email}
       studentClassName={profile?.className}
